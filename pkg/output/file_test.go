@@ -8,12 +8,10 @@ import (
 )
 
 func TestFileOutput_Send(t *testing.T) {
-	fArgs := FileArgs{
-		Path: "/tmp/output.json",
-	}
+	path := "/tmp/output.json"
 
-	fo := FileOutput{
-		Output: []ReleaseOutput{
+	out := Output{
+		HelmReleases: []ReleaseOutput{
 			{
 				ReleaseName:   "foo",
 				Namespace:     "foo",
@@ -28,14 +26,14 @@ func TestFileOutput_Send(t *testing.T) {
 		},
 	}
 
-	err := fo.Send(&fArgs)
+	err := out.ToFile(path)
 	assert.Nil(t, err)
 
-	_, existsErr := os.Stat(fArgs.Path)
+	_, existsErr := os.Stat(path)
 	assert.Nil(t, existsErr)
 
 	if existsErr == nil {
-		os.Remove(fArgs.Path)
+		os.Remove(path)
 	}
 
 }
