@@ -1,0 +1,116 @@
+version: 2.1
+
+orbs:
+  rok8s: fairwinds/rok8s-scripts@11
+
+references:
+  set_environment_variables: &set_environment_variables
+    run:
+      name: Set Environment Variables
+      command: |
+        echo 'export REPO=quay.io/fairwinds/nova' >> ${BASH_ENV}
+        echo 'export GO111MODULE=on' >> ${BASH_ENV}
+        echo 'export CI_SHA1=$CIRCLE_SHA1' >> ${BASH_ENV}
+        echo 'export CI_BRANCH=$CIRCLE_BRANCH' >> ${BASH_ENV}
+        echo 'export CI_BUILD_NUM=$CIRCLE_BUILD_NUM' >> ${BASH_ENV}
+        echo 'export CI_TAG=$CIRCLE_TAG' >> ${BASH_ENV}
+        echo 'export PUSH_ALL_VERSION_TAGS=true' >> ${BASH_ENV}
+
+  docker_build: &docker_build
+    run:
+      name: Docker Build
+      command: |
+        docker-pull -f deploy/build.config
+        docker-build -f deploy/build.config
+
+  docker_build_and_push: &docker_build_and_push
+    run:
+      name: Docker Build and Push
+      command: |
+        docker login quay.io -u="${fairwinds_quay_user}" -p="${fairwinds_quay_token}"
+        docker-pull -f deploy/build.config
+        docker-build -f deploy/build.config
+        docker-push -f deploy/build.config
+
+jobs:
+  test:
+    working_directory: /go/src/github.com/fairwindsops/nova
+    docker:
+      - image: circleci/golang:1.12
+    steps:
+      - checkout
+      - *set_environment_variables
+      - run:
+          name: lint
+          command: |
+            go get -u golang.org/x/lint/golint
+            golint -set_exit_status ./... | tee golint-report.out
+            test -z $(go fmt ./...)
+      - run:
+          name: test
+          command: |
+            go test -v --bench --benchmem -coverprofile=coverage.txt -covermode=atomic ./pkg/...
+            go vet 2> govet-report.out
+            go tool cover -html=coverage.txt -o cover-report.html
+      - run: bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN
+
+  build:
+    docker:
+      - image: quay.io/reactiveops/ci-images:v11-alpine
+    steps:
+      - checkout
+      - setup_remote_docker
+      - *set_environment_variables
+      - *docker_build
+
+  push:
+    docker:
+      - image: quay.io/reactiveops/ci-images:v11-alpine
+    steps:
+      - checkout
+      - setup_remote_docker
+      - *set_environment_variables
+      - *docker_build_and_push
+
+  release:
+    docker:
+      - image: circleci/golang:1.13
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run: curl -sL http://git.io/goreleaser | bash
+
+  deploy-prod:
+    executor: rok8s/ci-images
+    steps:
+      - checkout
+      - rok8s/set_env
+      - run: prepare-kubectl
+      - run: helm-deploy -f deploy/prod.config
+
+workflows:
+  version: 2
+  test_and_build:
+    jobs:
+      - test
+      - build
+      - push:
+          context: org-global
+          requires:
+            - test
+            - build
+          filters:
+            branches:
+              ignore: /pull\/[0-9]+/
+
+  release:
+    jobs:
+      - release:
+          context: org-global
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/

@@ -1,0 +1,29 @@
+builds:
+  - id: nova
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+    goarch:
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - 6
+      - 7
+checksum:
+  name_template: 'checksums.txt'
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+brews:
+  - name: nova
+    github:
+      owner: FairwindsOps
+      name: homebrew-tap
+    folder: Formula
+    description: Check installed Helm charts for updates
+    test: |
+      system "#{bin}/nova version"
