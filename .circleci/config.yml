@@ -7,10 +7,9 @@ jobs:
   test:
     working_directory: /go/src/github.com/fairwindsops/nova
     docker:
-      - image: circleci/golang:1.12
+      - image: circleci/golang:1.14
     steps:
       - checkout
-      - *set_environment_variables
       - run:
           name: lint
           command: |
@@ -24,24 +23,6 @@ jobs:
             go vet 2> govet-report.out
             go tool cover -html=coverage.txt -o cover-report.html
       - run: bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN
-
-  build:
-    docker:
-      - image: quay.io/reactiveops/ci-images:v11-alpine
-    steps:
-      - checkout
-      - setup_remote_docker
-      - *set_environment_variables
-      - *docker_build
-
-  push:
-    docker:
-      - image: quay.io/reactiveops/ci-images:v11-alpine
-    steps:
-      - checkout
-      - setup_remote_docker
-      - *set_environment_variables
-      - *docker_build_and_push
 
   release-binary:
     docker:
@@ -61,6 +42,7 @@ workflows:
       - rok8s/docker_build_and_push:
           name: build-and-push-container
           docker-push: false
+          password-variable: "fairwinds_quay_token"
           enable_docker_layer_caching: true
           config_file: .circleci/build.config
           requires:
