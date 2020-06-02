@@ -24,6 +24,7 @@ type ReleaseOutput struct {
 	IsOld            bool    `json:"outdated"`
 }
 
+// Output is the object that Nova outputs
 type Output struct {
 	HelmReleases []ReleaseOutput `json:"helm_releases"`
 }
