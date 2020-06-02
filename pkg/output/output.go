@@ -37,7 +37,7 @@ func (output *ReleaseOutput) ToMarkdownTable() string {
 	return ""
 }
 
-// Send dispatches a message to file
+// ToFile dispatches a message to file
 func (output Output) ToFile(filename string) error {
 	data, err := json.Marshal(output)
 	if err != nil {
