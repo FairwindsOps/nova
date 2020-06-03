@@ -44,8 +44,13 @@ var fieldOrder = []field{
 	field{"Deprecated", 10, true},
 }
 
-func (release ReleaseOutput) String() string {
-	v := reflect.ValueOf(release)
+// Output is the object that Nova outputs
+type Output struct {
+	HelmReleases []ReleaseOutput `json:"helm_releases"`
+}
+
+func (output ReleaseOutput) String() string {
+	v := reflect.ValueOf(output)
 	values := make([]string, len(fieldOrder))
 	for idx, field := range fieldOrder {
 		value := v.FieldByName(field.name)
@@ -67,11 +72,6 @@ func (release ReleaseOutput) String() string {
 		}
 	}
 	return strings.Join(values, separator)
-}
-
-// Output is the object that Nova outputs
-type Output struct {
-	HelmReleases []ReleaseOutput `json:"helm_releases"`
 }
 
 // ToMarkdownTable returns a markdown formatted table
