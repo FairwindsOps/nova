@@ -13,7 +13,7 @@ Before you can contribute, you will need to sign the [Contributor License Agreem
 
 ## Creating a New Issue
 
-If you've encountered an issue that is not already reported, please create a [new issue](https://github.com/FairwindsOps/polaris/issues), choose `Bug Report`, `Feature Request` or `Misc.` and follow the instructions in the template. 
+If you've encountered an issue that is not already reported, please create a [new issue](https://github.com/FairwindsOps/nova/issues), choose `Bug Report`, `Feature Request` or `Misc.` and follow the instructions in the template. 
 
 ## Getting Started
 
@@ -28,7 +28,7 @@ please start a conversation on that issue, and we can help answer any questions 
 
 ### Installation
 * Install the project with `go get github.com/fairwindsops/nova`
-* Change into the polaris directory which is installed at `$GOPATH/src/github.com/fairwindsops/nova`
+* Change into the Nova directory which is installed at `$GOPATH/src/github.com/fairwindsops/nova`
 * See the results with `go run main.go find`
 
 ## Running Tests
