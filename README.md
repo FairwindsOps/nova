@@ -2,6 +2,28 @@
 
 Nova finds Helm charts in your Kubernetes cluster, and checks the upstream repository for any new releases.
 
+# Installation
+
+## From GitHub Releases
+Visit the [releases page](https://github.com/FairwindsOps/nova/releases) to find the release
+that's right for your environment. For example, on Linux:
+```
+curl -L "https://github.com/FairwindsOps/nova/releases/download/1.1.0/nova_1.1.0_linux_amd64.tar.gz" > nova.tar.gz
+tar -xvf nova.tar.gz
+sudo mv nova /usr/local/bin/
+```
+
+## Homebrew
+```
+brew tap fairwindsops/tap
+brew install fairwindsops/tap/nova
+```
+
+## From source
+```
+go get https://github.com/fairwindsops/nova
+```
+
 # Usage
 
 ```
