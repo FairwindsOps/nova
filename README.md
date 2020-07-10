@@ -1,6 +1,5 @@
 # Nova
-
-Nova finds Helm charts in your Kubernetes cluster, and checks the upstream repository for any new releases.
+Find outdated or deprecated Helm charts running in your cluster.
 
 # Installation
 
@@ -27,8 +26,12 @@ go get https://github.com/fairwindsops/nova
 # Usage
 
 ```
-nova find --output-file=releases.json
+nova find
 ```
+
+## Options
+* `--helm-version` - which version of Helm to use. Options are `2`, `3`, and `auto` (default is `3`)
+* `--output-file` - output JSON to a file
 
 # Output
 Below is sample output for Nova
@@ -38,7 +41,7 @@ Below is sample output for Nova
 ReleaseName               ChartName                 Namespace            Version       NewestVersion  IsOld    Deprecated
 cert-manager              cert-manager              cert-manager         v0.11.0       v0.15.2        True
 insights-agent            insights-agent            insights-agent       0.21.0        0.21.0
-grafana                   grafana                   insights-tools-graf… 2.1.3         3.0.1          True
+grafana                   grafana                   grafana-dashboard    2.1.3         3.0.1          True
 metrics-server            metrics-server            metrics-server       2.8.8         2.11.1         True
 nginx-ingress             nginx-ingress             nginx-ingress        1.25.0        1.40.2         True
 ```
