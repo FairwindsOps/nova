@@ -16,10 +16,10 @@ var (
 
 func init() {
 	klog.InitFlags(nil)
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	flag.Set("alsologtostderr", "true")
 	flag.Set("logtostderr", "true")
 	flag.Parse()
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 }
 
 var rootCmd = &cobra.Command{

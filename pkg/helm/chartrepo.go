@@ -66,7 +66,7 @@ func NewRepo(urls []string) []*Repo {
 			}
 			err := repo.loadReleases()
 			if err != nil {
-				klog.Warningf("Could not load chart repo: %s", address)
+				klog.V(5).Infof("Could not load chart repo %s: %s", address, err)
 			} else {
 				mutex.Lock()
 				repos = append(repos, repo)
@@ -82,19 +82,16 @@ func NewRepo(urls []string) []*Repo {
 func (r *Repo) loadReleases() error {
 	response, err := http.Get(fmt.Sprintf("%s/index.yaml", r.URL))
 	if err != nil {
-		klog.Warningf("Error loading chart repo %s: %v", r.URL, err)
 		return err
 	}
 
 	data, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		klog.Warningf("Error reading chart data from repo %s: %v", r.URL, err)
 		return err
 	}
 
 	err = yaml.Unmarshal(data, r.Charts)
 	if err != nil {
-		klog.Warningf("Error unmarshalling yaml for chart repo %s: %v", r.URL, err)
 		return err
 	}
 	return nil

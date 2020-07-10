@@ -38,7 +38,7 @@ func (h *Helm) GetHelmReleasesVersion3(helmRepos []*Repo) ([]output.ReleaseOutpu
 		return nil, err
 	}
 
-	klog.Infof("Got %d installed releases in the cluster", len(deployed))
+	klog.V(5).Infof("Got %d installed releases in the cluster", len(deployed))
 	for _, chart := range deployed {
 		validRepos := IsRepoIncluded(chart.Chart.Metadata.Name, helmRepos)
 		newest := TryToFindNewestReleaseByChart(chart, validRepos)
@@ -78,7 +78,7 @@ func (h *Helm) GetHelmReleasesVersion2(helmRepos []*Repo) ([]output.ReleaseOutpu
 		return nil, err
 	}
 
-	klog.Infof("Got %d installed releases in the cluster", len(deployed))
+	klog.V(5).Infof("Got %d installed releases in the cluster", len(deployed))
 	for _, chart := range deployed {
 		validRepos := IsRepoIncluded(chart.Chart.Metadata.Name, helmRepos)
 

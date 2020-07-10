@@ -65,7 +65,6 @@ var clusterCmd = &cobra.Command{
 				panic(err)
 			}
 		} else {
-			fmt.Printf("\n\n")
 			fmt.Println(out)
 		}
 	},
