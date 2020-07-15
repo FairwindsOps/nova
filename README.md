@@ -31,6 +31,7 @@ nova find
 
 ## Options
 * `--helm-version` - which version of Helm to use. Options are `2`, `3`, and `auto` (default is `3`)
+* `--wide` - show `Chart Name` and `Namespace`
 * `--output-file` - output JSON to a file
 
 # Output
@@ -38,12 +39,12 @@ Below is sample output for Nova
 
 ## CLI
 ```
-ReleaseName               ChartName                 Namespace            Version       NewestVersion  IsOld    Deprecated
-cert-manager              cert-manager              cert-manager         v0.11.0       v0.15.2        True
-insights-agent            insights-agent            insights-agent       0.21.0        0.21.0
-grafana                   grafana                   grafana-dashboard    2.1.3         3.0.1          True
-metrics-server            metrics-server            metrics-server       2.8.8         2.11.1         True
-nginx-ingress             nginx-ingress             nginx-ingress        1.25.0        1.40.2         True
+Release Name      Installed    Latest     Old     Deprecated
+cert-manager      v0.11.0      v0.15.2    true    false
+insights-agent    0.21.0       0.21.1     true    false
+grafana           2.1.3        3.1.1      true    false
+metrics-server    2.8.8        2.11.1     true    false
+nginx-ingress     1.25.0       1.40.3     true    false
 ```
 
 ## JSON
