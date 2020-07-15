@@ -29,6 +29,7 @@ type ReleaseOutput struct {
 	IsOld       bool `json:"outdated"`
 }
 
+// VerisonInfo contains both a chart version and an app version
 type VersionInfo struct {
 	Version    string `json:"version"`
 	AppVersion string `json:"appVersion"`
@@ -49,6 +50,7 @@ func (output Output) ToFile(filename string) error {
 	return nil
 }
 
+// Print sends the output to STDOUT
 func (output Output) Print(wide bool) {
 	if len(output.HelmReleases) == 0 {
 		fmt.Println("No releases found")
