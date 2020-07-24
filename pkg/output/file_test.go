@@ -16,10 +16,12 @@ func TestFileOutput_Send(t *testing.T) {
 				ReleaseName: "foo",
 				Namespace:   "foo",
 				Installed: VersionInfo{
-					Version: "1.0",
+					Version:    "1.0",
+					AppVersion: "2.0.0",
 				},
 				Latest: VersionInfo{
-					Version: "1.0",
+					Version:    "1.0",
+					AppVersion: "2.0.0",
 				},
 				Home:        "https://wiki.example.com",
 				Deprecated:  false,
