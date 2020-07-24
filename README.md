@@ -2,6 +2,8 @@
   <img src="/img/logo.png" alt="Nova" />
   <br>
 
+  <b>Find outdated or deprecated Helm charts running in your cluster.</b>
+
   [![Version][version-image]][version-link] [![CircleCI][circleci-image]][circleci-link] [![Go Report Card][goreport-image]][goreport-link]
 </div>
 
@@ -14,7 +16,6 @@
 [circleci-image]: https://circleci.com/gh/FairwindsOps/nova.svg?style=svg
 [circleci-link]: https://circleci.com/gh/FairwindsOps/nova.svg
 
-Find outdated or deprecated Helm charts running in your cluster.
 
 Nova scans your cluster for installed Helm charts, then cross-checks them against
 all known Helm repositories. If it finds an updated version of the chart you're using,
