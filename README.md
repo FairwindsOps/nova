@@ -21,6 +21,21 @@ Nova scans your cluster for installed Helm charts, then cross-checks them agains
 all known Helm repositories. If it finds an updated version of the chart you're using,
 or notices your current version is deprecated, it will let you know.
 
+**Want to learn more?** Reach out on [Slack](https://fairwindscommunity.slack.com/) ([request invite](https://join.slack.com/t/fairwindscommunity/shared_invite/zt-e3c6vj4l-3lIH6dvKqzWII5fSSFDi1g)), send an email to `opensource@fairwinds.com`, or join us for [office hours on Zoom](https://fairwindscommunity.slack.com/messages/office-hours)
+
+## Quickstart
+```
+$ go get github.com/fairwindsops/nova
+$ nova find --helm-version=auto
+
+Release Name      Installed    Latest     Old     Deprecated
+cert-manager      v0.11.0      v0.15.2    true    false
+insights-agent    0.21.0       0.21.1     true    false
+grafana           2.1.3        3.1.1      true    false
+metrics-server    2.8.8        2.11.1     true    false
+nginx-ingress     1.25.0       1.40.3     true    false
+```
+
 ## Installation
 
 ### From GitHub Releases
@@ -40,11 +55,10 @@ brew install fairwindsops/tap/nova
 
 ### From source
 ```
-go get https://github.com/fairwindsops/nova
+go get github.com/fairwindsops/nova
 ```
 
 ## Usage
-
 ```
 nova find --helm-version=auto --wide
 ```
