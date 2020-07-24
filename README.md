@@ -46,7 +46,7 @@ go get https://github.com/fairwindsops/nova
 ## Usage
 
 ```
-nova find --helm-version=auto
+nova find --helm-version=auto --wide
 ```
 
 ### Options
@@ -58,7 +58,7 @@ nova find --helm-version=auto
 Below is sample output for Nova
 
 #### CLI
-```
+```bash
 Release Name      Installed    Latest     Old     Deprecated
 cert-manager      v0.11.0      v0.15.2    true    false
 insights-agent    0.21.0       0.21.1     true    false
@@ -68,9 +68,9 @@ nginx-ingress     1.25.0       1.40.3     true    false
 ```
 
 #### JSON
-```
+```json
 {
-    "helm_releases": [
+    "helm": [
         {
             "release": "cert-manager",
             "chartName": "cert-manager",
@@ -78,13 +78,16 @@ nginx-ingress     1.25.0       1.40.3     true    false
             "description": "A Helm chart for cert-manager",
             "home": "https://github.com/jetstack/cert-manager",
             "icon": "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
-            "version": "v0.11.0",
-            "appVersion": "v0.11.0",
-            "newest": "v0.15.2",
-            "newest_appVersion": "v0.15.2",
+            "Installed": {
+                "version": "v0.11.0",
+                "appVersion": "v0.11.0"
+            },
+            "Latest": {
+                "version": "v0.16.0",
+                "appVersion": "v0.16.0"
+            },
             "outdated": true
         }
     ]
 }
 ```
-
