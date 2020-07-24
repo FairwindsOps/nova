@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
 	"k8s.io/klog"
 
@@ -15,12 +14,14 @@ var (
 	repos            []string
 	pollHelmHub      bool
 	helmHubConfigURL string
+	wide             bool
 )
 
 func init() {
 	rootCmd.AddCommand(clusterCmd)
 	rootCmd.PersistentFlags().StringVarP(&outputFile, "output-file", "", "", "Path on local filesystem to write file output to")
 	clusterCmd.PersistentFlags().StringVar(&helmVersion, "helm-version", "3", "Helm version in the current cluster (2|3|auto)")
+	clusterCmd.PersistentFlags().BoolVar(&wide, "wide", false, "Output chart name and namespace")
 
 	rootCmd.PersistentFlags().StringSliceVarP(&repos, "url", "u", []string{
 		"https://charts.fairwinds.com/stable",
@@ -65,8 +66,7 @@ var clusterCmd = &cobra.Command{
 				panic(err)
 			}
 		} else {
-			fmt.Printf("\n\n")
-			fmt.Println(out)
+			out.Print(wide)
 		}
 	},
 }

@@ -4,83 +4,35 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"reflect"
-	"strings"
+	"os"
+	"text/tabwriter"
 
 	"k8s.io/klog"
 )
 
-const separator = " "
+// Output is the object that Nova outputs
+type Output struct {
+	HelmReleases []ReleaseOutput `json:"helm"`
+}
 
 // ReleaseOutput represents a release
 type ReleaseOutput struct {
-	ReleaseName      string  `json:"release"`
-	ChartName        string  `json:"chartName"`
-	Namespace        string  `json:"namespace,omitempty"`
-	Description      string  `json:"description"`
-	Deprecated       bool    `json:"deprecated,omitempty"`
-	Home             string  `json:"home,omitempty"`
-	Icon             string  `json:"icon,omitempty"`
-	Version          string  `json:"version"`
-	AppVersion       *string `json:"appVersion,omitempty"`
-	NewestVersion    string  `json:"newest"`
-	NewestAppVersion *string `json:"newest_appVersion,omitempty"`
-	IsOld            bool    `json:"outdated"`
+	ReleaseName string `json:"release"`
+	ChartName   string `json:"chartName"`
+	Namespace   string `json:"namespace,omitempty"`
+	Description string `json:"description"`
+	Deprecated  bool   `json:"deprecated,omitempty"`
+	Home        string `json:"home,omitempty"`
+	Icon        string `json:"icon,omitempty"`
+	Installed   VersionInfo
+	Latest      VersionInfo
+	IsOld       bool `json:"outdated"`
 }
 
-type field struct {
-	name   string
-	length int
-	isBool bool
-}
-
-var fieldOrder = []field{
-	field{"ReleaseName", 25, false},
-	field{"ChartName", 25, false},
-	field{"Namespace", 20, false},
-	field{"Version", 13, false},
-	field{"NewestVersion", 14, false},
-	field{"IsOld", 8, true},
-	field{"Deprecated", 10, true},
-}
-
-// Output is the object that Nova outputs
-type Output struct {
-	HelmReleases []ReleaseOutput `json:"helm_releases"`
-}
-
-func (output ReleaseOutput) String() string {
-	v := reflect.ValueOf(output)
-	values := make([]string, len(fieldOrder))
-	for idx, field := range fieldOrder {
-		value := v.FieldByName(field.name)
-		if field.isBool {
-			boolValue := value.Bool()
-			if boolValue {
-				values[idx] = "True"
-			} else {
-				values[idx] = " "
-			}
-		} else {
-			values[idx] = value.String()
-		}
-		for len(values[idx]) < field.length {
-			values[idx] += " "
-		}
-		if len(values[idx]) > field.length {
-			values[idx] = values[idx][:field.length-1] + "…"
-		}
-	}
-	return strings.Join(values, separator)
-}
-
-// ToMarkdownTable returns a markdown formatted table
-func (output *ReleaseOutput) ToMarkdownTable() string {
-	if output.AppVersion != nil && output.NewestAppVersion != nil {
-		txt := "| | Old | New |\n|-|-|-|\n| Version | %s | %s |\n| AppVersion | %s | %s |"
-		return fmt.Sprintf(txt, output.Version, output.NewestVersion, *output.AppVersion, *output.NewestAppVersion)
-	}
-	return ""
+// VersionInfo contains both a chart version and an app version
+type VersionInfo struct {
+	Version    string `json:"version"`
+	AppVersion string `json:"appVersion"`
 }
 
 // ToFile dispatches a message to file
@@ -98,21 +50,30 @@ func (output Output) ToFile(filename string) error {
 	return nil
 }
 
-func (output Output) String() string {
+// Print sends the output to STDOUT
+func (output Output) Print(wide bool) {
 	if len(output.HelmReleases) == 0 {
-		return "No releases found"
+		fmt.Println("No releases found")
 	}
-	fieldNames := make([]string, len(fieldOrder))
-	for idx, field := range fieldOrder {
-		fieldNames[idx] = field.name
-		for len(fieldNames[idx]) < field.length {
-			fieldNames[idx] += " "
+	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
+	header := "Release Name\t"
+	if wide {
+		header += "Chart Name\tNamespace\t"
+	}
+	header += "Installed\tLatest\tOld\tDeprecated"
+	fmt.Fprintln(w, header)
+
+	for _, release := range output.HelmReleases {
+		line := release.ReleaseName + "\t"
+		if wide {
+			line += release.ChartName + "\t"
+			line += release.Namespace + "\t"
 		}
+		line += release.Installed.Version + "\t"
+		line += release.Latest.Version + "\t"
+		line += fmt.Sprintf("%t", release.IsOld) + "\t"
+		line += fmt.Sprintf("%t", release.Deprecated) + "\t"
+		fmt.Fprintln(w, line)
 	}
-	str := strings.Join(fieldNames, separator)
-	releaseStrings := make([]string, len(output.HelmReleases))
-	for idx, release := range output.HelmReleases {
-		releaseStrings[idx] = release.String()
-	}
-	return str + "\n" + strings.Join(releaseStrings, "\n")
+	w.Flush()
 }

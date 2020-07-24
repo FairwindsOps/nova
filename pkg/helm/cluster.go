@@ -38,24 +38,28 @@ func (h *Helm) GetHelmReleasesVersion3(helmRepos []*Repo) ([]output.ReleaseOutpu
 		return nil, err
 	}
 
-	klog.Infof("Got %d installed releases in the cluster", len(deployed))
+	klog.V(5).Infof("Got %d installed releases in the cluster", len(deployed))
 	for _, chart := range deployed {
 		validRepos := IsRepoIncluded(chart.Chart.Metadata.Name, helmRepos)
 		newest := TryToFindNewestReleaseByChart(chart, validRepos)
 		if newest != nil {
 			rls := output.ReleaseOutput{
-				ReleaseName:      chart.Name,
-				ChartName:        chart.Chart.Metadata.Name,
-				Namespace:        chart.Namespace,
-				Description:      chart.Chart.Metadata.Description,
-				Icon:             chart.Chart.Metadata.Icon,
-				Version:          chart.Chart.Metadata.Version,
-				Deprecated:       chart.Chart.Metadata.Deprecated,
-				Home:             chart.Chart.Metadata.Home,
-				AppVersion:       &chart.Chart.Metadata.AppVersion,
-				NewestVersion:    newest.Version,
-				NewestAppVersion: &newest.AppVersion,
-				IsOld:            version.Compare(newest.Version, chart.Chart.Metadata.Version, ">"),
+				ReleaseName: chart.Name,
+				ChartName:   chart.Chart.Metadata.Name,
+				Namespace:   chart.Namespace,
+				Description: chart.Chart.Metadata.Description,
+				Icon:        chart.Chart.Metadata.Icon,
+				Home:        chart.Chart.Metadata.Home,
+				Installed: output.VersionInfo{
+					Version:    chart.Chart.Metadata.Version,
+					AppVersion: chart.Chart.Metadata.AppVersion,
+				},
+				Latest: output.VersionInfo{
+					Version:    newest.Version,
+					AppVersion: newest.AppVersion,
+				},
+				Deprecated: chart.Chart.Metadata.Deprecated,
+				IsOld:      version.Compare(newest.Version, chart.Chart.Metadata.Version, ">"),
 			}
 			outputObjects = append(outputObjects, rls)
 		}
@@ -74,25 +78,29 @@ func (h *Helm) GetHelmReleasesVersion2(helmRepos []*Repo) ([]output.ReleaseOutpu
 		return nil, err
 	}
 
-	klog.Infof("Got %d installed releases in the cluster", len(deployed))
+	klog.V(5).Infof("Got %d installed releases in the cluster", len(deployed))
 	for _, chart := range deployed {
 		validRepos := IsRepoIncluded(chart.Chart.Metadata.Name, helmRepos)
 
 		newest := TryToFindNewestReleaseByChartVersion2(chart, validRepos)
 		if newest != nil {
 			rls := output.ReleaseOutput{
-				ReleaseName:      chart.Name,
-				ChartName:        chart.Chart.Metadata.Name,
-				Namespace:        chart.Namespace,
-				Description:      chart.Chart.Metadata.Description,
-				Icon:             chart.Chart.Metadata.Icon,
-				Version:          chart.Chart.Metadata.Version,
-				Deprecated:       chart.Chart.Metadata.Deprecated,
-				Home:             chart.Chart.Metadata.Home,
-				AppVersion:       &chart.Chart.Metadata.AppVersion,
-				NewestVersion:    newest.Version,
-				NewestAppVersion: &newest.AppVersion,
-				IsOld:            version.Compare(newest.Version, chart.Chart.Metadata.Version, ">"),
+				ReleaseName: chart.Name,
+				ChartName:   chart.Chart.Metadata.Name,
+				Namespace:   chart.Namespace,
+				Description: chart.Chart.Metadata.Description,
+				Icon:        chart.Chart.Metadata.Icon,
+				Home:        chart.Chart.Metadata.Home,
+				Installed: output.VersionInfo{
+					Version:    chart.Chart.Metadata.Version,
+					AppVersion: chart.Chart.Metadata.AppVersion,
+				},
+				Latest: output.VersionInfo{
+					Version:    newest.Version,
+					AppVersion: newest.AppVersion,
+				},
+				Deprecated: chart.Chart.Metadata.Deprecated,
+				IsOld:      version.Compare(newest.Version, chart.Chart.Metadata.Version, ">"),
 			}
 			outputObjects = append(outputObjects, rls)
 		}

@@ -13,15 +13,21 @@ func TestFileOutput_Send(t *testing.T) {
 	out := Output{
 		HelmReleases: []ReleaseOutput{
 			{
-				ReleaseName:   "foo",
-				Namespace:     "foo",
-				Version:       "1.0",
-				Home:          "https://wiki.example.com",
-				Deprecated:    false,
-				Description:   "Test description for foo chart",
-				Icon:          "https://wiki.example.com/logo.png",
-				NewestVersion: "1.0",
-				IsOld:         false,
+				ReleaseName: "foo",
+				Namespace:   "foo",
+				Installed: VersionInfo{
+					Version:    "1.0",
+					AppVersion: "2.0.0",
+				},
+				Latest: VersionInfo{
+					Version:    "1.0",
+					AppVersion: "2.0.0",
+				},
+				Home:        "https://wiki.example.com",
+				Deprecated:  false,
+				Description: "Test description for foo chart",
+				Icon:        "https://wiki.example.com/logo.png",
+				IsOld:       false,
 			},
 		},
 	}
