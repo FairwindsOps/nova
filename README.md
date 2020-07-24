@@ -7,7 +7,7 @@
   [![Version][version-image]][version-link] [![CircleCI][circleci-image]][circleci-link] [![Go Report Card][goreport-image]][goreport-link]
 </div>
 
-[version-image]: https://img.shields.io/static/v1.svg?label=Version&message=1.2.0&color=239922
+[version-image]: https://img.shields.io/static/v1.svg?label=Version&message=1.0.0&color=239922
 [version-link]: https://github.com/FairwindsOps/nova
 
 [goreport-image]: https://goreportcard.com/badge/github.com/FairwindsOps/nova
@@ -27,7 +27,7 @@ or notices your current version is deprecated, it will let you know.
 Visit the [releases page](https://github.com/FairwindsOps/nova/releases) to find the release
 that's right for your environment. For example, on Linux:
 ```
-curl -L "https://github.com/FairwindsOps/nova/releases/download/1.1.0/nova_1.1.0_linux_amd64.tar.gz" > nova.tar.gz
+curl -L "https://github.com/FairwindsOps/nova/releases/download/1.0.0/nova_1.0.0_linux_amd64.tar.gz" > nova.tar.gz
 tar -xvf nova.tar.gz
 sudo mv nova /usr/local/bin/
 ```
