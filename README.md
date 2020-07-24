@@ -86,7 +86,8 @@ nginx-ingress     1.25.0       1.40.3     true    false
                 "version": "v0.16.0",
                 "appVersion": "v0.16.0"
             },
-            "outdated": true
+            "outdated": true,
+            "deprecated": false
         }
     ]
 }

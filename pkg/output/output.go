@@ -21,12 +21,12 @@ type ReleaseOutput struct {
 	ChartName   string `json:"chartName"`
 	Namespace   string `json:"namespace,omitempty"`
 	Description string `json:"description"`
-	Deprecated  bool   `json:"deprecated,omitempty"`
 	Home        string `json:"home,omitempty"`
 	Icon        string `json:"icon,omitempty"`
 	Installed   VersionInfo
 	Latest      VersionInfo
 	IsOld       bool `json:"outdated"`
+	Deprecated  bool `json:"deprecated"`
 }
 
 // VersionInfo contains both a chart version and an app version
