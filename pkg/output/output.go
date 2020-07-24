@@ -29,7 +29,7 @@ type ReleaseOutput struct {
 	IsOld       bool `json:"outdated"`
 }
 
-// VerisonInfo contains both a chart version and an app version
+// VersionInfo contains both a chart version and an app version
 type VersionInfo struct {
 	Version    string `json:"version"`
 	AppVersion string `json:"appVersion"`
