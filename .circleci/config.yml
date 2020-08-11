@@ -64,7 +64,9 @@ workflows:
             - test
           filters:
             branches:
-              ignore: /pull\/[0-9]+/
+              only: /master/
+            tags:
+              only: /.*/
 
   release:
     jobs:
