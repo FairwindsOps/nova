@@ -68,7 +68,7 @@ nova find --helm-version=auto --wide
 * `--wide` - show `Chart Name` and `Namespace`
 * `--output-file` - output JSON to a file
 * `--url strings`, `-u` - URL for a helm chart repo (default [https://charts.fairwinds.com/stable,https://charts.fairwinds.com/incubator,https://kubernetes-charts.storage.googleapis.com,https://kubernetes-charts-incubator.storage.googleapis.com,https://charts.jetstack.io])
-* `--poll-helm-hub` - When true, polls all helm repos that publish to helm hub.  Default is true. (default true)
+* `--poll-helm-hub` - When true, polls all helm repos that publish to helm hub (Default is true).
 * `--helm-hub-config` - The URL to the helm hub sync config. (default is "https://raw.githubusercontent.com/helm/hub/master/config/repo-values.yaml")
 
 ### Output
