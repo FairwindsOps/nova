@@ -77,7 +77,7 @@ workflows:
               ignore: /.*/
             tags:
               only: /.*/
-      - rok8s-scripts/docker_build_and_push:
+      - rok8s/docker_build_and_push:
           name: build-and-push-container
           docker-push: true
           enable_docker_layer_caching: false
