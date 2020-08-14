@@ -66,12 +66,27 @@ workflows:
             branches:
               ignore: /pull\/[0-9]+/
             tags:
-              only: /.*/
+              ignore: /.*/
 
   release:
     jobs:
       - release-binary:
           context: org-global
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/
+      - rok8s/docker_build_and_push:
+          name: build-and-push-container
+          docker-push: true
+          enable_docker_layer_caching: false
+          config_file: .circleci/build.config
+          context: org-global
+          docker-login: true
+          password-variable: "fairwinds_quay_token"
+          registry: quay.io
+          username: fairwinds+circleci
           filters:
             branches:
               ignore: /.*/
