@@ -3,20 +3,17 @@ module github.com/fairwindsops/nova
 go 1.13
 
 require (
+	// required for dependency issue: https://github.com/kubernetes/client-go/issues/628
 	github.com/Azure/go-autorest v12.2.0+incompatible
+
 	github.com/DATA-DOG/go-sqlmock v1.4.1 // indirect
-	github.com/ashwanthkumar/slack-go-webhook v0.0.0-20200209025033-430dd4e66960
-	github.com/bradleyfalzon/ghinstallation v1.1.1
-	github.com/google/go-github/v28 v28.1.1
 	github.com/jmoiron/sqlx v1.2.0 // indirect
 	github.com/lib/pq v1.5.2 // indirect
 	github.com/mcuadros/go-version v0.0.0-20190830083331-035f6764e8d2
-	github.com/parnurzeal/gorequest v0.2.16 // indirect
 	github.com/rubenv/sql-migrate v0.0.0-20200429072036-ae26b214fa43 // indirect
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.5.1
-	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	gopkg.in/yaml.v2 v2.2.8
 	helm.sh/helm v2.16.6+incompatible
 	helm.sh/helm/v3 v3.1.2
@@ -26,7 +23,6 @@ require (
 	k8s.io/client-go v1.5.1
 	k8s.io/helm v2.16.5+incompatible
 	k8s.io/klog v1.0.0
-	moul.io/http2curl v1.0.0 // indirect
 	sigs.k8s.io/controller-runtime v0.5.2
 )
 
