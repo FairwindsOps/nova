@@ -3,6 +3,7 @@ module github.com/fairwindsops/nova
 go 1.13
 
 require (
+	github.com/Azure/go-autorest v12.2.0+incompatible
 	github.com/DATA-DOG/go-sqlmock v1.4.1 // indirect
 	github.com/ashwanthkumar/slack-go-webhook v0.0.0-20200209025033-430dd4e66960
 	github.com/bradleyfalzon/ghinstallation v1.1.1
