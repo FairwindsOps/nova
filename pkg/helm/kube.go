@@ -21,8 +21,8 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 
-	// This is required to auth to gcp (i.e. GKE)
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	// add all known auth providers
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
