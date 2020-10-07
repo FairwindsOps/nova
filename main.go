@@ -19,8 +19,7 @@ import (
 )
 
 var (
-	// VERSION is set during build
-	version = "0.0.1"
+	version = "1.0.3"
 )
 
 func main() {
