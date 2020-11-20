@@ -1,4 +1,8 @@
 project_name: nova
+release:
+  github:
+    owner: FairwindsOps
+    name: nova
 builds:
   - id: nova
     binary: nova
