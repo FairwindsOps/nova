@@ -22,7 +22,7 @@ changelog:
       - '^test:'
 brews:
   - name: nova
-    github:
+    tap:
       owner: FairwindsOps
       name: homebrew-tap
     folder: Formula
