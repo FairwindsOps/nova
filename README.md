@@ -4,7 +4,7 @@
 
   <b>Find outdated or deprecated Helm charts running in your cluster.</b>
 
-  [![Version][version-image]][version-link] [![CircleCI][circleci-image]][circleci-link] [![Go Report Card][goreport-image]][goreport-link]
+  [![GitHub release (latest SemVer)][release-image]][release-link] [![Version][version-image]][version-link] [![CircleCI][circleci-image]][circleci-link] [![Go Report Card][goreport-image]][goreport-link]
 </div>
 
 [version-image]: https://img.shields.io/github/go-mod/go-version/FairwindsOps/nova
