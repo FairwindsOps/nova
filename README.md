@@ -4,17 +4,20 @@
 
   <b>Find outdated or deprecated Helm charts running in your cluster.</b>
 
-  [![Version][version-image]][version-link] [![CircleCI][circleci-image]][circleci-link] [![Go Report Card][goreport-image]][goreport-link]
+  [![GitHub release (latest SemVer)][release-image]][release-link] [![Version][version-image]][version-link] [![CircleCI][circleci-image]][circleci-link] [![Go Report Card][goreport-image]][goreport-link]
 </div>
 
-[version-image]: https://img.shields.io/static/v1.svg?label=Version&message=1.0.3&color=239922
-[version-link]: https://github.com/FairwindsOps/Nova
+[version-image]: https://img.shields.io/github/go-mod/go-version/FairwindsOps/nova
+[version-link]: https://github.com/FairwindsOps/nova
 
-[goreport-image]: https://goreportcard.com/badge/github.com/FairwindsOps/Nova
-[goreport-link]: https://goreportcard.com/report/github.com/FairwindsOps/Nova
+[release-image]: https://img.shields.io/github/v/release/FairwindsOps/nova
+[release-link]: https://github.com/FairwindsOps/nova
 
-[circleci-image]: https://circleci.com/gh/FairwindsOps/Nova.svg?style=svg
-[circleci-link]: https://circleci.com/gh/FairwindsOps/Nova
+[goreport-image]: https://goreportcard.com/badge/github.com/FairwindsOps/nova
+[goreport-link]: https://goreportcard.com/report/github.com/FairwindsOps/nova
+
+[circleci-image]: https://circleci.com/gh/FairwindsOps/nova.svg?style=svg
+[circleci-link]: https://circleci.com/gh/FairwindsOps/nova
 
 
 Nova scans your cluster for installed Helm charts, then cross-checks them against
