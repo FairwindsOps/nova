@@ -1,5 +1,11 @@
+project_name: nova
+release:
+  github:
+    owner: FairwindsOps
+    name: nova
 builds:
   - id: nova
+    binary: nova
     env:
       - CGO_ENABLED=0
       - GO111MODULE=on
@@ -20,7 +26,7 @@ changelog:
       - '^test:'
 brews:
   - name: nova
-    github:
+    tap:
       owner: FairwindsOps
       name: homebrew-tap
     folder: Formula
