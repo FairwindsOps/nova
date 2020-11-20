@@ -67,6 +67,15 @@ workflows:
               ignore: /pull\/[0-9]+/
             tags:
               ignore: /.*/
+      - rok8s/kubernetes_e2e_tests:
+          name: End-To-End Test on Kubernetes
+          requires:
+            - rok8s/docker_build_and_push
+          pre_script: e2e/pre.sh
+          script: e2e/ci.sh
+          filters:
+            tags:
+              ignore: /.*/
 
   release:
     jobs:
