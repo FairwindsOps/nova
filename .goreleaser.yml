@@ -1,5 +1,7 @@
+project_name: nova
 builds:
   - id: nova
+    binary: nova
     env:
       - CGO_ENABLED=0
       - GO111MODULE=on
