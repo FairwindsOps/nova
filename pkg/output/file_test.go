@@ -37,6 +37,7 @@ func TestFileOutput_Send(t *testing.T) {
 					Version:    "1.0",
 					AppVersion: "2.0.0",
 				},
+				HelmVersion: "v3",
 				Home:        "https://wiki.example.com",
 				Deprecated:  false,
 				Description: "Test description for foo chart",

@@ -39,8 +39,9 @@ type ReleaseOutput struct {
 	Icon        string `json:"icon,omitempty"`
 	Installed   VersionInfo
 	Latest      VersionInfo
-	IsOld       bool `json:"outdated"`
-	Deprecated  bool `json:"deprecated"`
+	IsOld       bool   `json:"outdated"`
+	Deprecated  bool   `json:"deprecated"`
+	HelmVersion string `json:"helmVersion"`
 }
 
 // VersionInfo contains both a chart version and an app version
@@ -72,7 +73,7 @@ func (output Output) Print(wide bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 	header := "Release Name\t"
 	if wide {
-		header += "Chart Name\tNamespace\t"
+		header += "Chart Name\tNamespace\tHelmVersion\t"
 	}
 	header += "Installed\tLatest\tOld\tDeprecated"
 	fmt.Fprintln(w, header)
@@ -82,6 +83,7 @@ func (output Output) Print(wide bool) {
 		if wide {
 			line += release.ChartName + "\t"
 			line += release.Namespace + "\t"
+			line += release.HelmVersion + "\t"
 		}
 		line += release.Installed.Version + "\t"
 		line += release.Latest.Version + "\t"

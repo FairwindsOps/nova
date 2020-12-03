@@ -72,8 +72,9 @@ func (h *Helm) GetHelmReleasesVersion3(helmRepos []*Repo) ([]output.ReleaseOutpu
 					Version:    newest.Version,
 					AppVersion: newest.AppVersion,
 				},
-				Deprecated: chart.Chart.Metadata.Deprecated,
-				IsOld:      version.Compare(newest.Version, chart.Chart.Metadata.Version, ">"),
+				HelmVersion: "v3",
+				Deprecated:  chart.Chart.Metadata.Deprecated,
+				IsOld:       version.Compare(newest.Version, chart.Chart.Metadata.Version, ">"),
 			}
 			outputObjects = append(outputObjects, rls)
 		}
@@ -113,8 +114,9 @@ func (h *Helm) GetHelmReleasesVersion2(helmRepos []*Repo) ([]output.ReleaseOutpu
 					Version:    newest.Version,
 					AppVersion: newest.AppVersion,
 				},
-				Deprecated: chart.Chart.Metadata.Deprecated,
-				IsOld:      version.Compare(newest.Version, chart.Chart.Metadata.Version, ">"),
+				HelmVersion: "v2",
+				Deprecated:  chart.Chart.Metadata.Deprecated,
+				IsOld:       version.Compare(newest.Version, chart.Chart.Metadata.Version, ">"),
 			}
 			outputObjects = append(outputObjects, rls)
 		}
