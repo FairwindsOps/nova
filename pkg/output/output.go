@@ -73,7 +73,7 @@ func (output Output) Print(wide bool) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 	header := "Release Name\t"
 	if wide {
-		header += "Chart Name\tNamespace\tVersion\t"
+		header += "Chart Name\tNamespace\tHelmVersion\t"
 	}
 	header += "Installed\tLatest\tOld\tDeprecated"
 	fmt.Fprintln(w, header)
