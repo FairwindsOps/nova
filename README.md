@@ -68,7 +68,7 @@ nova find --helm-version=auto --wide
 
 ### Options
 * `--helm-version` - which version of Helm to use. Options are `2`, `3`, and `auto` (default is `3`)
-* `--wide` - show `Chart Name` and `Namespace`
+* `--wide` - show `Chart Name`,  `Namespace`, `HelmVersion`
 * `--output-file` - output JSON to a file
 * `--url strings`, `-u` - URL for a helm chart repo (default [https://charts.fairwinds.com/stable,https://charts.fairwinds.com/incubator,https://kubernetes-charts.storage.googleapis.com,https://kubernetes-charts-incubator.storage.googleapis.com,https://charts.jetstack.io])
 * `--poll-helm-hub` - When true, polls all helm repos that publish to helm hub (Default is true).
@@ -106,6 +106,7 @@ nginx-ingress     1.25.0       1.40.3     true    false
                 "version": "v0.16.0",
                 "appVersion": "v0.16.0"
             },
+            "helmVersion": "v3",
             "outdated": true,
             "deprecated": false
         }
