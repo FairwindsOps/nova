@@ -24,6 +24,4 @@ or notices your current version is deprecated, it will let you know.
 
 **Want to learn more?** Reach out on [Slack](https://fairwindscommunity.slack.com/) ([request invite](https://join.slack.com/t/fairwindscommunity/shared_invite/zt-e3c6vj4l-3lIH6dvKqzWII5fSSFDi1g)), send an email to `opensource@fairwinds.com`, or join us for [office hours on Zoom](https://fairwindscommunity.slack.com/messages/office-hours)
 
-## Documentation
 
-Check out the [documentation at docs.fairwinds.com](https://nova.docs.fairwinds.com)
