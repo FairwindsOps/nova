@@ -6,7 +6,7 @@ There are a few guidelines that we need contributors to follow so that we can ke
 
 ## Code of Conduct
 
-This project adheres to a [code of conduct](CODE_OF_CONDUCT.md). Please review this document before contributing to this project.
+This project adheres to a [code of conduct](/contributing/code-of-conduct). Please review this document before contributing to this project.
 
 ## Sign the CLA
 Before you can contribute, you will need to sign the [Contributor License Agreement](https://cla-assistant.io/fairwindsops/nova).
