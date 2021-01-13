@@ -10,3 +10,6 @@ cover.html
 /nova
 /Nova
 pkged.go
+
+node_modules
+/dist
