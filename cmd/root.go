@@ -30,8 +30,8 @@ var (
 
 func init() {
 	klog.InitFlags(nil)
-	flag.Set("alsologtostderr", "true")
-	flag.Set("logtostderr", "true")
+	_ = flag.Set("alsologtostderr", "true")
+	_ = flag.Set("logtostderr", "true")
 	flag.Parse()
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 }

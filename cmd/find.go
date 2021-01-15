@@ -29,11 +29,13 @@ var (
 	pollHelmHub      bool
 	helmHubConfigURL string
 	wide             bool
+	kubeContext      string
 )
 
 func init() {
 	rootCmd.AddCommand(clusterCmd)
 	rootCmd.PersistentFlags().StringVarP(&outputFile, "output-file", "", "", "Path on local filesystem to write file output to")
+	rootCmd.PersistentFlags().StringVar(&kubeContext, "context", "", "A context to use in the kubeconfig.")
 	clusterCmd.PersistentFlags().StringVar(&helmVersion, "helm-version", "3", "Helm version in the current cluster (2|3|auto)")
 	clusterCmd.PersistentFlags().BoolVar(&wide, "wide", false, "Output chart name and namespace")
 
@@ -67,9 +69,12 @@ var clusterCmd = &cobra.Command{
 	Long:  "Find deployed helm releases that have updated charts available in chart repos",
 	Run: func(cmd *cobra.Command, args []string) {
 
+		h := nova_helm.NewHelm(helmVersion, kubeContext)
 		HelmRepos := nova_helm.NewRepo(getRepoURLs())
-		outputObjects, err := nova_helm.GetReleaseOutput(helmVersion, HelmRepos)
-		out := output.Output{outputObjects}
+		outputObjects, err := h.GetReleaseOutput(HelmRepos)
+		out := output.Output{
+			HelmReleases: outputObjects,
+		}
 
 		if err != nil {
 			klog.Fatalf("Error getting helm releases from cluster: %v", err)
