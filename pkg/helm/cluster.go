@@ -33,7 +33,7 @@ type Helm struct {
 }
 
 // NewHelm returns a basic helm struct with the version of helm requested
-func NewHelm(version string, kubeContext *string) *Helm {
+func NewHelm(version string, kubeContext string) *Helm {
 	return &Helm{
 		Version: version,
 		Kube:    getConfigInstance(kubeContext),

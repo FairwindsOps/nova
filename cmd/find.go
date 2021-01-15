@@ -71,10 +71,12 @@ var clusterCmd = &cobra.Command{
 	Long:  "Find deployed helm releases that have updated charts available in chart repos",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		h := nova_helm.NewHelm(helmVersion, &kubeContext)
+		h := nova_helm.NewHelm(helmVersion, kubeContext)
 		HelmRepos := nova_helm.NewRepo(getRepoURLs())
 		outputObjects, err := h.GetReleaseOutput(HelmRepos)
-		out := output.Output{outputObjects}
+		out := output.Output{
+			HelmReleases: outputObjects,
+		}
 
 		if err != nil {
 			klog.Fatalf("Error getting helm releases from cluster: %v", err)
