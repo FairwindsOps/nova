@@ -34,27 +34,37 @@ var kubeClient *kube
 var once sync.Once
 
 // GetConfigInstance returns a Kubernetes interface based on the current configuration
-func getConfigInstance() *kube {
+func getConfigInstance(context *string) *kube {
 	once.Do(func() {
 		if kubeClient == nil {
 			kubeClient = &kube{
-				Client: getKubeClient(),
+				Client: getKubeClient(context),
 			}
 		}
 	})
 	return kubeClient
 }
 
-func getKubeClient() kubernetes.Interface {
-	kubeConf, err := config.GetConfig()
+func getKubeClient(context *string) kubernetes.Interface {
+	var clientset *kubernetes.Clientset
+
+	kubeConf, err := config.GetConfigWithContext(*context)
 	if err != nil {
-		klog.Errorf("Error getting kubeconfig: %v", err)
+		klog.Errorf("error getting config with context %s: %v", *context, err)
 		os.Exit(1)
 	}
-	clientset, err := kubernetes.NewForConfig(kubeConf)
+	// if context == nil {
+	// 	kubeConf, err := config.GetConfig()
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// }
+
+	clientset, err = kubernetes.NewForConfig(kubeConf)
 	if err != nil {
-		klog.Errorf("Error creating kubernetes client: %v", err)
+		klog.Errorf("error create kubernetes client: %v", *context, err)
 		os.Exit(1)
 	}
 	return clientset
+
 }

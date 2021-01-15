@@ -26,17 +26,17 @@ import (
 	"k8s.io/klog"
 )
 
-// Helm represents all current releases that we can find in the cluster
+// Helm contains a helm version and kubernetes client interface
 type Helm struct {
 	Version string
 	Kube    *kube
 }
 
 // NewHelm returns a basic helm struct with the version of helm requested
-func NewHelm(version string) *Helm {
+func NewHelm(version string, kubeContext *string) *Helm {
 	return &Helm{
 		Version: version,
-		Kube:    getConfigInstance(),
+		Kube:    getConfigInstance(kubeContext),
 	}
 }
 
@@ -126,24 +126,19 @@ func (h *Helm) GetHelmReleasesVersion2(helmRepos []*Repo) ([]output.ReleaseOutpu
 }
 
 // GetReleaseOutput return the expected output or error
-func GetReleaseOutput(version string, repos []*Repo) (outputObjects []output.ReleaseOutput, err error) {
-
-	switch version {
+func (h *Helm) GetReleaseOutput(repos []*Repo) (outputObjects []output.ReleaseOutput, err error) {
+	switch h.Version {
 	case "2":
-		h := NewHelm(version)
 		outputObjects, err = h.GetHelmReleasesVersion2(repos)
 	case "3":
-		h := NewHelm(version)
 		outputObjects, err = h.GetHelmReleasesVersion3(repos)
 	case "auto":
-		h := NewHelm("3")
 		outputObjectsVersion3, err3 := h.GetHelmReleasesVersion3(repos)
 		if outputObjectsVersion3 != nil {
 			outputObjects = append(outputObjects, outputObjectsVersion3...)
 		}
-		h2 := NewHelm("2")
 
-		outputObjectsVersion2, err2 := h2.GetHelmReleasesVersion2(repos)
+		outputObjectsVersion2, err2 := h.GetHelmReleasesVersion2(repos)
 		if outputObjectsVersion2 != nil {
 			outputObjects = append(outputObjects, outputObjectsVersion2...)
 		}
