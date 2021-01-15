@@ -28,8 +28,15 @@ import (
 
 // Helm contains a helm version and kubernetes client interface
 type Helm struct {
+	Version         string
+	Kube            *kube
+	DesiredVersions []DesiredVersion
+}
+
+// DesiredVersion is a specific desired version that overrides the latest from the repository
+type DesiredVersion struct {
+	Name    string
 	Version string
-	Kube    *kube
 }
 
 // NewHelm returns a basic helm struct with the version of helm requested
@@ -74,8 +81,9 @@ func (h *Helm) GetHelmReleasesVersion3(helmRepos []*Repo) ([]output.ReleaseOutpu
 				},
 				HelmVersion: "v3",
 				Deprecated:  chart.Chart.Metadata.Deprecated,
-				IsOld:       version.Compare(newest.Version, chart.Chart.Metadata.Version, ">"),
 			}
+			h.overrideDesiredVersion(&rls)
+			rls.IsOld = version.Compare(rls.Latest.Version, chart.Chart.Metadata.Version, ">")
 			outputObjects = append(outputObjects, rls)
 		}
 	}
@@ -116,13 +124,27 @@ func (h *Helm) GetHelmReleasesVersion2(helmRepos []*Repo) ([]output.ReleaseOutpu
 				},
 				HelmVersion: "v2",
 				Deprecated:  chart.Chart.Metadata.Deprecated,
-				IsOld:       version.Compare(newest.Version, chart.Chart.Metadata.Version, ">"),
 			}
+			h.overrideDesiredVersion(&rls)
+			rls.IsOld = version.Compare(rls.Latest.Version, chart.Chart.Metadata.Version, ">")
 			outputObjects = append(outputObjects, rls)
 		}
 	}
 
 	return outputObjects, err
+}
+
+func (h *Helm) overrideDesiredVersion(rls *output.ReleaseOutput) {
+	for _, override := range h.DesiredVersions {
+		if rls.ChartName == override.Name {
+			klog.V(3).Infof("using override: %s=%s", rls.ChartName, override.Version)
+			rls.Latest = output.VersionInfo{
+				Version:    override.Version,
+				AppVersion: "",
+			}
+			rls.Overridden = true
+		}
+	}
 }
 
 // GetReleaseOutput return the expected output or error
