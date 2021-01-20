@@ -1,6 +1,6 @@
 module github.com/fairwindsops/nova
 
-go 1.13
+go 1.15
 
 require (
 	// required for dependency issue: https://github.com/kubernetes/client-go/issues/628
