@@ -28,8 +28,9 @@ import (
 )
 
 var (
-	currentVersion string
-	cfgFile        string
+	version       string
+	versionCommit string
+	cfgFile       string
 )
 
 func init() {
@@ -174,8 +175,9 @@ var genConfigCmd = &cobra.Command{
 }
 
 // Execute is the main entry point into the command
-func Execute(version string) {
-	currentVersion = version
+func Execute(VERSION, COMMIT string) {
+	version = VERSION
+	versionCommit = COMMIT
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)

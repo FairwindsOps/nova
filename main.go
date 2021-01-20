@@ -19,9 +19,12 @@ import (
 )
 
 var (
-	version = "1.0.3"
+	// version is set during build
+	version = "development"
+	// comit is set during build
+	commit = "n/a"
 )
 
 func main() {
-	cmd.Execute(version)
+	cmd.Execute(version, commit)
 }
