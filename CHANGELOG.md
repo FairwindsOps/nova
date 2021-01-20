@@ -1,5 +1,9 @@
 # Changelog
 
+# 2.2.0
+* Add support for config files
+* Add support for overriding desired-versions
+
 # 2.1.0
 * Support for `--context` flag to specify k8s context
 
