@@ -42,6 +42,7 @@ type ReleaseOutput struct {
 	IsOld       bool   `json:"outdated"`
 	Deprecated  bool   `json:"deprecated"`
 	HelmVersion string `json:"helmVersion"`
+	Overridden  bool   `json:"overridden"`
 }
 
 // VersionInfo contains both a chart version and an app version

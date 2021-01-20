@@ -25,6 +25,10 @@ module.exports = {
         path: "/usage",
       },
       {
+        title: "Desired Versions",
+        path: "/desired-versions",
+      },
+      {
         title: "Contributing",
         children: [
           {
