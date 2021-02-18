@@ -17,13 +17,19 @@ package cmd
 import (
 	"flag"
 	"fmt"
+	"io"
+	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os"
+	"strings"
 
 	nova_helm "github.com/fairwindsops/nova/pkg/helm"
 	"github.com/fairwindsops/nova/pkg/output"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/klog"
 )
 
@@ -84,12 +90,59 @@ func initConfig() {
 		return
 	}
 
+	if strings.Contains(cfgFile, "http") {
+		klog.V(2).Infof("detected URL for config location")
+		var err error
+		cfgFile, err = downloadConfig(cfgFile)
+		if err != nil {
+			klog.Fatalf("failed to download config: %s", err.Error())
+		}
+		defer os.Remove(cfgFile)
+	}
+
 	// Read config
 	viper.SetConfigFile(cfgFile)
 	klog.V(2).Infof("using config file: %s", cfgFile)
 	if err := viper.ReadInConfig(); err != nil {
 		klog.V(2).Infof("could not read config file %s - ignoring it", err.Error())
 	}
+}
+
+func downloadConfig(cfgURL string) (string, error) {
+	fileURL, err := url.Parse(cfgURL)
+	if err != nil {
+		return "", err
+	}
+	path := fileURL.Path
+	segments := strings.Split(path, "/")
+	fileName := segments[len(segments)-1]
+
+	file, err := ioutil.TempFile("", fmt.Sprintf("*-%s", fileName))
+	if err != nil {
+		return "", err
+	}
+
+	client := http.Client{
+		CheckRedirect: func(r *http.Request, via []*http.Request) error {
+			r.URL.Opaque = r.URL.Path
+			return nil
+		},
+	}
+	// Put content on file
+	resp, err := client.Get(cfgURL)
+	if err != nil {
+		return "", &errors.StatusError{}
+	}
+	defer resp.Body.Close()
+
+	size, err := io.Copy(file, resp.Body)
+
+	defer file.Close()
+
+	tmpConfig := file.Name()
+	klog.V(2).Infof("downloaded config file %s with size %d", tmpConfig, size)
+
+	return tmpConfig, nil
 }
 
 var rootCmd = &cobra.Command{
