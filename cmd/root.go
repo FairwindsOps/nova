@@ -90,7 +90,7 @@ func initConfig() {
 		return
 	}
 
-	if strings.Contains(cfgFile, "http") {
+	if strings.HasPrefix(cfgFile, "https://") || strings.HasPrefix(cfgFile, "http://") {
 		klog.V(2).Infof("detected URL for config location")
 		var err error
 		cfgFile, err = downloadConfig(cfgFile)
