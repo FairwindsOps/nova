@@ -13,9 +13,6 @@
   <a href="https://circleci.com/gh/FairwindsOps/nova.svg">
     <img src="https://circleci.com/gh/FairwindsOps/nova.svg?style=svg">
   </a>
-  <a href="https://codecov.io/gh/FairwindsOps/nova">
-    <img src="https://codecov.io/gh/FairwindsOps/nova/branch/master/graph/badge.svg">
-  </a>
 </div>
 
 Nova scans your cluster for installed Helm charts, then cross-checks them against
