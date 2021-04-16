@@ -22,7 +22,6 @@ jobs:
             go test -v --bench --benchmem -coverprofile=coverage.txt -covermode=atomic ./pkg/...
             go vet 2> govet-report.out
             go tool cover -html=coverage.txt -o cover-report.html
-      - run: bash <(curl -s https://codecov.io/bash) -t $CODECOV_TOKEN
 
   release-binary:
     docker:
