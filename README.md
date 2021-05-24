@@ -19,8 +19,26 @@ Nova scans your cluster for installed Helm charts, then cross-checks them agains
 all known Helm repositories. If it finds an updated version of the chart you're using,
 or notices your current version is deprecated, it will let you know.
 
-**Want to learn more?** Reach out on [Slack](https://fairwindscommunity.slack.com/) ([request invite](https://join.slack.com/t/fairwindscommunity/shared_invite/zt-e3c6vj4l-3lIH6dvKqzWII5fSSFDi1g)), send an email to `opensource@fairwinds.com`, or join us for [office hours on Zoom](https://fairwindscommunity.slack.com/messages/office-hours)
+## Join the Fairwinds Open Source Community
+
+The goal of the Fairwinds Community is to exchange ideas, influence the open source roadmap, and network with fellow Kubernetes users. [Chat with us on Slack](https://join.slack.com/t/fairwindscommunity/shared_invite/zt-e3c6vj4l-3lIH6dvKqzWII5fSSFDi1g) or [join the user group](https://www.fairwinds.com/open-source-software-user-group) to get involved!
 
 ## Documentation
 
 Check out the [documentation at docs.fairwinds.com](https://nova.docs.fairwinds.com)
+
+
+## Other Projects from Fairwinds
+
+Enjoying Nova? Check out some of our other projects:
+* [Polaris](https://github.com/FairwindsOps/Polaris) - Audit, enforce, and build policies for Kubernetes resources, including over 20 built-in checks for best practices
+* [Goldilocks](https://github.com/FairwindsOps/Goldilocks) - Right-size your Kubernetes Deployments by compare your memory and CPU settings against actual usage
+* [Pluto](https://github.com/FairwindsOps/Pluto) - Detect Kubernetes resources that have been deprecated or removed in future versions
+* [rbac-manager](https://github.com/FairwindsOps/rbac-manager) - Simplify the management of RBAC in your Kubernetes clusters
+
+## Fairwinds Insights
+
+If you're interested in running Nova in multiple clusters,
+tracking the results over time, integrating with Slack, Datadog, and Jira,
+or unlocking other functionality, check out
+[Fairwinds Insights](https://www.fairwinds.com/nova-users-insights?utm_source=nova&utm_medium=nova&utm_campaign=nova), a platform for auditing and enforcing policy in Kubernetes clusters.
