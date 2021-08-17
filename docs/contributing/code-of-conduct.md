@@ -1,3 +1,8 @@
+---
+meta:
+  - name: description
+    content: "Fairwinds Nova | Contribution Code of Conduct"
+---
 # Contributor Covenant Code of Conduct
 
 ## Our Pledge

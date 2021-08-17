@@ -1,3 +1,8 @@
+---
+meta:
+  - name: description
+    content: "Fairwinds Nova | Contribution Guidelines"
+---
 # Contributing
 
 Issues, whether bugs, tasks, or feature requests are essential for keeping our projects great.

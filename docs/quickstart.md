@@ -1,3 +1,8 @@
+---
+meta:
+  - name: description
+    content: "Fairwinds Nova | Documentation Quickstart"
+---
 # Quickstart
 
 Install the golang binary and run it against your cluster.

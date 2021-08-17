@@ -1,3 +1,8 @@
+---
+meta:
+  - name: description
+    content: "Fairwinds Nova | Documentation on setting your desired version"
+---
 # Setting Desired Versions
 
 If you would like to specify your own set of versions, rather than using the latest available version for comparison, you may set `desired-versions` via the command-line or via file.
