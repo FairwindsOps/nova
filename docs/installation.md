@@ -1,3 +1,8 @@
+---
+meta:
+  - name: description
+    content: "Fairwinds Nova | Install Documentation"
+---
 ## Installation
 
 ### From GitHub Releases
