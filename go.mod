@@ -3,10 +3,7 @@ module github.com/fairwindsops/nova
 go 1.15
 
 require (
-	// required for dependency issue: https://github.com/kubernetes/client-go/issues/628
-	github.com/Azure/go-autorest v12.2.0+incompatible
 	github.com/DATA-DOG/go-sqlmock v1.4.1 // indirect
-	github.com/cavaliercoder/grab v2.0.0+incompatible
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/jmoiron/sqlx v1.2.0 // indirect
 	github.com/lib/pq v1.5.2 // indirect
@@ -26,7 +23,7 @@ require (
 	golang.org/x/text v0.3.5 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0
-	helm.sh/helm v2.16.6+incompatible
+	helm.sh/helm v2.16.11+incompatible
 	helm.sh/helm/v3 v3.1.2
 	k8s.io/apiextensions-apiserver v0.18.1 // indirect
 	k8s.io/apimachinery v0.18.1
