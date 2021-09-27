@@ -3,6 +3,8 @@ module github.com/fairwindsops/nova
 go 1.15
 
 require (
+    // required for dependency issue: https://github.com/kubernetes/client-go/issues/628
+    github.com/Azure/go-autorest v12.2.0+incompatible
 	github.com/DATA-DOG/go-sqlmock v1.4.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/jmoiron/sqlx v1.2.0 // indirect
