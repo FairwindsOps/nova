@@ -16,6 +16,10 @@ builds:
     goarm:
       - 6
       - 7
+    goos:
+      - linux
+      - darwin
+      - windows
 checksum:
   name_template: 'checksums.txt'
 changelog:
