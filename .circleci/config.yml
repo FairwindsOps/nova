@@ -7,7 +7,7 @@ jobs:
   test:
     working_directory: /go/src/github.com/fairwindsops/nova
     docker:
-      - image: circleci/golang:1.14
+      - image: circleci/golang:1.15
     steps:
       - checkout
       - run:
@@ -22,16 +22,23 @@ jobs:
             go test -v --bench --benchmem -coverprofile=coverage.txt -covermode=atomic ./pkg/...
             go vet 2> govet-report.out
             go tool cover -html=coverage.txt -o cover-report.html
-
-  release-binary:
+  snapshot:
+    working_directory: /go/src/github.com/fairwindsops/nova
     docker:
-      - image: circleci/golang:1.13
-        environment:
-          GO111MODULE: "on"
+      - image: goreleaser/goreleaser:v0.174.2
     steps:
       - checkout
-      - setup_remote_docker
-      - run: curl -sL http://git.io/goreleaser | bash
+      - run: goreleaser --snapshot
+      - store_artifacts:
+          path: dist
+          destination: snapshot
+  release-binary:
+    working_directory: /go/src/github.com/fairwindsops/nova
+    docker:
+      - image: goreleaser/goreleaser:v0.174.2
+    steps:
+      - checkout
+      - run: goreleaser
   publish_docs:
     docker:
       - image: cimg/node:15.5.1
@@ -62,6 +69,14 @@ workflows:
   test_and_build:
     jobs:
       - test
+      - snapshot:
+          requires:
+            - test
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              ignore: /.*/
       - rok8s/docker_build_and_push:
           name: build-container
           docker-push: false
