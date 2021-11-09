@@ -176,6 +176,9 @@ var clusterCmd = &cobra.Command{
 	Short: "Find out-of-date deployed releases.",
 	Long:  "Find deployed helm releases that have updated charts available in chart repos",
 	Run: func(cmd *cobra.Command, args []string) {
+		if viper.GetString("helm-version") != "3" {
+			klog.Warning("DEPRECATION: --helm-version explicitly set to either 'auto' or '2'. In v3 of Nova, Helm 2 support will be removed.")
+		}
 		h := nova_helm.NewHelm(viper.GetString("helm-version"), viper.GetString("context"))
 
 		klog.V(4).Infof("Settings: %v", viper.AllSettings())
