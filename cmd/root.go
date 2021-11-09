@@ -71,7 +71,7 @@ func init() {
 	rootCmd.PersistentFlags().String("context", "", "A context to use in the kubeconfig.")
 	viper.BindPFlag("context", rootCmd.PersistentFlags().Lookup("context"))
 
-	rootCmd.PersistentFlags().String("helm-version", "3", "Helm version in the current cluster (2|3|auto)")
+	rootCmd.PersistentFlags().String("helm-version", "3", "DEPRECATED: Only helm 3 usage in the future. Helm version in the current cluster (2|3|auto)")
 	viper.BindPFlag("helm-version", rootCmd.PersistentFlags().Lookup("helm-version"))
 
 	rootCmd.PersistentFlags().Bool("wide", false, "Output chart name and namespace")

@@ -9,7 +9,7 @@ Install the golang binary and run it against your cluster.
 
 ```
 $ go get github.com/fairwindsops/nova
-$ nova find --helm-version=auto
+$ nova find
 
 Release Name      Installed    Latest     Old     Deprecated
 cert-manager      v0.11.0      v0.15.2    true    false
