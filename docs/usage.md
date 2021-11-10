@@ -6,12 +6,12 @@ meta:
 # Usage
 
 ```
-nova find --helm-version=auto --wide
+nova find --wide
 ```
 
 ## Options
 * `--config` - Pass a config file that can control the remaining settings. Command-line arguments still take precedence
-* `--helm-version` - which version of Helm to use. Options are `2`, `3`, and `auto` (default is `3`)
+* `--helm-version` - DEPRECATED: Only helm 3 usage in the future. which version of Helm to use. Options are `2`, `3`, and `auto` (default is `3`)
 * `--context` - Sets a specific context in the kubeconfig. If blank, uses the currently set context.
 * `-d`, `--desired-versions` - A map of `chart=override_version` to override the helm repository when checking.
 * `--wide` - show `Chart Name`,  `Namespace` and `HelmVersion`

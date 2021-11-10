@@ -71,7 +71,7 @@ func init() {
 	rootCmd.PersistentFlags().String("context", "", "A context to use in the kubeconfig.")
 	viper.BindPFlag("context", rootCmd.PersistentFlags().Lookup("context"))
 
-	rootCmd.PersistentFlags().String("helm-version", "3", "Helm version in the current cluster (2|3|auto)")
+	rootCmd.PersistentFlags().String("helm-version", "3", "DEPRECATED: Only helm 3 usage in the future. Helm version in the current cluster (2|3|auto)")
 	viper.BindPFlag("helm-version", rootCmd.PersistentFlags().Lookup("helm-version"))
 
 	rootCmd.PersistentFlags().Bool("wide", false, "Output chart name and namespace")
@@ -176,6 +176,9 @@ var clusterCmd = &cobra.Command{
 	Short: "Find out-of-date deployed releases.",
 	Long:  "Find deployed helm releases that have updated charts available in chart repos",
 	Run: func(cmd *cobra.Command, args []string) {
+		if viper.GetString("helm-version") != "3" {
+			klog.Warning("DEPRECATION: --helm-version explicitly set to either 'auto' or '2'. In v3 of Nova, Helm 2 support will be removed.")
+		}
 		h := nova_helm.NewHelm(viper.GetString("helm-version"), viper.GetString("context"))
 
 		klog.V(4).Infof("Settings: %v", viper.AllSettings())
@@ -220,6 +223,9 @@ var genConfigCmd = &cobra.Command{
 	Short: "Generate a config file.",
 	Long:  "Generate a configuration file with all of the default configuration values.",
 	Run: func(cmd *cobra.Command, args []string) {
+		if viper.GetString("helm-version") != "3" {
+			klog.Warning("DEPRECATION: --helm-version explicitly set to either 'auto' or '2'. In v3 of Nova, Helm 2 support will be removed.")
+		}
 		err := viper.SafeWriteConfigAs(cfgFile)
 		if err != nil {
 			klog.Fatal(err)
