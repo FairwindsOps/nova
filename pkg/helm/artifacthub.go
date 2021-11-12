@@ -251,7 +251,7 @@ func (ac *ArtifactHubPackageClient) Search(searchTerm string, offset int) (ret A
 	urlValues.Add("offset", strconv.Itoa(offset))
 	urlValues.Add("sort", "stars")
 	searchPath := "api/v1/packages/search"
-	resp, err := ac.get(&searchPath, urlValues)
+	resp, err := ac.get(searchPath, urlValues)
 	if err != nil {
 		return ArtifactHubPackagesSearchReturn{
 			err:          err,
@@ -284,8 +284,7 @@ func (ac *ArtifactHubPackageClient) GetPackages(packageRepos []ArtifactHubPackag
 		wg.Add(1)
 		go func(index int, repo ArtifactHubPackageRepo, wg *sync.WaitGroup, ret *[]ArtifactHubHelmPackage) {
 			defer wg.Done()
-			path := fmt.Sprintf("api/v1/packages/helm/%s/%s", repo.RepoName, repo.PackageName)
-			response := ac.getSpecific(&path, index)
+			response := ac.getSpecific(fmt.Sprintf("api/v1/packages/helm/%s/%s", repo.RepoName, repo.PackageName))
 			if response.err != nil {
 				klog.Errorf("error getting package %s/%s: %s", repo.RepoName, repo.PackageName, response.err)
 			}
@@ -296,8 +295,8 @@ func (ac *ArtifactHubPackageClient) GetPackages(packageRepos []ArtifactHubPackag
 	return ret
 }
 
-func (ac *ArtifactHubPackageClient) getSpecific(path *string, i int) (ret ArtifactHubPackageReturn) {
-	klog.Warningf("getting package %s at index %d", *path, i)
+func (ac *ArtifactHubPackageClient) getSpecific(path string) (ret ArtifactHubPackageReturn) {
+	klog.V(8).Infof("getting package %s", path)
 	resp, err := ac.get(path, nil)
 	if err != nil {
 		return ArtifactHubPackageReturn{
@@ -309,21 +308,21 @@ func (ac *ArtifactHubPackageClient) getSpecific(path *string, i int) (ret Artifa
 		defer resp.Body.Close()
 		err := json.NewDecoder(resp.Body).Decode(&ret.Package)
 		if err != nil {
-			klog.Errorf("error decoding response for path %s:\n%v", *path, err)
+			klog.Errorf("error decoding response for path %s:\n%v", path, err)
 			return ArtifactHubPackageReturn{
 				err:          err,
 				httpResponse: resp,
 			}
 		}
 		ret.httpResponse = resp
-		if *path == "api/v1/packages/helm/bitnami/metrics-server" || *path == "api/v1/packages/helm/bitnami/redis" {
+		if path == "api/v1/packages/helm/bitnami/metrics-server" || path == "api/v1/packages/helm/bitnami/redis" {
 			if ret.Package.Repository.Name != "bitnami" {
-				klog.Warningf("GET %s %v Repo: %s Index: %d", *path, ret.httpResponse.StatusCode, ret.Package.Repository.Name, i)
+				klog.Warningf("GET %s %v Repo: %s Request ID: %s", path, ret.httpResponse.StatusCode, ret.Package.Repository.Name)
 			}
 		}
 		return
 	} else {
-		klog.Errorf("error GETing response for path %s: %d", *path, resp.StatusCode)
+		klog.Errorf("error GETing response for path %s: %d", path, resp.StatusCode)
 		return ArtifactHubPackageReturn{
 			err:          fmt.Errorf("error code: %d", resp.StatusCode),
 			httpResponse: resp,
@@ -336,9 +335,10 @@ func (ac *ArtifactHubPackageClient) getSpecific(path *string, i int) (ret Artifa
 // will work and are documented here: https://artifacthub.io/docs/api/#/
 // urlValues are the search parameters for the query if necessary.
 // offset is to be used for pagination. The first page would be offset 0.
-func (ac *ArtifactHubPackageClient) get(path *string, urlValues url.Values) (*http.Response, error) {
-	ac.URL.Path = *path
-	urlString := ac.URL.String()
+func (ac *ArtifactHubPackageClient) get(path string, urlValues url.Values) (*http.Response, error) {
+	requestUrl := *ac.URL
+	requestUrl.Path = path
+	urlString := requestUrl.String()
 	r, err := http.NewRequest("GET", urlString, nil)
 	if err != nil {
 		return nil, err

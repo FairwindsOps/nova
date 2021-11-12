@@ -230,11 +230,11 @@ var artifacthubCmd = &cobra.Command{
 			panic(err)
 		}
 		h := nova_helm.NewHelm(viper.GetString("helm-version"), viper.GetString("context"))
-		releases, releaseNames, err := h.GetReleaseOutputNew()
+		releases, chartNames, err := h.GetReleaseOutputNew()
 		if err != nil {
 			panic(err)
 		}
-		packageRepos, err := ahClient.MultiSearch(releaseNames)
+		packageRepos, err := ahClient.MultiSearch(chartNames)
 		if err != nil {
 			klog.Fatalf("Error getting artifacthub package repos: %v", err)
 		}
