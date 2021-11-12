@@ -44,45 +44,38 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.AddCommand(clusterCmd)
 	rootCmd.AddCommand(genConfigCmd)
-	rootCmd.AddCommand(artifacthubCmd)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file to use. If empty, flags will be used instead")
-
 	rootCmd.PersistentFlags().String("output-file", "", "Path on local filesystem to write file output to")
-	viper.BindPFlag("output-file", rootCmd.PersistentFlags().Lookup("output-file"))
+	err := viper.BindPFlag("output-file", rootCmd.PersistentFlags().Lookup("output-file"))
+	if err != nil {
+		klog.Fatalf("Failed to bind output-file flag: %v", err)
+	}
 
 	rootCmd.PersistentFlags().StringToStringP("desired-versions", "d", nil, "A map of chart=override_version to override the helm repository when checking.")
-	viper.BindPFlag("desired-versions", rootCmd.PersistentFlags().Lookup("desired-versions"))
-
-	rootCmd.PersistentFlags().StringSliceP("url", "u", []string{
-		"https://charts.fairwinds.com/stable",
-		"https://charts.fairwinds.com/incubator",
-		"https://kubernetes-charts.storage.googleapis.com",
-		"https://kubernetes-charts-incubator.storage.googleapis.com",
-		"https://charts.jetstack.io",
-	}, "URL for a helm chart repo")
-	viper.BindPFlag("url", rootCmd.PersistentFlags().Lookup("url"))
-
-	// helm hub args
-	rootCmd.PersistentFlags().Bool("poll-helm-hub", true, "When true, polls all helm repos that publish to helm hub.  Default is true.")
-	viper.BindPFlag("poll-helm-hub", rootCmd.PersistentFlags().Lookup("poll-helm-hub"))
-
-	rootCmd.PersistentFlags().String("helm-hub-config", "https://raw.githubusercontent.com/helm/hub/master/config/repo-values.yaml", "The URL to the helm hub sync config.")
-	viper.BindPFlag("helm-hub-config", rootCmd.PersistentFlags().Lookup("helm-hub-config"))
+	err = viper.BindPFlag("desired-versions", rootCmd.PersistentFlags().Lookup("desired-versions"))
+	if err != nil {
+		klog.Fatalf("Failed to bind desired-versions flag: %v", err)
+	}
 
 	rootCmd.PersistentFlags().String("context", "", "A context to use in the kubeconfig.")
-	viper.BindPFlag("context", rootCmd.PersistentFlags().Lookup("context"))
-
-	rootCmd.PersistentFlags().String("helm-version", "3", "DEPRECATED: Only helm 3 usage in the future. Helm version in the current cluster (2|3|auto)")
-	viper.BindPFlag("helm-version", rootCmd.PersistentFlags().Lookup("helm-version"))
+	err = viper.BindPFlag("context", rootCmd.PersistentFlags().Lookup("context"))
+	if err != nil {
+		klog.Fatalf("Failed to bind context flag: %v", err)
+	}
 
 	rootCmd.PersistentFlags().Bool("wide", false, "Output chart name and namespace")
-	viper.BindPFlag("wide", rootCmd.PersistentFlags().Lookup("wide"))
+	err = viper.BindPFlag("wide", rootCmd.PersistentFlags().Lookup("wide"))
+	if err != nil {
+		klog.Fatalf("Failed to bind wide flag: %v", err)
+	}
 
 	klog.InitFlags(nil)
 	_ = flag.Set("alsologtostderr", "true")
 	_ = flag.Set("logtostderr", "true")
-	flag.Parse()
+	pflag.CommandLine.AddGoFlag(flag.CommandLine.Lookup("alsologtostderr"))
+	pflag.CommandLine.AddGoFlag(flag.CommandLine.Lookup("logtostderr"))
+	pflag.CommandLine.AddGoFlag(flag.CommandLine.Lookup("v"))
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 }
 
@@ -138,6 +131,9 @@ func downloadConfig(cfgURL string) (string, error) {
 	defer resp.Body.Close()
 
 	size, err := io.Copy(file, resp.Body)
+	if err != nil {
+		return "", err
+	}
 
 	defer file.Close()
 
@@ -161,28 +157,16 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-// getRepoURLs combines user specified repos and, if enabled, all helm hub repo URLs
-func getRepoURLs() []string {
-	repos := viper.GetStringSlice("url")
-	if viper.GetBool("poll-helm-hub") {
-		hc, err := nova_helm.NewHubConfig(viper.GetString("helm-hub-config"))
-		if err == nil {
-			return append(repos, hc.URLs()...)
-		}
-	}
-	return repos
-}
-
 var clusterCmd = &cobra.Command{
 	Use:   "find",
 	Short: "Find out-of-date deployed releases.",
 	Long:  "Find deployed helm releases that have updated charts available in chart repos",
 	Run: func(cmd *cobra.Command, args []string) {
-		if viper.GetString("helm-version") != "3" {
-			klog.Warning("DEPRECATION: --helm-version explicitly set to either 'auto' or '2'. In v3 of Nova, Helm 2 support will be removed.")
+		h := nova_helm.NewHelm(viper.GetString("context"))
+		ahClient, err := nova_helm.NewArtifactHubPackageClient()
+		if err != nil {
+			panic(err)
 		}
-		h := nova_helm.NewHelm(viper.GetString("helm-version"), viper.GetString("context"))
-
 		klog.V(4).Infof("Settings: %v", viper.AllSettings())
 		klog.V(4).Infof("All Keys: %v", viper.AllKeys())
 
@@ -199,37 +183,6 @@ var clusterCmd = &cobra.Command{
 				})
 			}
 		}
-		HelmRepos := nova_helm.NewRepoList(getRepoURLs())
-		outputObjects, err := h.GetReleaseOutput(HelmRepos)
-		out := output.Output{
-			HelmReleases: outputObjects,
-		}
-
-		if err != nil {
-			klog.Fatalf("Error getting helm releases from cluster: %v", err)
-		}
-		outputFile := viper.GetString("output-file")
-		if outputFile != "" {
-			err = out.ToFile(outputFile)
-			if err != nil {
-				panic(err)
-			}
-		} else {
-			out.Print(viper.GetBool("wide"))
-		}
-	},
-}
-
-var artifacthubCmd = &cobra.Command{
-	Use:   "ahub",
-	Short: "Artifacthub test",
-	Long:  "Artifacthub test",
-	Run: func(cmd *cobra.Command, args []string) {
-		ahClient, err := nova_helm.NewArtifactHubPackageClient()
-		if err != nil {
-			panic(err)
-		}
-		h := nova_helm.NewHelm(viper.GetString("helm-version"), viper.GetString("context"))
 		releases, chartNames, err := h.GetReleaseOutputNew()
 		if err != nil {
 			panic(err)
