@@ -315,11 +315,6 @@ func (ac *ArtifactHubPackageClient) getSpecific(path string) (ret ArtifactHubPac
 			}
 		}
 		ret.httpResponse = resp
-		if path == "api/v1/packages/helm/bitnami/metrics-server" || path == "api/v1/packages/helm/bitnami/redis" {
-			if ret.Package.Repository.Name != "bitnami" {
-				klog.Warningf("GET %s %v Repo: %s Request ID: %s", path, ret.httpResponse.StatusCode, ret.Package.Repository.Name)
-			}
-		}
 		return
 	} else {
 		klog.Errorf("error GETing response for path %s: %d", path, resp.StatusCode)

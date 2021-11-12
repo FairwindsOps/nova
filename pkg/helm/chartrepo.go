@@ -15,11 +15,7 @@
 package helm
 
 import (
-	"fmt"
-	"io/ioutil"
-	"net/http"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/fairwindsops/nova/pkg/output"
@@ -27,7 +23,6 @@ import (
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 
-	"gopkg.in/yaml.v2"
 	"k8s.io/klog"
 )
 
@@ -61,54 +56,6 @@ type ChartRelease struct {
 	Deprecated  bool               `yaml:"deprecated" json:"deprecated"`
 }
 
-// NewRepoList returns data about a helm chart repository, given its url
-func NewRepoList(urls []string) []*Repo {
-	var repos []*Repo
-
-	var mutex = &sync.Mutex{}
-	var wg sync.WaitGroup
-	wg.Add(len(urls))
-
-	for _, url := range urls {
-		go func(address string) {
-			defer wg.Done()
-			repo := &Repo{
-				URL:    address,
-				Charts: &ChartReleases{},
-			}
-			err := repo.loadReleases()
-			if err != nil {
-				klog.V(5).Infof("Could not load chart repo %s: %s", address, err)
-			} else {
-				mutex.Lock()
-				repos = append(repos, repo)
-				mutex.Unlock()
-			}
-		}(url)
-	}
-
-	wg.Wait()
-	return repos
-}
-
-func (r *Repo) loadReleases() error {
-	response, err := http.Get(fmt.Sprintf("%s/index.yaml", r.URL))
-	if err != nil {
-		return err
-	}
-
-	data, err := ioutil.ReadAll(response.Body)
-	if err != nil {
-		return err
-	}
-
-	err = yaml.Unmarshal(data, r.Charts)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // NewestVersion returns the newest chart release for the provided release name
 func (r *Repo) NewestVersion(releaseName string) *ChartRelease {
 	for name, entries := range r.Charts.Entries {
@@ -132,114 +79,30 @@ func (r *Repo) NewestVersion(releaseName string) *ChartRelease {
 	return nil
 }
 
-// NewestChartVersion returns the newest chart release for the provided release name and version
-func (r *Repo) NewestChartVersion(currentChart *chart.Metadata) *ChartRelease {
-	for name, entries := range r.Charts.Entries {
-		if name == currentChart.Name {
-			var newest ChartRelease
-			repoHasCurrentVersion := false
-			for _, release := range entries {
-				if IsValidRelease(release.Version) {
-					if release.Version == currentChart.Version {
-						repoHasCurrentVersion = checkChartsSimilarity(currentChart, &release)
-					}
-
-					foundNewer := version.Compare(release.Version, newest.Version, ">")
-					if foundNewer {
-						newest = release
-					}
-				}
-			}
-			if repoHasCurrentVersion {
-				return &newest
-			}
-
-		}
-	}
-	return nil
-}
-
-// TryToFindNewestReleaseByChart will return the newest chart release given a collection of repos
-func TryToFindNewestReleaseByChart(chart *release.Release, repos []*Repo) *ChartRelease {
-	newestRelease := &ChartRelease{}
-	for _, repo := range repos {
-		newestInRepo := repo.NewestChartVersion(chart.Chart.Metadata)
-		if newestInRepo == nil {
-			continue
-		}
-		if newestRelease == nil {
-			newestRelease = newestInRepo
-		} else {
-			if version.Compare(newestInRepo.Version, newestRelease.Version, ">") {
-				newestRelease = newestInRepo
-			}
-		}
-	}
-	return newestRelease
-}
-
-func clusterVersionExistsInPackage(clusterVersion string, pkg ArtifactHubHelmPackage) bool {
-	for _, packageVersion := range pkg.AvailableVersions {
-		if packageVersion.Version == clusterVersion {
-			return true
-		}
-	}
-	return false
-}
-
-func preferVerifiedAndOfficial(pkg ArtifactHubHelmPackage) int {
-	ret := 0
-	if pkg.Repository.VerifiedPublisher {
-		klog.V(3).Infof("Preferring verified publisher for package %s: %s", pkg.Name, pkg.Repository.Name)
-		ret++
-	}
-	if pkg.Repository.Official {
-		klog.V(3).Infof("Preferring official publisher for package %s: %s", pkg.Name, pkg.Repository.Name)
-		ret++
-	}
-	return ret
-}
-
-func TryToFindNewestReleaseByChartNew(clusterRelease *release.Release, ahubPackages []ArtifactHubHelmPackage) *output.ReleaseOutput {
-	var firstMatch string
-	var properPackage ArtifactHubHelmPackage
-	matchingPackages := map[string]ArtifactHubHelmPackage{}
-	for _, p := range ahubPackages {
-		if !clusterVersionExistsInPackage(clusterRelease.Chart.Metadata.Version, p) {
-			continue
-		}
-		if !checkChartsSimilarityNew(clusterRelease, p) {
-			continue
-		}
-		matchingPackages[p.PackageID] = p
-		if firstMatch == "" {
-			firstMatch = p.PackageID
-		}
-	}
-	if len(matchingPackages) == 0 {
-		return nil
-	}
+func TryToFindNewestReleaseByChart(clusterRelease *release.Release, ahubPackages []ArtifactHubHelmPackage) *output.ReleaseOutput {
 	var highScore int
-	var highScorePackageID string
-	for _, pkg := range matchingPackages {
-		score := preferVerifiedAndOfficial(pkg)
+	var highScorePackage ArtifactHubHelmPackage
+	for _, p := range ahubPackages {
+		score := 0
+		if p.Name != clusterRelease.Chart.Metadata.Name {
+			continue
+		}
+		score = scoreChartSimilarity(clusterRelease, p)
 		if score > highScore {
 			highScore = score
-			highScorePackageID = pkg.PackageID
+			highScorePackage = p
 		}
 	}
+	// klog.V(5).Infof("Found high schore: %d for installed release '%s':\n%v", highScore, clusterRelease.Name, spew.Sdump(highScorePackage))
 	if highScore == 0 {
 		for _, p := range ahubPackages {
 			if p.Name == clusterRelease.Chart.Metadata.Name {
-				klog.V(3).Infof("No high scores for '%s'. Found respository %s/%s", clusterRelease.Chart.Metadata.Name, p.Repository.Name, p.Name)
+				klog.V(3).Infof("No scores above 0 for '%s'. Found respository %s/%s", clusterRelease.Chart.Metadata.Name, p.Repository.Name, p.Name)
 			}
 		}
-		klog.V(3).Infof("No High Scores. Using this one: %v", matchingPackages[firstMatch].Repository.Url)
-		properPackage = matchingPackages[firstMatch]
-	} else {
-		properPackage = matchingPackages[highScorePackageID]
+		klog.V(3).Infof("No scores above 0. Using this one: %v", highScorePackage.Repository.Url)
 	}
-	return prepareOutput(clusterRelease, properPackage)
+	return prepareOutput(clusterRelease, highScorePackage)
 }
 
 func prepareOutput(release *release.Release, pkg ArtifactHubHelmPackage) *output.ReleaseOutput {
@@ -264,45 +127,22 @@ func prepareOutput(release *release.Release, pkg ArtifactHubHelmPackage) *output
 	}
 }
 
-func checkChartsSimilarity(currentChartMeta *chart.Metadata, chartFromRepo *ChartRelease) bool {
-
-	if currentChartMeta.Home != chartFromRepo.Home {
-		return false
+func scoreChartSimilarity(release *release.Release, pkg ArtifactHubHelmPackage) int {
+	ret := 0
+	var preferredRepositories = []string{
+		"bitnami",
+		"fairwinds-stable",
+		"fairwinds-incubator",
 	}
-
-	if currentChartMeta.Description != chartFromRepo.Description {
-		return false
-	}
-
-	for _, source := range currentChartMeta.Sources {
-		if !containsString(chartFromRepo.Sources, source) {
-			return false
-		}
-	}
-
-	chartFromRepoMaintainers := map[string]bool{}
-	for _, m := range chartFromRepo.Maintainers {
-		chartFromRepoMaintainers[m.Email+";"+m.Name+";"+m.URL] = true
-	}
-	for _, m := range currentChartMeta.Maintainers {
-		if !chartFromRepoMaintainers[m.Email+";"+m.Name+";"+m.URL] {
-			return false
-		}
-	}
-	return true
-}
-
-func checkChartsSimilarityNew(release *release.Release, pkg ArtifactHubHelmPackage) bool {
-	if release.Chart.Metadata.Home != pkg.HomeURL {
-		return false
-	}
-	if release.Chart.Metadata.Description != pkg.Description {
-		return false
+	if release.Chart.Metadata.Home == pkg.HomeURL {
+		klog.V(8).Infof("+1 score for %s Home URL (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		ret++
 	}
 	for _, source := range pkg.Links {
 		if source.Name == "source" {
-			if !containsString(release.Chart.Metadata.Sources, source.URL) {
-				return false
+			if containsString(release.Chart.Metadata.Sources, source.URL) {
+				klog.V(8).Infof("+1 score for %s source links (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+				ret++
 			}
 		}
 	}
@@ -310,12 +150,39 @@ func checkChartsSimilarityNew(release *release.Release, pkg ArtifactHubHelmPacka
 	for _, m := range pkg.Maintainers {
 		pkgMaintainers[m.Email+";"+m.Name+";"] = true
 	}
+	matchedMaintainers := 0
 	for _, m := range release.Chart.Metadata.Maintainers {
-		if !pkgMaintainers[m.Email+";"+m.Name+";"] {
-			return false
+		if pkgMaintainers[m.Email+";"+m.Name+";"] {
+			matchedMaintainers++
 		}
 	}
-	return true
+	if matchedMaintainers > 0 {
+		klog.V(8).Infof("+1 score for %s Maintainers (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		ret++
+	}
+	if pkg.Repository.VerifiedPublisher {
+		klog.V(8).Infof("+1 score for %s verified publisher (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		ret++
+	}
+	if clusterVersionExistsInPackage(release.Chart.Metadata.Version, pkg) {
+		klog.V(8).Infof("+1 score for %s, current version exists in available versions (ahub package %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		ret++
+	}
+	if containsString(preferredRepositories, pkg.Repository.Name) {
+		klog.V(8).Infof("+1 score for %s, preffered repo (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		ret++
+	}
+	klog.V(8).Infof("Calculated score repo: %s, release: %s, score: %d\n\n", release.Name, pkg.Repository.Name, ret)
+	return ret
+}
+
+func clusterVersionExistsInPackage(clusterVersion string, pkg ArtifactHubHelmPackage) bool {
+	for _, packageVersion := range pkg.AvailableVersions {
+		if packageVersion.Version == clusterVersion {
+			return true
+		}
+	}
+	return false
 }
 
 func containsString(arr []string, val string) bool {

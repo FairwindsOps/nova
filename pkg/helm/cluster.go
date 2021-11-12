@@ -18,16 +18,14 @@ import (
 	"fmt"
 
 	"github.com/fairwindsops/nova/pkg/output"
-	version "github.com/mcuadros/go-version"
 	"helm.sh/helm/v3/pkg/release"
-	helmstoragev3 "helm.sh/helm/v3/pkg/storage"
-	driverv3 "helm.sh/helm/v3/pkg/storage/driver"
+	helmstorage "helm.sh/helm/v3/pkg/storage"
+	helmdriver "helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/klog"
 )
 
 // Helm contains a helm version and kubernetes client interface
 type Helm struct {
-	Version         string
 	Kube            *kube
 	DesiredVersions []DesiredVersion
 }
@@ -39,59 +37,15 @@ type DesiredVersion struct {
 }
 
 // NewHelm returns a basic helm struct with the version of helm requested
-func NewHelm(version string, kubeContext string) *Helm {
+func NewHelm(kubeContext string) *Helm {
 	return &Helm{
-		Version: version,
-		Kube:    getConfigInstance(kubeContext),
+		Kube: getConfigInstance(kubeContext),
 	}
 }
 
-// GetHelmReleasesVersion3 returns a collection of deployed helm version 3 charts in a cluster.
-func (h *Helm) GetHelmReleasesVersion3(helmRepos []*Repo) ([]output.ReleaseOutput, error) {
-	outputObjects := []output.ReleaseOutput{}
-
-	hs := driverv3.NewSecrets(h.Kube.Client.CoreV1().Secrets(""))
-	helmClient := helmstoragev3.Init(hs)
-	deployed, err := helmClient.ListDeployed()
-
-	if err != nil {
-		return nil, err
-	}
-
-	klog.V(5).Infof("Got %d installed releases in the cluster", len(deployed))
-	for _, chart := range deployed {
-		validRepos := IsRepoIncluded(chart.Chart.Metadata.Name, helmRepos)
-		newest := TryToFindNewestReleaseByChart(chart, validRepos)
-		if newest != nil {
-			rls := output.ReleaseOutput{
-				ReleaseName: chart.Name,
-				ChartName:   chart.Chart.Metadata.Name,
-				Namespace:   chart.Namespace,
-				Description: chart.Chart.Metadata.Description,
-				Icon:        chart.Chart.Metadata.Icon,
-				Home:        chart.Chart.Metadata.Home,
-				Installed: output.VersionInfo{
-					Version:    chart.Chart.Metadata.Version,
-					AppVersion: chart.Chart.Metadata.AppVersion,
-				},
-				Latest: output.VersionInfo{
-					Version:    newest.Version,
-					AppVersion: newest.AppVersion,
-				},
-				HelmVersion: "v3",
-				Deprecated:  chart.Chart.Metadata.Deprecated,
-			}
-			h.OverrideDesiredVersion(&rls)
-			rls.IsOld = version.Compare(rls.Latest.Version, chart.Chart.Metadata.Version, ">")
-			outputObjects = append(outputObjects, rls)
-		}
-	}
-	return outputObjects, err
-}
-
-func (h *Helm) GetHelmReleasesVersion3New() ([]*release.Release, error) {
-	hs := driverv3.NewSecrets(h.Kube.Client.CoreV1().Secrets(""))
-	helmClient := helmstoragev3.Init(hs)
+func (h *Helm) GetHelmReleases() ([]*release.Release, error) {
+	hs := helmdriver.NewSecrets(h.Kube.Client.CoreV1().Secrets(""))
+	helmClient := helmstorage.Init(hs)
 	deployed, err := helmClient.ListDeployed()
 
 	if err != nil {
@@ -114,8 +68,8 @@ func (h *Helm) OverrideDesiredVersion(rls *output.ReleaseOutput) {
 }
 
 func (h *Helm) GetReleaseNames() ([]string, error) {
-	hs := driverv3.NewSecrets(h.Kube.Client.CoreV1().Secrets(""))
-	helmClient := helmstoragev3.Init(hs)
+	hs := helmdriver.NewSecrets(h.Kube.Client.CoreV1().Secrets(""))
+	helmClient := helmstorage.Init(hs)
 	deployed, err := helmClient.ListDeployed()
 	if err != nil {
 		klog.Errorf("error getting deployed releases: %s", err)
@@ -128,29 +82,8 @@ func (h *Helm) GetReleaseNames() ([]string, error) {
 	return ret, nil
 }
 
-// GetReleaseOutput return the expected output or error
-func (h *Helm) GetReleaseOutput(repos []*Repo) (outputObjects []output.ReleaseOutput, err error) {
-	switch h.Version {
-	case "3":
-		outputObjects, err = h.GetHelmReleasesVersion3(repos)
-	case "auto":
-		outputObjectsVersion3, err3 := h.GetHelmReleasesVersion3(repos)
-		if outputObjectsVersion3 != nil {
-			outputObjects = append(outputObjects, outputObjectsVersion3...)
-		}
-		if err3 != nil {
-			err = fmt.Errorf("Could not detect helm 3 charts.\nError: %v", err3)
-		}
-
-	default:
-		err = fmt.Errorf("helm version either not specified or incorrect (use 3 or auto)")
-	}
-	return
-
-}
-
-func (h *Helm) GetReleaseOutputNew() (outputObjects []*release.Release, chartNames []string, err error) {
-	outputObjects, err = h.GetHelmReleasesVersion3New()
+func (h *Helm) GetReleaseOutput() (outputObjects []*release.Release, chartNames []string, err error) {
+	outputObjects, err = h.GetHelmReleases()
 	if err != nil {
 		err = fmt.Errorf("could not detect helm 3 charts.\nError: %v", err)
 	}

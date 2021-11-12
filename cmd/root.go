@@ -183,7 +183,7 @@ var clusterCmd = &cobra.Command{
 				})
 			}
 		}
-		releases, chartNames, err := h.GetReleaseOutputNew()
+		releases, chartNames, err := h.GetReleaseOutput()
 		if err != nil {
 			panic(err)
 		}
@@ -195,7 +195,7 @@ var clusterCmd = &cobra.Command{
 		klog.V(2).Infof("found %d possible package matches", len(packages))
 		out := output.Output{}
 		for _, release := range releases {
-			output := helm.TryToFindNewestReleaseByChartNew(release, packages)
+			output := helm.TryToFindNewestReleaseByChart(release, packages)
 			if output != nil {
 				h.OverrideDesiredVersion(output)
 				out.HelmReleases = append(out.HelmReleases, *output)

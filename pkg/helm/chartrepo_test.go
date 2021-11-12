@@ -25,22 +25,6 @@ func TestIsValidRelease(t *testing.T) {
 	assert.Equal(t, IsValidRelease("1.0-rc3"), false)
 }
 
-func TestNewRepo(t *testing.T) {
-	urls := []string{
-		"https://charts.fairwinds.com/stable",
-	}
-	repo := NewRepoList(urls)
-	assert.Greater(t, len(repo[0].Charts.Entries), 0)
-}
-
-func TestRepo_NewestVersion(t *testing.T) {
-	urls := []string{
-		"https://charts.fairwinds.com/stable",
-	}
-	repo := NewRepoList(urls)
-	assert.NotNil(t, repo[0].NewestVersion("rbac-manager"))
-}
-
 func TestGetNewestRelease(t *testing.T) {
 	repo := Repo{
 		Charts: &ChartReleases{
