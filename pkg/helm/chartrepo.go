@@ -15,7 +15,6 @@
 package helm
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -23,13 +22,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fairwindsops/nova/pkg/output"
 	version "github.com/mcuadros/go-version"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 
 	"gopkg.in/yaml.v2"
-	chartV2 "k8s.io/helm/pkg/proto/hapi/chart"
-	rspb "k8s.io/helm/pkg/proto/hapi/release"
 	"k8s.io/klog"
 )
 
@@ -41,30 +39,30 @@ type Repo struct {
 
 // ChartReleases contains the chart releases of a helm repository
 type ChartReleases struct {
-	APIVersion string                    `yaml:"apiVersion"`
-	Entries    map[string][]ChartRelease `yaml:"entries"`
+	APIVersion string                    `yaml:"apiVersion" json:"apiVersion"`
+	Entries    map[string][]ChartRelease `yaml:"entries" json:"entries"`
 }
 
 // ChartRelease is a single chart version in a helm repository
 type ChartRelease struct {
-	APIVersion  string             `yaml:"apiVersion,omitempty"`
-	AppVersion  string             `yaml:"appVersion"`
-	Created     time.Time          `yaml:"created"`
-	Description string             `yaml:"description"`
-	Digest      string             `yaml:"digest,omitempty"`
-	Maintainers []chart.Maintainer `yaml:"maintainers,omitempty"`
-	Name        string             `yaml:"name"`
-	Urls        []string           `yaml:"urls"`
-	Version     string             `yaml:"version"`
-	Home        string             `json:"home"`
-	Sources     []string           `json:"sources"`
-	Keywords    []string           `json:"keywords"`
-	Icon        string             `json:"icon"`
-	Deprecated  bool               `json:"deprecated"`
+	APIVersion  string             `yaml:"apiVersion,omitempty" json:"apiVersion,omitempty"`
+	AppVersion  string             `yaml:"appVersion" json:"appVersion"`
+	Created     time.Time          `yaml:"created" json:"created"`
+	Description string             `yaml:"description" json:"description"`
+	Digest      string             `yaml:"digest,omitempty" json:"digest,omitempty"`
+	Maintainers []chart.Maintainer `yaml:"maintainers,omitempty" json:"maintainers,omitempty"`
+	Name        string             `yaml:"name" json:"name"`
+	Urls        []string           `yaml:"urls" json:"urls"`
+	Version     string             `yaml:"version" json:"version"`
+	Home        string             `yaml:"home" json:"home"`
+	Sources     []string           `yaml:"sources" json:"sources"`
+	Keywords    []string           `yaml:"keywords" json:"keywords"`
+	Icon        string             `yaml:"icon,omitempty" json:"icon,omitempty"`
+	Deprecated  bool               `yaml:"deprecated" json:"deprecated"`
 }
 
-// NewRepo returns data about a helm chart repository, given its url
-func NewRepo(urls []string) []*Repo {
+// NewRepoList returns data about a helm chart repository, given its url
+func NewRepoList(urls []string) []*Repo {
 	var repos []*Repo
 
 	var mutex = &sync.Mutex{}
@@ -180,30 +178,90 @@ func TryToFindNewestReleaseByChart(chart *release.Release, repos []*Repo) *Chart
 	return newestRelease
 }
 
-// TryToFindNewestReleaseByChartVersion2 will return the newest chart release given a collection of repos from helm2
-func TryToFindNewestReleaseByChartVersion2(chart *rspb.Release, repos []*Repo) *ChartRelease {
-	newestRelease := &ChartRelease{}
-	for _, repo := range repos {
-		metadata, err := convertMetadataVersion2to3(chart.Chart.Metadata)
-
-		if err != nil {
-			klog.Errorf("Error converting helm2 metadata to helm3: %v", err)
-			continue
-		}
-
-		newestInRepo := repo.NewestChartVersion(metadata)
-		if newestInRepo == nil {
-			continue
-		}
-		if newestRelease == nil {
-			newestRelease = newestInRepo
-		} else {
-			if version.Compare(newestInRepo.Version, newestRelease.Version, ">") {
-				newestRelease = newestInRepo
-			}
+func clusterVersionExistsInPackage(clusterVersion string, pkg ArtifactHubHelmPackage) bool {
+	for _, packageVersion := range pkg.AvailableVersions {
+		if packageVersion.Version == clusterVersion {
+			return true
 		}
 	}
-	return newestRelease
+	return false
+}
+
+func preferVerifiedAndOfficial(pkg ArtifactHubHelmPackage) int {
+	ret := 0
+	if pkg.Repository.VerifiedPublisher {
+		klog.V(3).Infof("Preferring verified publisher for package %s: %s", pkg.Name, pkg.Repository.Name)
+		ret++
+	}
+	if pkg.Repository.Official {
+		klog.V(3).Infof("Preferring official publisher for package %s: %s", pkg.Name, pkg.Repository.Name)
+		ret++
+	}
+	return ret
+}
+
+func TryToFindNewestReleaseByChartNew(clusterRelease *release.Release, ahubPackages []ArtifactHubHelmPackage) *output.ReleaseOutput {
+	var firstMatch string
+	var properPackage ArtifactHubHelmPackage
+	matchingPackages := map[string]ArtifactHubHelmPackage{}
+	for _, p := range ahubPackages {
+		if !clusterVersionExistsInPackage(clusterRelease.Chart.Metadata.Version, p) {
+			continue
+		}
+		if !checkChartsSimilarityNew(clusterRelease, p) {
+			continue
+		}
+		matchingPackages[p.PackageID] = p
+		if firstMatch == "" {
+			firstMatch = p.PackageID
+		}
+	}
+	if len(matchingPackages) == 0 {
+		return nil
+	}
+	var highScore int
+	var highScorePackageID string
+	for _, pkg := range matchingPackages {
+		score := preferVerifiedAndOfficial(pkg)
+		if score > highScore {
+			highScore = score
+			highScorePackageID = pkg.PackageID
+		}
+	}
+	if highScore == 0 {
+		for _, p := range ahubPackages {
+			if p.Name == clusterRelease.Chart.Metadata.Name {
+				klog.V(3).Infof("No high scores for '%s'. Found respository %s/%s", clusterRelease.Chart.Metadata.Name, p.Repository.Name, p.Name)
+			}
+		}
+		klog.V(3).Infof("No High Scores. Using this one: %v", matchingPackages[firstMatch].Repository.Url)
+		properPackage = matchingPackages[firstMatch]
+	} else {
+		properPackage = matchingPackages[highScorePackageID]
+	}
+	return prepareOutput(clusterRelease, properPackage)
+}
+
+func prepareOutput(release *release.Release, pkg ArtifactHubHelmPackage) *output.ReleaseOutput {
+	return &output.ReleaseOutput{
+		ReleaseName: release.Name,
+		ChartName:   release.Chart.Metadata.Name,
+		Namespace:   release.Namespace,
+		Description: release.Chart.Metadata.Description,
+		Home:        release.Chart.Metadata.Home,
+		Icon:        release.Chart.Metadata.Icon,
+		Installed: output.VersionInfo{
+			Version:    release.Chart.Metadata.Version,
+			AppVersion: release.Chart.Metadata.AppVersion,
+		},
+		Latest: output.VersionInfo{
+			Version:    pkg.Version,
+			AppVersion: pkg.AppVersion,
+		},
+		IsOld:       version.Compare(release.Chart.Metadata.Version, pkg.Version, "<"),
+		Deprecated:  pkg.Deprecated,
+		HelmVersion: "3",
+	}
 }
 
 func checkChartsSimilarity(currentChartMeta *chart.Metadata, chartFromRepo *ChartRelease) bool {
@@ -228,6 +286,32 @@ func checkChartsSimilarity(currentChartMeta *chart.Metadata, chartFromRepo *Char
 	}
 	for _, m := range currentChartMeta.Maintainers {
 		if !chartFromRepoMaintainers[m.Email+";"+m.Name+";"+m.URL] {
+			return false
+		}
+	}
+	return true
+}
+
+func checkChartsSimilarityNew(release *release.Release, pkg ArtifactHubHelmPackage) bool {
+	if release.Chart.Metadata.Home != pkg.HomeURL {
+		return false
+	}
+	if release.Chart.Metadata.Description != pkg.Description {
+		return false
+	}
+	for _, source := range pkg.Links {
+		if source.Name == "source" {
+			if !containsString(release.Chart.Metadata.Sources, source.URL) {
+				return false
+			}
+		}
+	}
+	pkgMaintainers := map[string]bool{}
+	for _, m := range pkg.Maintainers {
+		pkgMaintainers[m.Email+";"+m.Name+";"] = true
+	}
+	for _, m := range release.Chart.Metadata.Maintainers {
+		if !pkgMaintainers[m.Email+";"+m.Name+";"] {
 			return false
 		}
 	}
@@ -318,20 +402,4 @@ func contains(chartName string, repo *Repo) bool {
 		}
 	}
 	return false
-}
-
-func convertMetadataVersion2to3(metatataV2 *chartV2.Metadata) (*chart.Metadata, error) {
-
-	metadata := new(chart.Metadata)
-	jsonData, err := json.Marshal(metatataV2)
-	if err != nil {
-		return nil, err
-	}
-
-	err = json.Unmarshal(jsonData, metadata)
-	if err != nil {
-		return nil, err
-	}
-
-	return metadata, err
 }

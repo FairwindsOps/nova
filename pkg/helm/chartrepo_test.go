@@ -29,7 +29,7 @@ func TestNewRepo(t *testing.T) {
 	urls := []string{
 		"https://charts.fairwinds.com/stable",
 	}
-	repo := NewRepo(urls)
+	repo := NewRepoList(urls)
 	assert.Greater(t, len(repo[0].Charts.Entries), 0)
 }
 
@@ -37,7 +37,7 @@ func TestRepo_NewestVersion(t *testing.T) {
 	urls := []string{
 		"https://charts.fairwinds.com/stable",
 	}
-	repo := NewRepo(urls)
+	repo := NewRepoList(urls)
 	assert.NotNil(t, repo[0].NewestVersion("rbac-manager"))
 }
 

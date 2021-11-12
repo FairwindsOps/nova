@@ -83,7 +83,7 @@ func TestHelm_overrideDesiredVersion(t *testing.T) {
 			h := &Helm{
 				DesiredVersions: tt.desiredVersions,
 			}
-			h.overrideDesiredVersion(tt.input)
+			h.OverrideDesiredVersion(tt.input)
 			assert.EqualValues(t, tt.want, tt.input)
 		})
 	}

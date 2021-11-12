@@ -24,6 +24,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/fairwindsops/nova/pkg/helm"
 	nova_helm "github.com/fairwindsops/nova/pkg/helm"
 	"github.com/fairwindsops/nova/pkg/output"
 	"github.com/spf13/cobra"
@@ -43,6 +44,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.AddCommand(clusterCmd)
 	rootCmd.AddCommand(genConfigCmd)
+	rootCmd.AddCommand(artifacthubCmd)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file to use. If empty, flags will be used instead")
 
@@ -197,7 +199,7 @@ var clusterCmd = &cobra.Command{
 				})
 			}
 		}
-		HelmRepos := nova_helm.NewRepo(getRepoURLs())
+		HelmRepos := nova_helm.NewRepoList(getRepoURLs())
 		outputObjects, err := h.GetReleaseOutput(HelmRepos)
 		out := output.Output{
 			HelmReleases: outputObjects,
@@ -205,6 +207,46 @@ var clusterCmd = &cobra.Command{
 
 		if err != nil {
 			klog.Fatalf("Error getting helm releases from cluster: %v", err)
+		}
+		outputFile := viper.GetString("output-file")
+		if outputFile != "" {
+			err = out.ToFile(outputFile)
+			if err != nil {
+				panic(err)
+			}
+		} else {
+			out.Print(viper.GetBool("wide"))
+		}
+	},
+}
+
+var artifacthubCmd = &cobra.Command{
+	Use:   "ahub",
+	Short: "Artifacthub test",
+	Long:  "Artifacthub test",
+	Run: func(cmd *cobra.Command, args []string) {
+		ahClient, err := nova_helm.NewArtifactHubPackageClient()
+		if err != nil {
+			panic(err)
+		}
+		h := nova_helm.NewHelm(viper.GetString("helm-version"), viper.GetString("context"))
+		releases, releaseNames, err := h.GetReleaseOutputNew()
+		if err != nil {
+			panic(err)
+		}
+		packageRepos, err := ahClient.MultiSearch(releaseNames)
+		if err != nil {
+			klog.Fatalf("Error getting artifacthub package repos: %v", err)
+		}
+		packages := ahClient.GetPackages(packageRepos)
+		klog.V(2).Infof("found %d possible package matches", len(packages))
+		out := output.Output{}
+		for _, release := range releases {
+			output := helm.TryToFindNewestReleaseByChartNew(release, packages)
+			if output != nil {
+				h.OverrideDesiredVersion(output)
+				out.HelmReleases = append(out.HelmReleases, *output)
+			}
 		}
 		outputFile := viper.GetString("output-file")
 		if outputFile != "" {
