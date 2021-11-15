@@ -16,70 +16,15 @@ package helm
 
 import (
 	"strings"
-	"time"
 
 	"github.com/fairwindsops/nova/pkg/output"
 	version "github.com/mcuadros/go-version"
-	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 
 	"k8s.io/klog"
 )
 
-// Repo represents a Helm chart Repo
-type Repo struct {
-	URL    string
-	Charts *ChartReleases
-}
-
-// ChartReleases contains the chart releases of a helm repository
-type ChartReleases struct {
-	APIVersion string                    `yaml:"apiVersion" json:"apiVersion"`
-	Entries    map[string][]ChartRelease `yaml:"entries" json:"entries"`
-}
-
-// ChartRelease is a single chart version in a helm repository
-type ChartRelease struct {
-	APIVersion  string             `yaml:"apiVersion,omitempty" json:"apiVersion,omitempty"`
-	AppVersion  string             `yaml:"appVersion" json:"appVersion"`
-	Created     time.Time          `yaml:"created" json:"created"`
-	Description string             `yaml:"description" json:"description"`
-	Digest      string             `yaml:"digest,omitempty" json:"digest,omitempty"`
-	Maintainers []chart.Maintainer `yaml:"maintainers,omitempty" json:"maintainers,omitempty"`
-	Name        string             `yaml:"name" json:"name"`
-	Urls        []string           `yaml:"urls" json:"urls"`
-	Version     string             `yaml:"version" json:"version"`
-	Home        string             `yaml:"home" json:"home"`
-	Sources     []string           `yaml:"sources" json:"sources"`
-	Keywords    []string           `yaml:"keywords" json:"keywords"`
-	Icon        string             `yaml:"icon,omitempty" json:"icon,omitempty"`
-	Deprecated  bool               `yaml:"deprecated" json:"deprecated"`
-}
-
-// NewestVersion returns the newest chart release for the provided release name
-func (r *Repo) NewestVersion(releaseName string) *ChartRelease {
-	for name, entries := range r.Charts.Entries {
-		if name == releaseName {
-			var newest ChartRelease
-			for _, release := range entries {
-				if IsValidRelease(release.Version) {
-					if newest.Version == "" {
-						newest = release
-					}
-
-					foundNewer := version.Compare(release.Version, newest.Version, ">")
-					if foundNewer {
-						newest = release
-					}
-				}
-			}
-			return &newest
-		}
-	}
-	return nil
-}
-
-func TryToFindNewestReleaseByChart(clusterRelease *release.Release, ahubPackages []ArtifactHubHelmPackage) *output.ReleaseOutput {
+func FindBestArtifactHubMatch(clusterRelease *release.Release, ahubPackages []ArtifactHubHelmPackage) *output.ReleaseOutput {
 	var highScore int
 	var highScorePackage ArtifactHubHelmPackage
 	for _, p := range ahubPackages {
@@ -194,38 +139,6 @@ func containsString(arr []string, val string) bool {
 	return false
 }
 
-// GetNewestReleaseByName will return the newest chart release given a collection of repos
-func GetNewestReleaseByName(name string, repos []*Repo) *ChartRelease {
-	newestRelease := &ChartRelease{}
-	for _, repo := range repos {
-		newestInRepo := repo.NewestVersion(name)
-		if newestRelease == nil {
-			newestRelease = newestInRepo
-		} else {
-			if version.Compare(newestInRepo.Version, newestRelease.Version, ">") {
-				newestRelease = newestInRepo
-			}
-		}
-	}
-	return newestRelease
-}
-
-// GetChartInfo returns info about a chart with the version specified
-func GetChartInfo(name string, version string, repos []*Repo) *ChartRelease {
-	for _, repo := range repos {
-		for key, chart := range repo.Charts.Entries {
-			if key == name {
-				for _, release := range chart {
-					if release.Version == version {
-						return &release
-					}
-				}
-			}
-		}
-	}
-	return nil
-}
-
 // IsValidRelease returns a bool indicating whether a version string is valid or not.
 func IsValidRelease(version string) bool {
 	var specialForms = []string{
@@ -249,24 +162,4 @@ func IsValidRelease(version string) bool {
 		}
 	}
 	return true
-}
-
-// IsRepoIncluded check if the repo is included in the list of repos
-func IsRepoIncluded(chartName string, repos []*Repo) []*Repo {
-	found := []*Repo{}
-	for _, repo := range repos {
-		if contains(chartName, repo) {
-			found = append(found, repo)
-		}
-	}
-	return found
-}
-
-func contains(chartName string, repo *Repo) bool {
-	for name := range repo.Charts.Entries {
-		if name == chartName {
-			return true
-		}
-	}
-	return false
 }

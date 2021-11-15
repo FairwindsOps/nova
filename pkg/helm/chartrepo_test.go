@@ -24,19 +24,3 @@ func TestIsValidRelease(t *testing.T) {
 	assert.Equal(t, IsValidRelease("v1.0"), true)
 	assert.Equal(t, IsValidRelease("1.0-rc3"), false)
 }
-
-func TestGetNewestRelease(t *testing.T) {
-	repo := Repo{
-		Charts: &ChartReleases{
-			Entries: map[string][]ChartRelease{
-				"foo": {
-					{Version: "1.0"},
-					{Version: "2.0"},
-				},
-			},
-		},
-	}
-
-	newest := repo.NewestVersion("foo")
-	assert.Equal(t, "2.0", newest.Version)
-}
