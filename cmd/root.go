@@ -161,7 +161,7 @@ var clusterCmd = &cobra.Command{
 		h := nova_helm.NewHelm(viper.GetString("context"))
 		ahClient, err := nova_helm.NewArtifactHubPackageClient()
 		if err != nil {
-			panic(err)
+			klog.Fatalf("error setting up artifact hub client: %s", err)
 		}
 		klog.V(4).Infof("Settings: %v", viper.AllSettings())
 		klog.V(4).Infof("All Keys: %v", viper.AllKeys())
@@ -181,7 +181,7 @@ var clusterCmd = &cobra.Command{
 		}
 		releases, chartNames, err := h.GetReleaseOutput()
 		if err != nil {
-			panic(err)
+			klog.Fatalf("error getting helm releases: %s", err)
 		}
 		packageRepos, err := ahClient.MultiSearch(chartNames)
 		if err != nil {
@@ -201,7 +201,7 @@ var clusterCmd = &cobra.Command{
 		if outputFile != "" {
 			err = out.ToFile(outputFile)
 			if err != nil {
-				panic(err)
+				klog.Fatalf("error outputting to file: %s", err)
 			}
 		} else {
 			out.Print(viper.GetBool("wide"))
