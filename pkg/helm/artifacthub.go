@@ -1,3 +1,17 @@
+// Copyright 2021 FairwindsOps Inc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package helm
 
 import (
@@ -17,29 +31,34 @@ const (
 	artifactHubHelmKind        = "0"
 )
 
+// ArtifactHubPackageClient provides the various pieces to interact with the ArtifactHub API.
 type ArtifactHubPackageClient struct {
 	APIRoot string
 	URL     *url.URL
 	Client  *http.Client
 }
 
+// ArtifactHubPackageRepo is a simple struct to show a relationship between a helm package name and its repository.
 type ArtifactHubPackageRepo struct {
 	PackageName string
 	RepoName    string
 }
 
+// ArtifactHubPackageReturn is the return type for a specific package.
 type ArtifactHubPackageReturn struct {
 	Package      ArtifactHubHelmPackage
 	err          error
 	httpResponse *http.Response
 }
 
+// ArtifactHubPackagesSearchReturn is the return type for SearchPackages.
 type ArtifactHubPackagesSearchReturn struct {
 	Packages     []ArtifactHubPackageSearch `json:"packages,omitempty"`
 	err          error
 	httpResponse *http.Response
 }
 
+// ArtifactHubPackagesSearch represents a single search return object from the ArtifactHub `packages/search` API.
 type ArtifactHubPackageSearch struct {
 	PackageID                      string                           `json:"package_id"`
 	Name                           string                           `json:"name"`
@@ -58,6 +77,7 @@ type ArtifactHubPackageSearch struct {
 	Repository                     ArtifactHubRepository            `json:"repository"`
 }
 
+// ArtifactHubSecurityReportSummary is a child struct of ArtifactHubPackageSearch and contains the security report summary for a given package.
 type ArtifactHubSecurityReportSummary struct {
 	Low      int `json:"low"`
 	High     int `json:"high"`
@@ -66,6 +86,7 @@ type ArtifactHubSecurityReportSummary struct {
 	Critical int `json:"critical"`
 }
 
+// ArtifactHubRepository is a child struct of ArtifactHubPackageSearch represents a helm chart repository as provided by the ArtifactHub API.
 type ArtifactHubRepository struct {
 	Url                     string `json:"url"`
 	Kind                    int    `json:"kind"`
@@ -79,6 +100,7 @@ type ArtifactHubRepository struct {
 	OrganizationDisplayName string `json:"organization_display_name"`
 }
 
+// ArtifactHubHelmPackage represents a helm package (chart) as provided by the ArtifactHub API.
 type ArtifactHubHelmPackage struct {
 	PackageID                      string                           `json:"package_id"`
 	Name                           string                           `json:"name"`
@@ -106,6 +128,7 @@ type ArtifactHubHelmPackage struct {
 	Links                          []Link                           `json:"links"`
 }
 
+// AvailableVersion is a sub struct of ArtifactHubHelmPackage and provides a version that is available for a given helm chart.
 type AvailableVersion struct {
 	Version                 string `json:"version"`
 	ContainsSecurityUpdates bool   `json:"contains_security_updates"`
@@ -113,12 +136,14 @@ type AvailableVersion struct {
 	Ts                      int    `json:"ts"`
 }
 
+// Maintainer is a child struct of ArtifactHubHelmPackage and provides information about maintainers of a helm chart.
 type Maintainer struct {
 	Name         string `json:"name"`
 	MaintainerID string `json:"maintainer_id"`
 	Email        string `json:"email"`
 }
 
+// PackageData is a child struct of ArtifactHubHelmPackage and provides some metadata for a helm chart
 type PackageData struct {
 	APIVersion   string       `json:"apiVersion"`
 	Type         string       `json:"type"`
@@ -126,6 +151,7 @@ type PackageData struct {
 	Dependencies []Dependency `json:"dependencies"`
 }
 
+// Dependency is a child struct of PackageData and provides any helm dependency data for a given chart.
 type Dependency struct {
 	Name                       string `json:"name"`
 	Version                    string `json:"version"`
@@ -133,6 +159,7 @@ type Dependency struct {
 	ArtifactHubRespositoryName string `json:"artifacthub_respository_name,omitempty"`
 }
 
+// Link is child struct of ArtifactHubHelmPackage
 type Link struct {
 	URL  string `json:"url"`
 	Name string `json:"name"`
@@ -153,6 +180,7 @@ func NewArtifactHubPackageClient() (*ArtifactHubPackageClient, error) {
 	}, nil
 }
 
+// SearchPackages searches for packages given a search term  against the ArtifactHub API.
 func (ac *ArtifactHubPackageClient) SearchPackages(searchTerm string) ([]ArtifactHubPackageSearch, error) {
 	firstSet := ac.SearchFirst(searchTerm)
 	if firstSet.err != nil {
@@ -160,12 +188,14 @@ func (ac *ArtifactHubPackageClient) SearchPackages(searchTerm string) ([]Artifac
 	}
 	countHeader := firstSet.httpResponse.Header.Get("Pagination-Total-Count")
 	if countHeader == "" {
-		return []ArtifactHubPackageSearch{}, nil
+		klog.V(2).Infof("No Pagination-Total-Count header found in response when searching for '%s' - attempting to return first results", searchTerm)
+		return firstSet.Packages, nil
 	}
 	totalCount, err := strconv.Atoi(countHeader)
 	if err != nil {
 		return nil, err
 	}
+	klog.V(5).Infof("Found %d packages matching '%s'", totalCount, searchTerm)
 
 	ret := make([]ArtifactHubPackageSearch, totalCount)
 	for i, p := range firstSet.Packages {
@@ -175,6 +205,7 @@ func (ac *ArtifactHubPackageClient) SearchPackages(searchTerm string) ([]Artifac
 		wg := sync.WaitGroup{}
 		for i := maxArtifactHubRequestLimit; i < totalCount; i += maxArtifactHubRequestLimit {
 			wg.Add(1)
+			klog.V(8).Infof("Paging API for search term '%s' at %d offset", searchTerm, i)
 			go func(offset int, wg *sync.WaitGroup, ret *[]ArtifactHubPackageSearch) {
 				defer wg.Done()
 				for i, p := range ac.Search(searchTerm, offset).Packages {
@@ -190,6 +221,7 @@ func (ac *ArtifactHubPackageClient) SearchPackages(searchTerm string) ([]Artifac
 	return ret, nil
 }
 
+// SearchForPackageRepo calls SearchPackages with a given searchTerm, and then filters the results to only return the package name and repository info.
 func (ac *ArtifactHubPackageClient) SearchForPackageRepo(searchTerm string) ([]ArtifactHubPackageRepo, error) {
 	packages, err := ac.SearchPackages(searchTerm)
 	if err != nil {
@@ -206,6 +238,8 @@ func (ac *ArtifactHubPackageClient) SearchForPackageRepo(searchTerm string) ([]A
 	return ret, nil
 }
 
+// MultiSearch will find all packages that match various search terms (terms are not combined, but searched individually).
+// Returns only the package name and repository information.
 func (ac *ArtifactHubPackageClient) MultiSearch(searchTerms []string) ([]ArtifactHubPackageRepo, error) {
 	ret := make([]ArtifactHubPackageRepo, 0)
 	termMap := make(map[string][]ArtifactHubPackageRepo)
@@ -215,7 +249,7 @@ func (ac *ArtifactHubPackageClient) MultiSearch(searchTerms []string) ([]Artifac
 		go func(wg *sync.WaitGroup, term string, r *map[string][]ArtifactHubPackageRepo) {
 			defer wg.Done()
 			packages, err := ac.SearchForPackageRepo(term)
-			klog.V(3).Infof("found %d packages searching for term %s", len(packages), term)
+			klog.V(8).Infof("found %d packages searching for term %s", len(packages), term)
 			if err != nil {
 				klog.Errorf("error searching for term %s", err)
 				(*r)[term] = nil
@@ -234,6 +268,7 @@ func (ac *ArtifactHubPackageClient) MultiSearch(searchTerms []string) ([]Artifac
 	return ret, nil
 }
 
+// SearchFirst will find the first set (page) of packages that match a search term.
 func (ac *ArtifactHubPackageClient) SearchFirst(searchTerm string) ArtifactHubPackagesSearchReturn {
 	return ac.Search(searchTerm, 0)
 }
@@ -274,6 +309,8 @@ func (ac *ArtifactHubPackageClient) Search(searchTerm string, offset int) (ret A
 	}
 }
 
+// GetPackages makes use of the helm package details API: https://artifacthub.io/docs/api/#/Packages/getHelmPackageDetails
+// It sets up the proper query parameters and adds the repo/package name to the path.
 func (ac *ArtifactHubPackageClient) GetPackages(packageRepos []ArtifactHubPackageRepo) []ArtifactHubHelmPackage {
 	ret := make([]ArtifactHubHelmPackage, len(packageRepos))
 	wg := sync.WaitGroup{}
@@ -362,13 +399,4 @@ func (ac *ArtifactHubPackageClient) get(path string, urlValues url.Values) (*htt
 		break
 	}
 	return response, err
-}
-
-func (p ArtifactHubHelmPackage) VersionExists(version string) bool {
-	for _, v := range p.AvailableVersions {
-		if v.Version == version {
-			return true
-		}
-	}
-	return false
 }
