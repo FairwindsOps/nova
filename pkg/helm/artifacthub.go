@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"strconv"
 	"sync"
-	"time"
 
 	"k8s.io/klog"
 )
@@ -17,8 +16,6 @@ const (
 	maxArtifactHubRequestLimit = 60
 	artifactHubHelmKind        = "0"
 )
-
-var t = time.Now()
 
 type ArtifactHubPackageClient struct {
 	APIRoot string
