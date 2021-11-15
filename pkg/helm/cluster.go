@@ -43,6 +43,20 @@ func NewHelm(kubeContext string) *Helm {
 	}
 }
 
+func (h *Helm) GetReleaseOutput() (outputObjects []*release.Release, chartNames []string, err error) {
+	outputObjects, err = h.GetHelmReleases()
+	if err != nil {
+		err = fmt.Errorf("could not detect helm 3 charts.\nError: %v", err)
+	}
+	if outputObjects != nil {
+		chartNames = make([]string, len(outputObjects))
+		for i, release := range outputObjects {
+			chartNames[i] = release.Chart.Metadata.Name
+		}
+	}
+	return
+}
+
 func (h *Helm) GetHelmReleases() ([]*release.Release, error) {
 	hs := helmdriver.NewSecrets(h.Kube.Client.CoreV1().Secrets(""))
 	helmClient := helmstorage.Init(hs)
@@ -65,33 +79,4 @@ func (h *Helm) OverrideDesiredVersion(rls *output.ReleaseOutput) {
 			rls.Overridden = true
 		}
 	}
-}
-
-func (h *Helm) GetReleaseNames() ([]string, error) {
-	hs := helmdriver.NewSecrets(h.Kube.Client.CoreV1().Secrets(""))
-	helmClient := helmstorage.Init(hs)
-	deployed, err := helmClient.ListDeployed()
-	if err != nil {
-		klog.Errorf("error getting deployed releases: %s", err)
-		return nil, err
-	}
-	ret := make([]string, len(deployed))
-	for i, release := range deployed {
-		ret[i] = release.Chart.Metadata.Name
-	}
-	return ret, nil
-}
-
-func (h *Helm) GetReleaseOutput() (outputObjects []*release.Release, chartNames []string, err error) {
-	outputObjects, err = h.GetHelmReleases()
-	if err != nil {
-		err = fmt.Errorf("could not detect helm 3 charts.\nError: %v", err)
-	}
-	if outputObjects != nil {
-		chartNames = make([]string, len(outputObjects))
-		for i, release := range outputObjects {
-			chartNames[i] = release.Chart.Metadata.Name
-		}
-	}
-	return
 }
