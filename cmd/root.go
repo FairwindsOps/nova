@@ -163,12 +163,12 @@ var clusterCmd = &cobra.Command{
 		if err != nil {
 			klog.Fatalf("error setting up artifact hub client: %s", err)
 		}
-		klog.V(4).Infof("Settings: %v", viper.AllSettings())
-		klog.V(4).Infof("All Keys: %v", viper.AllKeys())
+		klog.V(5).Infof("Settings: %v", viper.AllSettings())
+		klog.V(5).Infof("All Keys: %v", viper.AllKeys())
 
 		if viper.IsSet("desired-versions") {
 			klog.V(3).Infof("desired-versions is set - attempting to load them")
-			klog.V(7).Infof("raw desired-versions: %v", viper.Get("desired-versions"))
+			klog.V(8).Infof("raw desired-versions: %v", viper.Get("desired-versions"))
 
 			desiredVersion := viper.GetStringMapString("desired-versions")
 			for k, v := range desiredVersion {

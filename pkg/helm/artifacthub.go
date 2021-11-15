@@ -195,7 +195,7 @@ func (ac *ArtifactHubPackageClient) SearchPackages(searchTerm string) ([]Artifac
 	if err != nil {
 		return nil, err
 	}
-	klog.V(5).Infof("Found %d packages matching '%s'", totalCount, searchTerm)
+	klog.V(5).Infof("found %d packages matching '%s'", totalCount, searchTerm)
 
 	ret := make([]ArtifactHubPackageSearch, totalCount)
 	for i, p := range firstSet.Packages {
@@ -205,16 +205,20 @@ func (ac *ArtifactHubPackageClient) SearchPackages(searchTerm string) ([]Artifac
 		wg := sync.WaitGroup{}
 		for i := maxArtifactHubRequestLimit; i < totalCount; i += maxArtifactHubRequestLimit {
 			wg.Add(1)
-			klog.V(8).Infof("Paging API for search term '%s' at %d offset", searchTerm, i)
-			go func(offset int, wg *sync.WaitGroup, ret *[]ArtifactHubPackageSearch) {
+			klog.V(8).Infof("paging API for search term '%s' at %d offset", searchTerm, i)
+			go func(offset int, sTerm string, wg *sync.WaitGroup, ret *[]ArtifactHubPackageSearch) {
 				defer wg.Done()
-				for i, p := range ac.Search(searchTerm, offset).Packages {
+				searchReturn := ac.Search(sTerm, offset)
+				if searchReturn.err != nil {
+					klog.Errorf("error searching for term '%s': %s", sTerm, searchReturn.err)
+				}
+				for i, p := range searchReturn.Packages {
 					if offset+i > len(*ret) {
 						continue
 					}
 					(*ret)[offset+i] = p
 				}
-			}(i, &wg, &ret)
+			}(i, searchTerm, &wg, &ret)
 		}
 		wg.Wait()
 	}
@@ -249,7 +253,6 @@ func (ac *ArtifactHubPackageClient) MultiSearch(searchTerms []string) ([]Artifac
 		go func(wg *sync.WaitGroup, term string, r *map[string][]ArtifactHubPackageRepo) {
 			defer wg.Done()
 			packages, err := ac.SearchForPackageRepo(term)
-			klog.V(8).Infof("found %d packages searching for term %s", len(packages), term)
 			if err != nil {
 				klog.Errorf("error searching for term %s", err)
 				(*r)[term] = nil
@@ -285,6 +288,7 @@ func (ac *ArtifactHubPackageClient) Search(searchTerm string, offset int) (ret A
 	searchPath := "api/v1/packages/search"
 	resp, err := ac.get(searchPath, urlValues)
 	if err != nil {
+		klog.V(3).Infof("error GETing response for with search term '%s': %s", searchTerm, err)
 		return ArtifactHubPackagesSearchReturn{
 			err:          err,
 			httpResponse: nil,
@@ -294,6 +298,7 @@ func (ac *ArtifactHubPackageClient) Search(searchTerm string, offset int) (ret A
 		defer resp.Body.Close()
 		err := json.NewDecoder(resp.Body).Decode(&ret)
 		if err != nil {
+			klog.V(3).Infof("error decoding search json with search term '%s': %s", searchTerm, err)
 			return ArtifactHubPackagesSearchReturn{
 				err:          err,
 				httpResponse: resp,
@@ -302,6 +307,7 @@ func (ac *ArtifactHubPackageClient) Search(searchTerm string, offset int) (ret A
 		ret.httpResponse = resp
 		return
 	} else {
+		klog.V(3).Infof("got non-200 response searching for term '%s': %d", searchTerm, resp.StatusCode)
 		return ArtifactHubPackagesSearchReturn{
 			err:          fmt.Errorf("error code: %d", resp.StatusCode),
 			httpResponse: resp,
@@ -330,9 +336,10 @@ func (ac *ArtifactHubPackageClient) GetPackages(packageRepos []ArtifactHubPackag
 }
 
 func (ac *ArtifactHubPackageClient) getSpecific(path string) (ret ArtifactHubPackageReturn) {
-	klog.V(8).Infof("getting package %s", path)
+	klog.V(10).Infof("getting package %s", path)
 	resp, err := ac.get(path, nil)
 	if err != nil {
+		klog.V(3).Infof("error GETing response for path '%s': %s", path, err)
 		return ArtifactHubPackageReturn{
 			err:          err,
 			httpResponse: nil,
@@ -342,7 +349,7 @@ func (ac *ArtifactHubPackageClient) getSpecific(path string) (ret ArtifactHubPac
 		defer resp.Body.Close()
 		err := json.NewDecoder(resp.Body).Decode(&ret.Package)
 		if err != nil {
-			klog.Errorf("error decoding response for path %s:\n%v", path, err)
+			klog.V(3).Infof("error decoding response for path %s:\n%v", path, err)
 			return ArtifactHubPackageReturn{
 				err:          err,
 				httpResponse: resp,
@@ -351,7 +358,7 @@ func (ac *ArtifactHubPackageClient) getSpecific(path string) (ret ArtifactHubPac
 		ret.httpResponse = resp
 		return
 	} else {
-		klog.Errorf("error GETing response for path %s: %d", path, resp.StatusCode)
+		klog.V(3).Infof("got non-200 response for path %s: %d", path, resp.StatusCode)
 		return ArtifactHubPackageReturn{
 			err:          fmt.Errorf("error code: %d", resp.StatusCode),
 			httpResponse: resp,

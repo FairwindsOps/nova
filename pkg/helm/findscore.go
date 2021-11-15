@@ -38,15 +38,6 @@ func FindBestArtifactHubMatch(clusterRelease *release.Release, ahubPackages []Ar
 			highScorePackage = p
 		}
 	}
-	// klog.V(5).Infof("Found high schore: %d for installed release '%s':\n%v", highScore, clusterRelease.Name, spew.Sdump(highScorePackage))
-	if highScore == 0 {
-		for _, p := range ahubPackages {
-			if p.Name == clusterRelease.Chart.Metadata.Name {
-				klog.V(3).Infof("No scores above 0 for '%s'. Found respository %s/%s", clusterRelease.Chart.Metadata.Name, p.Repository.Name, p.Name)
-			}
-		}
-		klog.V(3).Infof("No scores above 0. Using this one: %v", highScorePackage.Repository.Url)
-	}
 	return prepareOutput(clusterRelease, highScorePackage)
 }
 
@@ -77,16 +68,15 @@ func scoreChartSimilarity(release *release.Release, pkg ArtifactHubHelmPackage) 
 	var preferredRepositories = []string{
 		"bitnami",
 		"fairwinds-stable",
-		"fairwinds-incubator",
 	}
 	if release.Chart.Metadata.Home == pkg.HomeURL {
-		klog.V(8).Infof("+1 score for %s Home URL (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		klog.V(10).Infof("+1 score for %s Home URL (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
 		ret++
 	}
 	for _, source := range pkg.Links {
 		if source.Name == "source" {
 			if containsString(release.Chart.Metadata.Sources, source.URL) {
-				klog.V(8).Infof("+1 score for %s source links (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+				klog.V(10).Infof("+1 score for %s source links (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
 				ret++
 			}
 		}
@@ -102,22 +92,22 @@ func scoreChartSimilarity(release *release.Release, pkg ArtifactHubHelmPackage) 
 		}
 	}
 	if matchedMaintainers > 0 {
-		klog.V(8).Infof("+1 score for %s Maintainers (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		klog.V(10).Infof("+1 score for %s Maintainers (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
 		ret++
 	}
 	if pkg.Repository.VerifiedPublisher {
-		klog.V(8).Infof("+1 score for %s verified publisher (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		klog.V(10).Infof("+1 score for %s verified publisher (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
 		ret++
 	}
 	if clusterVersionExistsInPackage(release.Chart.Metadata.Version, pkg) {
-		klog.V(8).Infof("+1 score for %s, current version exists in available versions (ahub package %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		klog.V(10).Infof("+1 score for %s, current version exists in available versions (ahub package %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
 		ret++
 	}
 	if containsString(preferredRepositories, pkg.Repository.Name) {
-		klog.V(8).Infof("+1 score for %s, preffered repo (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		klog.V(10).Infof("+1 score for %s, preffered repo (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
 		ret++
 	}
-	klog.V(8).Infof("Calculated score repo: %s, release: %s, score: %d\n\n", release.Name, pkg.Repository.Name, ret)
+	klog.V(10).Infof("calculated score repo: %s, release: %s, score: %d\n\n", pkg.Repository.Name, release.Name, ret)
 	return ret
 }
 
