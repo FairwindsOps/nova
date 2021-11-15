@@ -24,3 +24,8 @@ func TestIsValidRelease(t *testing.T) {
 	assert.Equal(t, IsValidRelease("v1.0"), true)
 	assert.Equal(t, IsValidRelease("1.0-rc3"), false)
 }
+
+func Test_containsString(t *testing.T) {
+	assert.Equal(t, containsString([]string{"test", "other"}, "test"), true)
+	assert.Equal(t, containsString([]string{"other"}, "test"), false)
+}

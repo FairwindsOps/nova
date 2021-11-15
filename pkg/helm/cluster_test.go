@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHelm_overrideDesiredVersion(t *testing.T) {
+func TestHelm_OverrideDesiredVersion(t *testing.T) {
 	tests := []struct {
 		name            string
 		desiredVersions []DesiredVersion
