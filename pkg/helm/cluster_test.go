@@ -22,13 +22,6 @@ import (
 )
 
 func TestHelm_overrideDesiredVersion(t *testing.T) {
-	type fields struct {
-		DesiredVersions []DesiredVersion
-	}
-	type args struct {
-		rls       *output.ReleaseOutput
-		chartName string
-	}
 	tests := []struct {
 		name            string
 		desiredVersions []DesiredVersion

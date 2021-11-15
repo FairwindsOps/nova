@@ -191,7 +191,7 @@ var clusterCmd = &cobra.Command{
 		klog.V(2).Infof("found %d possible package matches", len(packages))
 		out := output.Output{}
 		for _, release := range releases {
-			output := nova_helm.TryToFindNewestReleaseByChart(release, packages)
+			output := nova_helm.FindBestArtifactHubMatch(release, packages)
 			if output != nil {
 				h.OverrideDesiredVersion(output)
 				out.HelmReleases = append(out.HelmReleases, *output)
