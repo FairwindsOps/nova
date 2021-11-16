@@ -18,6 +18,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/release"
 )
 
 func TestIsValidRelease(t *testing.T) {
@@ -28,4 +30,87 @@ func TestIsValidRelease(t *testing.T) {
 func Test_containsString(t *testing.T) {
 	assert.Equal(t, containsString([]string{"test", "other"}, "test"), true)
 	assert.Equal(t, containsString([]string{"other"}, "test"), false)
+}
+
+var emptyRelease = release.Release{
+	Chart: &chart.Chart{
+		Metadata: &chart.Metadata{},
+	},
+}
+
+func Test_scoreChartSimilarity(t *testing.T) {
+	tests := []struct {
+		name    string
+		release *release.Release
+		pkg     ArtifactHubHelmPackage
+		want    int
+	}{
+		{
+			name: "highest score",
+			release: &release.Release{
+				Chart: &chart.Chart{
+					Metadata: &chart.Metadata{
+						Version:     "1.0.0",
+						Home:        "https://example.com/charts",
+						Description: "This is a chart.",
+						Sources: []string{
+							"https://example.com/charts",
+						},
+						Maintainers: []*chart.Maintainer{
+							{
+								Email: "me@example.com",
+								Name:  "John",
+							},
+						},
+					},
+				},
+			},
+			pkg: ArtifactHubHelmPackage{
+				Description: "This is a chart.",
+				HomeURL:     "https://example.com/charts",
+				Links: []Link{
+					{
+						Name: "source",
+						URL:  "https://example.com/charts",
+					},
+				},
+				Maintainers: []Maintainer{
+					{
+						Email: "me@example.com",
+						Name:  "John",
+					},
+				},
+				AvailableVersions: []AvailableVersion{
+					{
+						Version: "1.0.0",
+					},
+					{
+						Version: "1.0.1",
+					},
+				},
+				Repository: ArtifactHubRepository{
+					Name:              "fairwinds-stable",
+					VerifiedPublisher: true,
+				},
+			},
+			want: 7,
+		},
+		{
+			name:    "empty pkg struct",
+			release: &emptyRelease,
+			pkg: ArtifactHubHelmPackage{
+				Description: "This is a chart.",
+				HomeURL:     "https://example.com/charts",
+			},
+			want: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := scoreChartSimilarity(tt.release, tt.pkg)
+			if got != tt.want {
+				t.Errorf("scoreChartSimilarity() got =%v, want %v", got, tt.want)
+			}
+		})
+	}
 }
