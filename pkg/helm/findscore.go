@@ -38,6 +38,7 @@ func FindBestArtifactHubMatch(clusterRelease *release.Release, ahubPackages []Ar
 			highScorePackage = p
 		}
 	}
+	klog.V(10).Infof("highScore for '%s': %d, highScorePackage Repo: %s", clusterRelease.Chart.Metadata.Name, highScore, highScorePackage.Repository.Name)
 	return prepareOutput(clusterRelease, highScorePackage)
 }
 
@@ -68,6 +69,7 @@ func scoreChartSimilarity(release *release.Release, pkg ArtifactHubHelmPackage) 
 	var preferredRepositories = []string{
 		"bitnami",
 		"fairwinds-stable",
+		"ingress-nginx",
 	}
 	if release.Chart.Metadata.Home == pkg.HomeURL {
 		klog.V(10).Infof("+1 score for %s Home URL (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
