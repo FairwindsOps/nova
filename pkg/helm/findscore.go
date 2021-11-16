@@ -75,6 +75,10 @@ func scoreChartSimilarity(release *release.Release, pkg ArtifactHubHelmPackage) 
 		klog.V(10).Infof("+1 score for %s Home URL (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
 		ret++
 	}
+	if release.Chart.Metadata.Description == pkg.Description {
+		klog.V(10).Infof("+1 score for %s Description (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		ret++
+	}
 	for _, source := range pkg.Links {
 		if source.Name == "source" {
 			if containsString(release.Chart.Metadata.Sources, source.URL) {
