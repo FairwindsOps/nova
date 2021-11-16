@@ -27,6 +27,7 @@ import (
 // Output is the object that Nova outputs
 type Output struct {
 	HelmReleases []ReleaseOutput `json:"helm"`
+	IncludeAll   bool            `json:"include_all"`
 }
 
 // ReleaseOutput represents a release
@@ -78,8 +79,17 @@ func (output Output) Print(wide bool) {
 	}
 	header += "Installed\tLatest\tOld\tDeprecated"
 	fmt.Fprintln(w, header)
+	separator := "============\t"
+	if wide {
+		separator += "==========\t=========\t===========\t"
+	}
+	separator += "=========\t======\t===\t=========="
+	fmt.Fprintln(w, separator)
 
 	for _, release := range output.HelmReleases {
+		if !output.IncludeAll && release.Latest.Version == "" {
+			continue
+		}
 		line := release.ReleaseName + "\t"
 		if wide {
 			line += release.ChartName + "\t"

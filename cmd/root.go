@@ -68,6 +68,11 @@ func init() {
 	if err != nil {
 		klog.Fatalf("Failed to bind wide flag: %v", err)
 	}
+	rootCmd.PersistentFlags().BoolP("include-all", "a", false, "Show all charts even if no latest version is found.")
+	err = viper.BindPFlag("include-all", rootCmd.PersistentFlags().Lookup("include-all"))
+	if err != nil {
+		klog.Fatalf("Failed to bind include-all flag: %v", err)
+	}
 
 	klog.InitFlags(nil)
 	_ = flag.Set("alsologtostderr", "true")
@@ -189,7 +194,9 @@ var clusterCmd = &cobra.Command{
 		}
 		packages := ahClient.GetPackages(packageRepos)
 		klog.V(2).Infof("found %d possible package matches", len(packages))
-		out := output.Output{}
+		out := output.Output{
+			IncludeAll: viper.GetBool("include-all"),
+		}
 		for _, release := range releases {
 			output := nova_helm.FindBestArtifactHubMatch(release, packages)
 			if output != nil {
