@@ -251,9 +251,10 @@ func (ac *ArtifactHubPackageClient) MultiSearch(searchTerms []string) ([]Artifac
 	klog.V(10).Infof("filtering MultiSearch string array duplicates. starting amount: %d", len(searchTerms))
 	searchTerms = removeDuplicateStr(searchTerms)
 	klog.V(10).Infof("filtered down to %d search terms", len(searchTerms))
+	mut := sync.Mutex{}
 	for _, searchTerm := range searchTerms {
 		wg.Add(1)
-		go func(wg *sync.WaitGroup, term string, r *map[string][]ArtifactHubPackageRepo) {
+		go func(wg *sync.WaitGroup, term string, r *map[string][]ArtifactHubPackageRepo, m *sync.Mutex) {
 			defer wg.Done()
 			packages, err := ac.SearchForPackageRepo(term)
 			if err != nil {
@@ -262,10 +263,12 @@ func (ac *ArtifactHubPackageClient) MultiSearch(searchTerms []string) ([]Artifac
 				return
 			}
 			if _, exists := (*r)[term]; !exists {
+				m.Lock()
+				defer m.Unlock()
 				(*r)[term] = packages
 			}
 
-		}(&wg, searchTerm, &termMap)
+		}(&wg, searchTerm, &termMap, &mut)
 	}
 	wg.Wait()
 	for term, packageRepos := range termMap {
