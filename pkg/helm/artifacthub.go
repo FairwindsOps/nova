@@ -248,6 +248,9 @@ func (ac *ArtifactHubPackageClient) MultiSearch(searchTerms []string) ([]Artifac
 	ret := make([]ArtifactHubPackageRepo, 0)
 	termMap := make(map[string][]ArtifactHubPackageRepo)
 	wg := sync.WaitGroup{}
+	klog.V(10).Infof("filtering MultiSearch string array duplicates. starting amount: %d", len(searchTerms))
+	searchTerms = removeDuplicateStr(searchTerms)
+	klog.V(10).Infof("filtered down to %d search terms", len(searchTerms))
 	for _, searchTerm := range searchTerms {
 		wg.Add(1)
 		go func(wg *sync.WaitGroup, term string, r *map[string][]ArtifactHubPackageRepo) {
@@ -258,7 +261,10 @@ func (ac *ArtifactHubPackageClient) MultiSearch(searchTerms []string) ([]Artifac
 				(*r)[term] = nil
 				return
 			}
-			(*r)[term] = packages
+			if _, exists := (*r)[term]; !exists {
+				(*r)[term] = packages
+			}
+
 		}(&wg, searchTerm, &termMap)
 	}
 	wg.Wait()
@@ -406,4 +412,16 @@ func (ac *ArtifactHubPackageClient) get(path string, urlValues url.Values) (*htt
 		break
 	}
 	return response, err
+}
+
+func removeDuplicateStr(strSlice []string) []string {
+	allKeys := make(map[string]bool)
+	list := []string{}
+	for _, item := range strSlice {
+		if _, value := allKeys[item]; !value {
+			allKeys[item] = true
+			list = append(list, item)
+		}
+	}
+	return list
 }
