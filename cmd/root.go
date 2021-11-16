@@ -77,7 +77,9 @@ func init() {
 	klog.InitFlags(nil)
 	_ = flag.Set("alsologtostderr", "true")
 	_ = flag.Set("logtostderr", "true")
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.CommandLine.AddGoFlag(flag.Lookup("alsologtostderr"))
+	pflag.CommandLine.AddGoFlag(flag.Lookup("logtostderr"))
+	pflag.CommandLine.AddGoFlag(flag.Lookup("v"))
 }
 
 func initConfig() {
