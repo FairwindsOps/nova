@@ -44,6 +44,7 @@ func NewHelm(kubeContext string) *Helm {
 	}
 }
 
+// GetReleaseOutput returns releases and chart names
 func (h *Helm) GetReleaseOutput() (outputObjects []*release.Release, chartNames []string, err error) {
 	outputObjects, err = h.GetHelmReleases()
 	if err != nil {
@@ -58,6 +59,7 @@ func (h *Helm) GetReleaseOutput() (outputObjects []*release.Release, chartNames 
 	return
 }
 
+// GetHelmReleases returns a list of helm releases from the cluster
 func (h *Helm) GetHelmReleases() ([]*release.Release, error) {
 	hs := helmdriver.NewSecrets(h.Kube.Client.CoreV1().Secrets(""))
 	helmClient := helmstorage.Init(hs)
@@ -69,6 +71,7 @@ func (h *Helm) GetHelmReleases() ([]*release.Release, error) {
 	return deployed, nil
 }
 
+// OverrideDesiredVersion accepts a list of releases and overrides the version stored in the helm struct where required
 func (h *Helm) OverrideDesiredVersion(rls *output.ReleaseOutput) {
 	for _, override := range h.DesiredVersions {
 		if rls.ChartName == override.Name {

@@ -58,7 +58,7 @@ type ArtifactHubPackagesSearchReturn struct {
 	httpResponse *http.Response
 }
 
-// ArtifactHubPackagesSearch represents a single search return object from the ArtifactHub `packages/search` API.
+// ArtifactHubPackageSearch represents a single search return object from the ArtifactHub `packages/search` API.
 type ArtifactHubPackageSearch struct {
 	PackageID                      string                           `json:"package_id"`
 	Name                           string                           `json:"name"`
@@ -88,7 +88,7 @@ type ArtifactHubSecurityReportSummary struct {
 
 // ArtifactHubRepository is a child struct of ArtifactHubPackageSearch represents a helm chart repository as provided by the ArtifactHub API.
 type ArtifactHubRepository struct {
-	Url                     string `json:"url"`
+	URL                     string `json:"url"`
 	Kind                    int    `json:"kind"`
 	Name                    string `json:"name"`
 	Official                bool   `json:"official"`
@@ -315,12 +315,11 @@ func (ac *ArtifactHubPackageClient) Search(searchTerm string, offset int) (ret A
 		}
 		ret.httpResponse = resp
 		return
-	} else {
-		klog.V(3).Infof("got non-200 response searching for term '%s': %d", searchTerm, resp.StatusCode)
-		return ArtifactHubPackagesSearchReturn{
-			err:          fmt.Errorf("error code: %d", resp.StatusCode),
-			httpResponse: resp,
-		}
+	}
+	klog.V(3).Infof("got non-200 response searching for term '%s': %d", searchTerm, resp.StatusCode)
+	return ArtifactHubPackagesSearchReturn{
+		err:          fmt.Errorf("error code: %d", resp.StatusCode),
+		httpResponse: resp,
 	}
 }
 
@@ -366,12 +365,11 @@ func (ac *ArtifactHubPackageClient) getSpecific(path string) (ret ArtifactHubPac
 		}
 		ret.httpResponse = resp
 		return
-	} else {
-		klog.V(3).Infof("got non-200 response for path %s: %d", path, resp.StatusCode)
-		return ArtifactHubPackageReturn{
-			err:          fmt.Errorf("error code: %d", resp.StatusCode),
-			httpResponse: resp,
-		}
+	}
+	klog.V(3).Infof("got non-200 response for path %s: %d", path, resp.StatusCode)
+	return ArtifactHubPackageReturn{
+		err:          fmt.Errorf("error code: %d", resp.StatusCode),
+		httpResponse: resp,
 	}
 }
 
@@ -381,9 +379,9 @@ func (ac *ArtifactHubPackageClient) getSpecific(path string) (ret ArtifactHubPac
 // urlValues are the search parameters for the query if necessary.
 // offset is to be used for pagination. The first page would be offset 0.
 func (ac *ArtifactHubPackageClient) get(path string, urlValues url.Values) (*http.Response, error) {
-	requestUrl := *ac.URL
-	requestUrl.Path = path
-	urlString := requestUrl.String()
+	requestURL := *ac.URL
+	requestURL.Path = path
+	urlString := requestURL.String()
 	r, err := http.NewRequest("GET", urlString, nil)
 	if err != nil {
 		return nil, err

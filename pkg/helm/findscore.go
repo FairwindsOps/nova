@@ -24,6 +24,7 @@ import (
 	"k8s.io/klog"
 )
 
+// FindBestArtifactHubMatch takes the helm releases found in the cluster and attempts to match those to a package in artifacthub
 func FindBestArtifactHubMatch(clusterRelease *release.Release, ahubPackages []ArtifactHubHelmPackage) *output.ReleaseOutput {
 	var highScore int
 	var highScorePackage ArtifactHubHelmPackage
