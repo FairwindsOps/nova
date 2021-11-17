@@ -17,6 +17,7 @@ package helm
 import (
 	"testing"
 
+	"github.com/fairwindsops/nova/pkg/output"
 	"github.com/stretchr/testify/assert"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
@@ -38,6 +39,63 @@ var emptyRelease = release.Release{
 	},
 }
 
+var ahubPackage = ArtifactHubHelmPackage{
+	Name:        "test",
+	Description: "This is a chart.",
+	HomeURL:     "https://example.com/charts",
+	Links: []Link{
+		{
+			Name: "source",
+			URL:  "https://example.com/charts",
+		},
+	},
+	Maintainers: []Maintainer{
+		{
+			Email: "me@example.com",
+			Name:  "John",
+		},
+	},
+	AvailableVersions: []AvailableVersion{
+		{
+			Version: "1.0.0",
+		},
+		{
+			Version: "1.0.1",
+		},
+	},
+	Version:    "1.0.1",
+	AppVersion: "1.0.1",
+	Deprecated: false,
+	Repository: ArtifactHubRepository{
+		Name:              "fairwinds-stable",
+		VerifiedPublisher: true,
+	},
+}
+
+var helmRelease = &release.Release{
+	Name:      "test",
+	Namespace: "test",
+	Chart: &chart.Chart{
+		Metadata: &chart.Metadata{
+			Name:        "test",
+			Version:     "1.0.0",
+			AppVersion:  "1.0.0",
+			Home:        "https://example.com/charts",
+			Description: "This is a chart.",
+			Icon:        "https://example.com/charts/icon.png",
+			Sources: []string{
+				"https://example.com/charts",
+			},
+			Maintainers: []*chart.Maintainer{
+				{
+					Email: "me@example.com",
+					Name:  "John",
+				},
+			},
+		},
+	},
+}
+
 func Test_scoreChartSimilarity(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -46,54 +104,10 @@ func Test_scoreChartSimilarity(t *testing.T) {
 		want    int
 	}{
 		{
-			name: "highest score",
-			release: &release.Release{
-				Chart: &chart.Chart{
-					Metadata: &chart.Metadata{
-						Version:     "1.0.0",
-						Home:        "https://example.com/charts",
-						Description: "This is a chart.",
-						Sources: []string{
-							"https://example.com/charts",
-						},
-						Maintainers: []*chart.Maintainer{
-							{
-								Email: "me@example.com",
-								Name:  "John",
-							},
-						},
-					},
-				},
-			},
-			pkg: ArtifactHubHelmPackage{
-				Description: "This is a chart.",
-				HomeURL:     "https://example.com/charts",
-				Links: []Link{
-					{
-						Name: "source",
-						URL:  "https://example.com/charts",
-					},
-				},
-				Maintainers: []Maintainer{
-					{
-						Email: "me@example.com",
-						Name:  "John",
-					},
-				},
-				AvailableVersions: []AvailableVersion{
-					{
-						Version: "1.0.0",
-					},
-					{
-						Version: "1.0.1",
-					},
-				},
-				Repository: ArtifactHubRepository{
-					Name:              "fairwinds-stable",
-					VerifiedPublisher: true,
-				},
-			},
-			want: 7,
+			name:    "highest score",
+			release: helmRelease,
+			pkg:     ahubPackage,
+			want:    7,
 		},
 		{
 			name:    "empty pkg struct",
@@ -110,6 +124,48 @@ func Test_scoreChartSimilarity(t *testing.T) {
 			got := scoreChartSimilarity(tt.release, tt.pkg)
 			if got != tt.want {
 				t.Errorf("scoreChartSimilarity() got =%v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_prepareOutput(t *testing.T) {
+	tests := []struct {
+		name    string
+		release *release.Release
+		pkg     ArtifactHubHelmPackage
+		want    *output.ReleaseOutput
+	}{
+		{
+			name:    "proper output",
+			release: helmRelease,
+			pkg:     ahubPackage,
+			want: &output.ReleaseOutput{
+				ReleaseName: "test",
+				ChartName:   "test",
+				Namespace:   "test",
+				Description: "This is a chart.",
+				Home:        "https://example.com/charts",
+				Icon:        "https://example.com/charts/icon.png",
+				Installed: output.VersionInfo{
+					Version:    "1.0.0",
+					AppVersion: "1.0.0",
+				},
+				Latest: output.VersionInfo{
+					Version:    "1.0.1",
+					AppVersion: "1.0.1",
+				},
+				IsOld:       true,
+				Deprecated:  false,
+				HelmVersion: "3",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := prepareOutput(tt.release, tt.pkg)
+			if !assert.Equal(t, got, tt.want) {
+				t.Errorf("prepareOutput() got: %v, want: %v", got, tt.want)
 			}
 		})
 	}
