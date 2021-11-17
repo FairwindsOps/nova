@@ -67,6 +67,7 @@ func TestHelm_OverrideDesiredVersion(t *testing.T) {
 					Version:    "1.1.1",
 					AppVersion: "",
 				},
+				IsOld:      true,
 				Overridden: true,
 			},
 		},

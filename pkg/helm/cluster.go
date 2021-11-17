@@ -18,6 +18,7 @@ import (
 	"fmt"
 
 	"github.com/fairwindsops/nova/pkg/output"
+	version "github.com/mcuadros/go-version"
 	"helm.sh/helm/v3/pkg/release"
 	helmstorage "helm.sh/helm/v3/pkg/storage"
 	helmdriver "helm.sh/helm/v3/pkg/storage/driver"
@@ -76,6 +77,7 @@ func (h *Helm) OverrideDesiredVersion(rls *output.ReleaseOutput) {
 				Version:    override.Version,
 				AppVersion: "",
 			}
+			rls.IsOld = version.Compare(rls.Installed.Version, override.Version, "<")
 			rls.Overridden = true
 		}
 	}
