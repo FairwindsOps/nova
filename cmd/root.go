@@ -223,9 +223,6 @@ var genConfigCmd = &cobra.Command{
 	Short: "Generate a config file.",
 	Long:  "Generate a configuration file with all of the default configuration values.",
 	Run: func(cmd *cobra.Command, args []string) {
-		if viper.GetString("helm-version") != "3" {
-			klog.Warning("DEPRECATION: --helm-version explicitly set to either 'auto' or '2'. In v3 of Nova, Helm 2 support will be removed.")
-		}
 		err := viper.SafeWriteConfigAs(cfgFile)
 		if err != nil {
 			klog.Fatal(err)
