@@ -210,7 +210,7 @@ func (ac *ArtifactHubPackageClient) SearchPackages(searchTerm string) ([]Artifac
 				defer wg.Done()
 				searchReturn := ac.Search(sTerm, offset)
 				if searchReturn.err != nil {
-					klog.Errorf("error searching for term '%s': %s", sTerm, searchReturn.err)
+					klog.V(3).Infof("error searching for term '%s': %s", sTerm, searchReturn.err)
 				}
 				for i, p := range searchReturn.Packages {
 					if offset+i > len(*ret) {
@@ -258,7 +258,7 @@ func (ac *ArtifactHubPackageClient) MultiSearch(searchTerms []string) ([]Artifac
 			defer wg.Done()
 			packages, err := ac.SearchForPackageRepo(term)
 			if err != nil {
-				klog.Errorf("error searching for term %s", err)
+				klog.V(3).Infof("error searching for term %s", err)
 				(*r)[term] = nil
 				return
 			}
@@ -334,7 +334,7 @@ func (ac *ArtifactHubPackageClient) GetPackages(packageRepos []ArtifactHubPackag
 			defer wg.Done()
 			response := ac.getSpecific(fmt.Sprintf("api/v1/packages/helm/%s/%s", repo.RepoName, repo.PackageName))
 			if response.err != nil {
-				klog.Errorf("error getting package %s/%s: %s", repo.RepoName, repo.PackageName, response.err)
+				klog.V(3).Infof("error getting package %s/%s: %s", repo.RepoName, repo.PackageName, response.err)
 			}
 			(*ret)[index] = response.Package
 		}(i, r, &wg, &ret)
