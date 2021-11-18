@@ -45,10 +45,11 @@ func NewHelm(kubeContext string) *Helm {
 }
 
 // GetReleaseOutput returns releases and chart names
-func (h *Helm) GetReleaseOutput() (outputObjects []*release.Release, chartNames []string, err error) {
-	outputObjects, err = h.GetHelmReleases()
+func (h *Helm) GetReleaseOutput() ([]*release.Release, []string, error) {
+	var chartNames = []string{}
+	outputObjects, err := h.GetHelmReleases()
 	if err != nil {
-		err = fmt.Errorf("could not detect helm 3 charts.\nError: %v", err)
+		err = fmt.Errorf("could not detect helm 3 charts: %v", err)
 	}
 	if outputObjects != nil {
 		chartNames = make([]string, len(outputObjects))
@@ -56,7 +57,7 @@ func (h *Helm) GetReleaseOutput() (outputObjects []*release.Release, chartNames 
 			chartNames[i] = release.Chart.Metadata.Name
 		}
 	}
-	return
+	return outputObjects, chartNames, err
 }
 
 // GetHelmReleases returns a list of helm releases from the cluster
