@@ -71,6 +71,7 @@ func scoreChartSimilarity(release *release.Release, pkg ArtifactHubHelmPackage) 
 		"bitnami",
 		"fairwinds-stable",
 		"ingress-nginx",
+		"cert-manager",
 	}
 	if release.Chart.Metadata.Home == pkg.HomeURL {
 		klog.V(10).Infof("+1 score for %s Home URL (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
