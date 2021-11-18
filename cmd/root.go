@@ -200,10 +200,10 @@ var clusterCmd = &cobra.Command{
 			IncludeAll: viper.GetBool("include-all"),
 		}
 		for _, release := range releases {
-			output := nova_helm.FindBestArtifactHubMatch(release, packages)
-			if output != nil {
-				h.OverrideDesiredVersion(output)
-				out.HelmReleases = append(out.HelmReleases, *output)
+			o := nova_helm.FindBestArtifactHubMatch(release, packages)
+			if o != nil {
+				h.OverrideDesiredVersion(o)
+				out.HelmReleases = append(out.HelmReleases, *o)
 			}
 		}
 		outputFile := viper.GetString("output-file")
