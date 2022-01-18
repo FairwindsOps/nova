@@ -1,10 +1,8 @@
 module github.com/fairwindsops/nova
 
-go 1.15
+go 1.17
 
 require (
-	// required for dependency issue: https://github.com/kubernetes/client-go/issues/628
-	github.com/Azure/go-autorest v12.2.0+incompatible
 	github.com/DATA-DOG/go-sqlmock v1.4.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/jmoiron/sqlx v1.2.0 // indirect
@@ -33,6 +31,49 @@ require (
 	k8s.io/helm v2.16.5+incompatible
 	k8s.io/klog v1.0.0
 	sigs.k8s.io/controller-runtime v0.5.2
+)
+
+require (
+	cloud.google.com/go v0.46.3 // indirect
+	github.com/Azure/go-autorest/autorest v0.9.0 // indirect
+	github.com/Azure/go-autorest/autorest/adal v0.5.0 // indirect
+	github.com/Azure/go-autorest/autorest/date v0.1.0 // indirect
+	github.com/Azure/go-autorest/logger v0.1.0 // indirect
+	github.com/Azure/go-autorest/tracing v0.5.0 // indirect
+	github.com/Masterminds/semver/v3 v3.0.3 // indirect
+	github.com/cyphar/filepath-securejoin v0.2.2 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
+	github.com/go-logr/logr v0.1.0 // indirect
+	github.com/gogo/protobuf v1.3.1 // indirect
+	github.com/golang/protobuf v1.3.2 // indirect
+	github.com/google/gofuzz v1.1.0 // indirect
+	github.com/googleapis/gnostic v0.3.1 // indirect
+	github.com/gophercloud/gophercloud v0.1.0 // indirect
+	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/imdario/mergo v0.3.7 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/json-iterator/go v1.1.8 // indirect
+	github.com/mitchellh/copystructure v1.0.0 // indirect
+	github.com/mitchellh/reflectwalk v1.0.0 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/subosito/gotenv v1.2.0 // indirect
+	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
+	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
+	github.com/xeipuuv/gojsonschema v1.1.0 // indirect
+	golang.org/x/crypto v0.0.0-20200220183623-bac4c82f6975 // indirect
+	golang.org/x/net v0.0.0-20191004110552-13f9640d40b9 // indirect
+	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
+	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
+	google.golang.org/appengine v1.6.5 // indirect
+	gopkg.in/gorp.v1 v1.7.2 // indirect
+	gopkg.in/inf.v0 v0.9.0 // indirect
+	k8s.io/api v0.18.1 // indirect
+	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89 // indirect
+	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
 // FIXME: we shouldn't need a replace directive....
