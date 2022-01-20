@@ -3,6 +3,27 @@ version: 2.1
 orbs:
   rok8s: fairwinds/rok8s-scripts@11
 
+references:
+  enable_experimental_features: &enable_experimental_docker_features
+    run:
+      name: enable experimental features
+      command: |
+        set -ex
+        apk --update add openssh
+        ssh remote-docker \<<EOF
+          sudo bash -c 'echo "{\"experimental\": true}" > /etc/docker/daemon.json'
+          sudo systemctl restart docker
+        EOF
+  install_vault: &install_vault
+    run:
+      name: install hashicorp vault
+      command: |
+        apk --update add curl yq
+        cd /tmp
+        curl -LO https://releases.hashicorp.com/vault/1.9.2/vault_1.9.2_linux_amd64.zip
+        unzip vault_1.9.2_linux_amd64.zip
+        mv vault /usr/bin/vault
+
 jobs:
   test:
     working_directory: /go/src/github.com/fairwindsops/nova
@@ -24,20 +45,37 @@ jobs:
             go tool cover -html=coverage.txt -o cover-report.html
   snapshot:
     working_directory: /go/src/github.com/fairwindsops/nova
+    resource_class: large
     docker:
-      - image: goreleaser/goreleaser:v0.184.0
+      - image: goreleaser/goreleaser:v1.3.0
     steps:
       - checkout
+      - setup_remote_docker:
+          version: 20.10.6
+      - *enable_experimental_docker_features
       - run: goreleaser --snapshot
       - store_artifacts:
           path: dist
           destination: snapshot
-  release-binary:
+  release:
     working_directory: /go/src/github.com/fairwindsops/nova
+    resource_class: large
+    shell: /bin/bash
     docker:
-      - image: goreleaser/goreleaser:v0.184.0
+      - image: goreleaser/goreleaser:v1.3.0
     steps:
       - checkout
+      - setup_remote_docker:
+          version: 20.10.6
+      - *enable_experimental_docker_features
+      - *install_vault
+      - rok8s/get_vault_env:
+          vault_path: repo/global/env
+      - rok8s/docker_login:
+          registry: "quay.io"
+          username: $FAIRWINDS_QUAY_USER
+          password-variable: FAIRWINDS_QUAY_TOKEN
+      - run: echo 'export GORELEASER_CURRENT_TAG="${CIRCLE_TAG}"' >> $BASH_ENV
       - run: goreleaser
   publish_docs:
     docker:
@@ -53,11 +91,29 @@ jobs:
             npm run check-links
             npm run build
       - run:
-          name: Install AWS CLI
+          name: Install Tools
           command: |
+            cd /tmp
+            echo "Installing AWS CLI"
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip awscliv2.zip
             sudo ./aws/install
+
+            echo "Installing Hashicorp Vault"
+            curl -LO https://releases.hashicorp.com/vault/1.9.2/vault_1.9.2_linux_amd64.zip
+            unzip vault_1.9.2_linux_amd64.zip
+            sudo mv vault /usr/bin/vault
+            sudo chmod +x /usr/bin/vault
+            vault --version
+
+            echo "Installing yq"
+            curl -LO https://github.com/mikefarah/yq/releases/download/v4.16.2/yq_linux_amd64.tar.gz
+            tar -zxvf yq_linux_amd64.tar.gz
+            sudo mv yq_linux_amd64 /usr/bin/yq
+            sudo chmod +x /usr/bin/yq
+            yq --version
+      - rok8s/get_vault_env:
+          vault_path: repo/nova/env
       - run:
           name: Publish Docs Site to S3
           command: |
@@ -77,35 +133,6 @@ workflows:
               only: /.*/
             tags:
               ignore: /.*/
-      - rok8s/docker_build_and_push:
-          name: build-container
-          docker-push: false
-          password-variable: "fairwinds_quay_token"
-          enable_docker_layer_caching: true
-          config_file: .circleci/build.config
-          requires:
-            - test
-          filters:
-            branches:
-              only: /pull\/[0-9]+/
-      - rok8s/docker_build_and_push:
-          name: build-and-push-container
-          docker-push: true
-          enable_docker_layer_caching: true
-          config_file: .circleci/build.config
-          context: org-global
-          docker-login: true
-          password-variable: "fairwinds_quay_token"
-          registry: quay.io
-          username: fairwinds+circleci
-          requires:
-            - test
-          filters:
-            branches:
-              ignore: /pull\/[0-9]+/
-            tags:
-              ignore: /.*/
-
   release:
     jobs:
       - publish_docs:
@@ -114,23 +141,8 @@ workflows:
               ignore: /.*/
             tags:
               only: /.*/
-      - release-binary:
+      - release:
           context: org-global
-          filters:
-            branches:
-              ignore: /.*/
-            tags:
-              only: /.*/
-      - rok8s/docker_build_and_push:
-          name: build-and-push-container
-          docker-push: true
-          enable_docker_layer_caching: false
-          config_file: .circleci/build.config
-          context: org-global
-          docker-login: true
-          password-variable: "fairwinds_quay_token"
-          registry: quay.io
-          username: fairwinds+circleci
           filters:
             branches:
               ignore: /.*/

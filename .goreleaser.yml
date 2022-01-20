@@ -1,5 +1,6 @@
 project_name: nova
 release:
+  prerelease: auto
   github:
     owner: FairwindsOps
     name: nova
@@ -20,6 +21,9 @@ builds:
       - linux
       - darwin
       - windows
+    ignore:
+      - goos: windows
+        goarch: arm64
 checksum:
   name_template: 'checksums.txt'
 changelog:
@@ -37,3 +41,48 @@ brews:
     description: Check installed Helm charts for updates
     test: |
       system "#{bin}/nova version"
+
+dockers:
+- image_templates:
+  - "quay.io/fairwinds/nova:{{ .FullCommit }}-amd64"
+  - "quay.io/fairwinds/nova:{{ .Tag }}-amd64"
+  - "quay.io/fairwinds/nova:v{{ .Major }}-amd64"
+  - "quay.io/fairwinds/nova:v{{ .Major }}.{{ .Minor }}-amd64"
+  use: buildx
+  dockerfile: Dockerfile
+  build_flag_templates:
+  - "--platform=linux/amd64"
+- image_templates:
+  - "quay.io/fairwinds/nova:{{ .Tag }}-arm64v8"
+  - "quay.io/fairwinds/nova:v{{ .Major }}-arm64v8"
+  - "quay.io/fairwinds/nova:v{{ .Major }}.{{ .Minor }}-arm64v8"
+  use: buildx
+  goarch: arm64
+  dockerfile: Dockerfile
+  build_flag_templates:
+  - "--platform=linux/arm64/v8"
+- image_templates:
+  - "quay.io/fairwinds/nova:{{ .Tag }}-armv7"
+  - "quay.io/fairwinds/nova:v{{ .Major }}-armv7"
+  - "quay.io/fairwinds/nova:v{{ .Major }}.{{ .Minor }}-armv7"
+  use: buildx
+  goarch: arm64
+  dockerfile: Dockerfile
+  build_flag_templates:
+  - "--platform=linux/arm/v7"
+docker_manifests:
+- name_template: quay.io/fairwinds/nova:{{ .Tag }}
+  image_templates:
+  - "quay.io/fairwinds/nova:{{ .Tag }}-amd64"
+  - "quay.io/fairwinds/nova:{{ .Tag }}-arm64v8"
+  - "quay.io/fairwinds/nova:{{ .Tag }}-armv7"
+- name_template: quay.io/fairwinds/nova:v{{ .Major }}
+  image_templates:
+  - "quay.io/fairwinds/nova:v{{ .Major }}-amd64"
+  - "quay.io/fairwinds/nova:v{{ .Major }}-arm64v8"
+  - "quay.io/fairwinds/nova:v{{ .Major }}-armv7"
+- name_template: quay.io/fairwinds/nova:v{{ .Major }}.{{ .Minor }}
+  image_templates:
+  - "quay.io/fairwinds/nova:v{{ .Major }}.{{ .Minor }}-amd64"
+  - "quay.io/fairwinds/nova:v{{ .Major }}.{{ .Minor }}-arm64v8"
+  - "quay.io/fairwinds/nova:v{{ .Major }}.{{ .Minor }}-armv7"
