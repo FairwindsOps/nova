@@ -17,23 +17,26 @@ desired-versions:
 
 Example run with config:
 ```
-$ nova find --config nova.yaml  --poll-helm-hub=false
+$ nova find --config nova.yaml
 Release Name      Installed    Latest    Old     Deprecated
-metrics-server    5.3.3        6.0.0     true    false
+============      =========    ======    ===     ==========
+metrics-server    5.6.0        6.0.0     true    false
 ```
 
-Then again, without the config and polling helm hub:
+Then again, without the config:
 ```
 $ nova find
-Release Name      Installed    Latest    Old      Deprecated
-metrics-server    5.3.3        5.3.3     false    false
+Release Name      Installed    Latest     Old     Deprecated
+============      =========    ======     ===     ==========
+metrics-server    5.6.0        5.10.10    true    false
 ```
 
 ## Using the CLI
 
 ```
 $ nova find --desired-versions='metrics-server=6.0.0,vpa=12.0.0'
-Release Name      Installed    Latest    Old     Deprecated
-metrics-server    5.3.3        6.0.0     true    false
-vpa               0.2.2        12.0.0    true    false
+Release Name      Installed    Latest     Old     Deprecated
+============      =========    ======     ===     ==========
+metrics-server    5.3.3        6.0.0      true    false
+vpa               0.2.2        12.0.0     true    false
 ```

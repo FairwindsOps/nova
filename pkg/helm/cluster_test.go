@@ -21,14 +21,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHelm_overrideDesiredVersion(t *testing.T) {
-	type fields struct {
-		DesiredVersions []DesiredVersion
-	}
-	type args struct {
-		rls       *output.ReleaseOutput
-		chartName string
-	}
+func TestHelm_OverrideDesiredVersion(t *testing.T) {
 	tests := []struct {
 		name            string
 		desiredVersions []DesiredVersion
@@ -74,6 +67,7 @@ func TestHelm_overrideDesiredVersion(t *testing.T) {
 					Version:    "1.1.1",
 					AppVersion: "",
 				},
+				IsOld:      true,
 				Overridden: true,
 			},
 		},
@@ -83,7 +77,7 @@ func TestHelm_overrideDesiredVersion(t *testing.T) {
 			h := &Helm{
 				DesiredVersions: tt.desiredVersions,
 			}
-			h.overrideDesiredVersion(tt.input)
+			h.OverrideDesiredVersion(tt.input)
 			assert.EqualValues(t, tt.want, tt.input)
 		})
 	}

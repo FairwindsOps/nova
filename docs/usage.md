@@ -10,15 +10,16 @@ nova find --wide
 ```
 
 ## Options
+* `-h`, `--help` - help for nova
 * `--config` - Pass a config file that can control the remaining settings. Command-line arguments still take precedence
-* `--helm-version` - DEPRECATED: Only helm 3 usage in the future. which version of Helm to use. Options are `2`, `3`, and `auto` (default is `3`)
 * `--context` - Sets a specific context in the kubeconfig. If blank, uses the currently set context.
 * `-d`, `--desired-versions` - A map of `chart=override_version` to override the helm repository when checking.
-* `--wide` - show `Chart Name`,  `Namespace` and `HelmVersion`
+* `-a`, `--include-all` - Show all charts even if no latest version is found.
 * `--output-file` - output JSON to a file
-* `--url strings`, `-u` - URL for a helm chart repo (default [https://charts.fairwinds.com/stable,https://charts.fairwinds.com/incubator,https://kubernetes-charts.storage.googleapis.com,https://kubernetes-charts-incubator.storage.googleapis.com,https://charts.jetstack.io])
-* `--poll-helm-hub` - When true, polls all helm repos that publish to helm hub (Default is true).
-* `--helm-hub-config` - The URL to the helm hub sync config. (default is "https://raw.githubusercontent.com/helm/hub/master/config/repo-values.yaml")
+* `-v Level`, `--v Level` - set the log verbosity level where `Level` is a number between 1 and 10.
+* `--wide` - show `Chart Name`,  `Namespace` and `HelmVersion`
+* `--alsologtostderr` - log to standard error as well as files
+* `--logtostderr` - log to standard error instead of files
 
 ## Generate Config
 
@@ -30,16 +31,8 @@ cat nova.yaml
 
 context: ""
 desired-versions: {}
-helm-hub-config: https://raw.githubusercontent.com/helm/hub/master/config/repo-values.yaml
-helm-version: "3"
+include-all: false
 output-file: ""
-poll-helm-hub: true
-url:
-- https://charts.fairwinds.com/stable
-- https://charts.fairwinds.com/incubator
-- https://kubernetes-charts.storage.googleapis.com
-- https://kubernetes-charts-incubator.storage.googleapis.com
-- https://charts.jetstack.io
 wide: false
 ```
 
@@ -49,19 +42,20 @@ Below is sample output for Nova
 ### CLI
 ```bash
 Release Name      Installed    Latest     Old     Deprecated
-cert-manager      v0.11.0      v0.15.2    true    false
-insights-agent    0.21.0       0.21.1     true    false
-grafana           2.1.3        3.1.1      true    false
-metrics-server    2.8.8        2.11.1     true    false
-nginx-ingress     1.25.0       1.40.3     true    false
+============      =========    ======     ===     ==========
+goldilocks        3.3.1        4.0.1      true    false
+metrics-server    5.6.0        5.10.10    true    false
+redis             15.4.1       15.5.5     true    false
 ```
 
 ### CLI (with --wide)
 
 ```
-Release Name      Chart Name        Namespace         HelmVersion    Installed    Latest    Old      Deprecated
-metrics-server    metrics-server    metrics-server    v3             5.3.3        5.3.3     false    false
-vpa               vpa               vpa               v3             0.2.2        0.2.2     false    false
+Release Name      Chart Name        Namespace         HelmVersion    Installed    Latest     Old     Deprecated
+============      ==========        =========         ===========    =========    ======     ===     ==========
+goldilocks        goldilocks        goldilocks        3              3.3.1        4.0.1      true    false
+metrics-server    metrics-server    metrics-server    3              5.6.0        5.10.10    true    false
+redis             redis             redis             3              15.4.1       15.5.5     true    false
 ```
 
 ### JSON
@@ -69,23 +63,23 @@ vpa               vpa               vpa               v3             0.2.2      
 {
     "helm": [
         {
-            "release": "cert-manager",
-            "chartName": "cert-manager",
-            "namespace": "cert-manager",
-            "description": "A Helm chart for cert-manager",
-            "home": "https://github.com/jetstack/cert-manager",
-            "icon": "https://raw.githubusercontent.com/jetstack/cert-manager/master/logo/logo.png",
-            "Installed": {
-                "version": "v0.11.0",
-                "appVersion": "v0.11.0"
-            },
-            "Latest": {
-                "version": "v0.16.0",
-                "appVersion": "v0.16.0"
-            },
-            "helmVersion": "v3",
-            "outdated": true,
-            "deprecated": false
+          "release": "goldilocks",
+          "chartName": "goldilocks",
+          "namespace": "goldilocks",
+          "description": "A Helm chart for running Fairwinds Goldilocks. See https://github.com/FairwindsOps/goldilocks\n",
+          "icon": "https://raw.githubusercontent.com/FairwindsOps/charts/master/stable/goldilocks/icon.png",
+          "Installed": {
+            "version": "3.3.1",
+            "appVersion": "v3.1.4"
+          },
+          "Latest": {
+            "version": "4.0.1",
+            "appVersion": "v4.0.0"
+          },
+          "outdated": true,
+          "deprecated": false,
+          "helmVersion": "3",
+          "overridden": false
         }
     ]
 }
