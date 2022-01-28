@@ -166,7 +166,7 @@ var clusterCmd = &cobra.Command{
 	Long:  "Find deployed helm releases that have updated charts available in chart repos",
 	Run: func(cmd *cobra.Command, args []string) {
 		h := nova_helm.NewHelm(viper.GetString("context"))
-		ahClient, err := nova_helm.NewArtifactHubPackageClient()
+		ahClient, err := nova_helm.NewArtifactHubPackageClient(version)
 		if err != nil {
 			klog.Fatalf("error setting up artifact hub client: %s", err)
 		}

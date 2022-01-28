@@ -33,9 +33,10 @@ const (
 
 // ArtifactHubPackageClient provides the various pieces to interact with the ArtifactHub API.
 type ArtifactHubPackageClient struct {
-	APIRoot string
-	URL     *url.URL
-	Client  *http.Client
+	APIRoot   string
+	URL       *url.URL
+	Client    *http.Client
+	UserAgent string
 }
 
 // ArtifactHubPackageRepo is a simple struct to show a relationship between a helm package name and its repository.
@@ -166,7 +167,7 @@ type Link struct {
 }
 
 // NewArtifactHubPackageClient returns a new client for the unauthenticated paths of the ArtifactHub API.
-func NewArtifactHubPackageClient() (*ArtifactHubPackageClient, error) {
+func NewArtifactHubPackageClient(version string) (*ArtifactHubPackageClient, error) {
 	apiRoot := artifactHubAPIRoot
 	u, err := url.ParseRequestURI(apiRoot)
 	if err != nil {
@@ -174,9 +175,10 @@ func NewArtifactHubPackageClient() (*ArtifactHubPackageClient, error) {
 	}
 	client := new(http.Client)
 	return &ArtifactHubPackageClient{
-		APIRoot: apiRoot,
-		URL:     u,
-		Client:  client,
+		APIRoot:   apiRoot,
+		URL:       u,
+		Client:    client,
+		UserAgent: fmt.Sprintf("Fairwinds-Nova/%s ", version),
 	}, nil
 }
 
@@ -394,6 +396,7 @@ func (ac *ArtifactHubPackageClient) get(path string, urlValues url.Values) (*htt
 	}
 	r.URL.RawQuery = q.Encode()
 	r.Header.Add("accept", "application/json")
+	r.Header.Set("User-Agent", ac.UserAgent)
 	var response *http.Response
 	for attempt := 1; attempt <= 5; attempt++ {
 		resp, innerErr := ac.Client.Do(r)
