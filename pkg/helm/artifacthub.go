@@ -178,7 +178,7 @@ func NewArtifactHubPackageClient(version string) (*ArtifactHubPackageClient, err
 		APIRoot:   apiRoot,
 		URL:       u,
 		Client:    client,
-		UserAgent: fmt.Sprintf("Nova/%s", version),
+		UserAgent: fmt.Sprintf("Fairwinds-Nova/%s ", version),
 	}, nil
 }
 
