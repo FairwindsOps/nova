@@ -20,11 +20,33 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewHubConfig(t *testing.T) {
-	_, iErr := NewHubConfig("invalid-url")
-	assert.NotNil(t, iErr)
-
-	valid, err := NewHubConfig("https://raw.githubusercontent.com/helm/hub/master/config/repo-values.yaml")
-	assert.Nil(t, err)
-	assert.Greater(t, len(valid.Sync.Repos), 0)
+func Test_removeDuplicateString(t *testing.T) {
+	tests := []struct {
+		name  string
+		slice []string
+		want  []string
+	}{
+		{
+			name: "test1",
+			slice: []string{
+				"a",
+				"b",
+				"c",
+				"a",
+			},
+			want: []string{
+				"a",
+				"b",
+				"c",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := removeDuplicateString(tt.slice)
+			if !assert.EqualValues(t, got, tt.want) {
+				t.Errorf("removeDuplicateString() got: %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
