@@ -67,6 +67,7 @@ dockers:
   - "quay.io/fairwinds/nova:v{{ .Major }}.{{ .Minor }}-armv7"
   use: buildx
   goarch: arm
+  goarm: 7
   dockerfile: Dockerfile
   build_flag_templates:
   - "--platform=linux/arm/v7"
