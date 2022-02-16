@@ -166,7 +166,7 @@ func TryToFindNewestReleaseByChart(chart *release.Release, repos []*Repo) *Chart
 	return newestRelease
 }
 
-// GetHelmReleasesVersion3 returns a collection of deployed helm version 3 charts in a cluster.
+// GetHelmReleasesVersion returns a collection of deployed helm version 3 charts in a cluster.
 func (h *Helm) GetHelmReleasesVersion(helmRepos []*Repo, helmReleases []*release.Release) []output.ReleaseOutput {
 	outputObjects := []output.ReleaseOutput{}
 
