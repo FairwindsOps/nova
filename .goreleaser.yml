@@ -58,6 +58,7 @@ dockers:
   - "quay.io/fairwinds/nova:v{{ .Major }}.{{ .Minor }}-arm64v8"
   use: buildx
   goarch: arm64
+  goos: linux
   dockerfile: Dockerfile
   build_flag_templates:
   - "--platform=linux/arm64/v8"
@@ -66,7 +67,9 @@ dockers:
   - "quay.io/fairwinds/nova:v{{ .Major }}-armv7"
   - "quay.io/fairwinds/nova:v{{ .Major }}.{{ .Minor }}-armv7"
   use: buildx
-  goarch: arm64
+  goarch: arm
+  goarm: 7
+  goos: linux
   dockerfile: Dockerfile
   build_flag_templates:
   - "--platform=linux/arm/v7"
