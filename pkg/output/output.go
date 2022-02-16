@@ -54,6 +54,7 @@ type VersionInfo struct {
 
 // ToFile dispatches a message to file
 func (output Output) ToFile(filename string) error {
+	output.dedupe()
 	data, err := json.Marshal(output)
 	if err != nil {
 		klog.Errorf("Error marshaling json: %v", err)
@@ -72,6 +73,7 @@ func (output Output) Print(wide bool) {
 	if len(output.HelmReleases) == 0 {
 		fmt.Println("No releases found")
 	}
+	output.dedupe()
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 	header := "Release Name\t"
 	if wide {
@@ -103,4 +105,25 @@ func (output Output) Print(wide bool) {
 		fmt.Fprintln(w, line)
 	}
 	w.Flush()
+}
+
+// dedupe will remove duplicate releases from the output if both artifacthub and a custom URL to a helm repository find matches.
+// this will always overrite any found by artifacthub with the version from a custom helm repo url because those are found last and
+// will therefore always be at the end of the output.HelmReleases array.
+func (output *Output) dedupe() {
+	klog.V(8).Infof("deduplicating releases for output")
+	var unique []ReleaseOutput
+	type key struct{ releaseName, chartName, namespace string }
+	tracker := make(map[key]int)
+	for _, release := range output.HelmReleases {
+		k := key{release.ReleaseName, release.ChartName, release.Namespace}
+		if i, ok := tracker[k]; ok {
+			klog.V(8).Infof("found duplicate release: '%s', chart: '%s', namespace: '%s'", release.ReleaseName, release.ChartName, release.Namespace)
+			unique[i] = release
+		} else {
+			tracker[k] = len(unique)
+			unique = append(unique, release)
+		}
+	}
+	output.HelmReleases = unique
 }
