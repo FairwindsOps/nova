@@ -149,7 +149,7 @@ func (r *Repo) NewestChartVersion(currentChart *chart.Metadata) *ChartRelease {
 
 // TryToFindNewestReleaseByChart will return the newest chart release given a collection of repos
 func TryToFindNewestReleaseByChart(chart *release.Release, repos []*Repo) *ChartRelease {
-	newestRelease := &ChartRelease{}
+	var newestRelease *ChartRelease
 	for _, repo := range repos {
 		newestInRepo := repo.NewestChartVersion(chart.Chart.Metadata)
 		if newestInRepo == nil {
