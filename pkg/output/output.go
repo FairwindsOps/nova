@@ -54,6 +54,7 @@ type VersionInfo struct {
 	AppVersion string `json:"appVersion"`
 }
 
+// NewOutputWithHelmReleases creates a new output object with the given helm releases pre-populated with the installed version
 func NewOutputWithHelmReleases(helmReleases []*release.Release) Output {
 	var output Output
 	for _, helmRelease := range helmReleases {
