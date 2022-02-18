@@ -206,10 +206,9 @@ var clusterCmd = &cobra.Command{
 		if err != nil {
 			klog.Fatalf("error getting helm releases: %s", err)
 		}
+		out := output.NewOutputWithHelmReleases(releases)
+		out.IncludeAll = viper.GetBool("include-all")
 
-		out := output.Output{
-			IncludeAll: viper.GetBool("include-all"),
-		}
 		if viper.GetBool("poll-artifacthub") {
 			packageRepos, err := ahClient.MultiSearch(chartNames)
 			if err != nil {

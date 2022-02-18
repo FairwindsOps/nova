@@ -21,6 +21,8 @@ import (
 	"os"
 	"text/tabwriter"
 
+	"helm.sh/helm/v3/pkg/release"
+
 	"k8s.io/klog"
 )
 
@@ -50,6 +52,22 @@ type ReleaseOutput struct {
 type VersionInfo struct {
 	Version    string `json:"version"`
 	AppVersion string `json:"appVersion"`
+}
+
+func NewOutputWithHelmReleases(helmReleases []*release.Release) Output {
+	var output Output
+	for _, helmRelease := range helmReleases {
+		var release ReleaseOutput
+		release.ChartName = helmRelease.Chart.Metadata.Name
+		release.ReleaseName = helmRelease.Name
+		release.Namespace = helmRelease.Namespace
+		release.Description = helmRelease.Chart.Metadata.Description
+		release.Home = helmRelease.Chart.Metadata.Home
+		release.Icon = helmRelease.Chart.Metadata.Icon
+		release.Installed = VersionInfo{helmRelease.Chart.Metadata.Version, helmRelease.Chart.Metadata.AppVersion}
+		output.HelmReleases = append(output.HelmReleases, release)
+	}
+	return output
 }
 
 // ToFile dispatches a message to file
@@ -111,14 +129,13 @@ func (output Output) Print(wide bool) {
 // this will always overrite any found by artifacthub with the version from a custom helm repo url because those are found last and
 // will therefore always be at the end of the output.HelmReleases array.
 func (output *Output) dedupe() {
-	klog.V(8).Infof("deduplicating releases for output")
 	var unique []ReleaseOutput
 	type key struct{ releaseName, chartName, namespace string }
 	tracker := make(map[key]int)
 	for _, release := range output.HelmReleases {
 		k := key{release.ReleaseName, release.ChartName, release.Namespace}
 		if i, ok := tracker[k]; ok {
-			klog.V(8).Infof("found duplicate release: '%s', chart: '%s', namespace: '%s'", release.ReleaseName, release.ChartName, release.Namespace)
+			klog.V(8).Infof("found duplicate release output, deduping: '%s', chart: '%s', namespace: '%s'", release.ReleaseName, release.ChartName, release.Namespace)
 			unique[i] = release
 		} else {
 			tracker[k] = len(unique)
