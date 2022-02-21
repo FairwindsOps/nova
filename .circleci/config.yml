@@ -34,7 +34,7 @@ jobs:
       - run:
           name: lint
           command: |
-            go get -u golang.org/x/lint/golint
+            go install golang.org/x/lint/golint@latest
             golint -set_exit_status ./... | tee golint-report.out
             test -z $(go fmt ./...)
       - run:

@@ -57,6 +57,18 @@ func init() {
 		klog.Fatalf("Failed to bind desired-versions flag: %v", err)
 	}
 
+	rootCmd.PersistentFlags().StringSliceP("url", "u", []string{}, "URL for a helm chart repo")
+	err = viper.BindPFlag("url", rootCmd.PersistentFlags().Lookup("url"))
+	if err != nil {
+		klog.Fatalf("Failed to bind url flag: %v", err)
+	}
+
+	rootCmd.PersistentFlags().Bool("poll-artifacthub", true, "When true, polls artifacthub to match against helm releases in the cluster. If false, you must provide a url list via --url/-u. Default is true.")
+	err = viper.BindPFlag("poll-artifacthub", rootCmd.PersistentFlags().Lookup("poll-artifacthub"))
+	if err != nil {
+		klog.Fatalf("Failed to bind poll-artifacthub flag: %v", err)
+	}
+
 	rootCmd.PersistentFlags().String("context", "", "A context to use in the kubeconfig.")
 	err = viper.BindPFlag("context", rootCmd.PersistentFlags().Lookup("context"))
 	if err != nil {
@@ -165,13 +177,17 @@ var clusterCmd = &cobra.Command{
 	Short: "Find out-of-date deployed releases.",
 	Long:  "Find deployed helm releases that have updated charts available in chart repos",
 	Run: func(cmd *cobra.Command, args []string) {
+		if !viper.GetBool("poll-artifacthub") && len(viper.GetStringSlice("url")) == 0 {
+			klog.Fatalf("--poll-artifacthub=false requires urls provided to the --url flag. none were provided.")
+		}
+		klog.V(5).Infof("Settings: %v", viper.AllSettings())
+		klog.V(5).Infof("All Keys: %v", viper.AllKeys())
+
 		h := nova_helm.NewHelm(viper.GetString("context"))
 		ahClient, err := nova_helm.NewArtifactHubPackageClient(version)
 		if err != nil {
 			klog.Fatalf("error setting up artifact hub client: %s", err)
 		}
-		klog.V(5).Infof("Settings: %v", viper.AllSettings())
-		klog.V(5).Infof("All Keys: %v", viper.AllKeys())
 
 		if viper.IsSet("desired-versions") {
 			klog.V(3).Infof("desired-versions is set - attempting to load them")
@@ -190,22 +206,34 @@ var clusterCmd = &cobra.Command{
 		if err != nil {
 			klog.Fatalf("error getting helm releases: %s", err)
 		}
-		packageRepos, err := ahClient.MultiSearch(chartNames)
-		if err != nil {
-			klog.Fatalf("Error getting artifacthub package repos: %v", err)
-		}
-		packages := ahClient.GetPackages(packageRepos)
-		klog.V(2).Infof("found %d possible package matches", len(packages))
-		out := output.Output{
-			IncludeAll: viper.GetBool("include-all"),
-		}
-		for _, release := range releases {
-			o := nova_helm.FindBestArtifactHubMatch(release, packages)
-			if o != nil {
-				h.OverrideDesiredVersion(o)
-				out.HelmReleases = append(out.HelmReleases, *o)
+		out := output.NewOutputWithHelmReleases(releases)
+		out.IncludeAll = viper.GetBool("include-all")
+
+		if viper.GetBool("poll-artifacthub") {
+			packageRepos, err := ahClient.MultiSearch(chartNames)
+			if err != nil {
+				klog.Fatalf("Error getting artifacthub package repos: %v", err)
+			}
+			packages := ahClient.GetPackages(packageRepos)
+			klog.V(2).Infof("found %d possible package matches", len(packages))
+			for _, release := range releases {
+				o := nova_helm.FindBestArtifactHubMatch(release, packages)
+				if o != nil {
+					h.OverrideDesiredVersion(o)
+					out.HelmReleases = append(out.HelmReleases, *o)
+				}
 			}
 		}
+		if len(viper.GetStringSlice("url")) > 0 {
+			repos := viper.GetStringSlice("url")
+			helmRepos := nova_helm.NewRepos(repos)
+			outputObjects := h.GetHelmReleasesVersion(helmRepos, releases)
+			out.HelmReleases = append(out.HelmReleases, outputObjects...)
+			if err != nil {
+				klog.Fatalf("Error getting helm releases from cluster: %v", err)
+			}
+		}
+
 		outputFile := viper.GetString("output-file")
 		if outputFile != "" {
 			err = out.ToFile(outputFile)

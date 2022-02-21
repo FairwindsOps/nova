@@ -21,6 +21,8 @@ import (
 	"os"
 	"text/tabwriter"
 
+	"helm.sh/helm/v3/pkg/release"
+
 	"k8s.io/klog"
 )
 
@@ -52,8 +54,26 @@ type VersionInfo struct {
 	AppVersion string `json:"appVersion"`
 }
 
+// NewOutputWithHelmReleases creates a new output object with the given helm releases pre-populated with the installed version
+func NewOutputWithHelmReleases(helmReleases []*release.Release) Output {
+	var output Output
+	for _, helmRelease := range helmReleases {
+		var release ReleaseOutput
+		release.ChartName = helmRelease.Chart.Metadata.Name
+		release.ReleaseName = helmRelease.Name
+		release.Namespace = helmRelease.Namespace
+		release.Description = helmRelease.Chart.Metadata.Description
+		release.Home = helmRelease.Chart.Metadata.Home
+		release.Icon = helmRelease.Chart.Metadata.Icon
+		release.Installed = VersionInfo{helmRelease.Chart.Metadata.Version, helmRelease.Chart.Metadata.AppVersion}
+		output.HelmReleases = append(output.HelmReleases, release)
+	}
+	return output
+}
+
 // ToFile dispatches a message to file
 func (output Output) ToFile(filename string) error {
+	output.dedupe()
 	data, err := json.Marshal(output)
 	if err != nil {
 		klog.Errorf("Error marshaling json: %v", err)
@@ -72,6 +92,7 @@ func (output Output) Print(wide bool) {
 	if len(output.HelmReleases) == 0 {
 		fmt.Println("No releases found")
 	}
+	output.dedupe()
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 	header := "Release Name\t"
 	if wide {
@@ -103,4 +124,24 @@ func (output Output) Print(wide bool) {
 		fmt.Fprintln(w, line)
 	}
 	w.Flush()
+}
+
+// dedupe will remove duplicate releases from the output if both artifacthub and a custom URL to a helm repository find matches.
+// this will always overrite any found by artifacthub with the version from a custom helm repo url because those are found last and
+// will therefore always be at the end of the output.HelmReleases array.
+func (output *Output) dedupe() {
+	var unique []ReleaseOutput
+	type key struct{ releaseName, chartName, namespace string }
+	tracker := make(map[key]int)
+	for _, release := range output.HelmReleases {
+		k := key{release.ReleaseName, release.ChartName, release.Namespace}
+		if i, ok := tracker[k]; ok {
+			klog.V(8).Infof("found duplicate release output, deduping: '%s', chart: '%s', namespace: '%s'", release.ReleaseName, release.ChartName, release.Namespace)
+			unique[i] = release
+		} else {
+			tracker[k] = len(unique)
+			unique = append(unique, release)
+		}
+	}
+	output.HelmReleases = unique
 }
