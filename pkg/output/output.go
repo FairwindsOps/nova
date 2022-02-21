@@ -23,7 +23,7 @@ import (
 
 	"helm.sh/helm/v3/pkg/release"
 
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // Output is the object that Nova outputs

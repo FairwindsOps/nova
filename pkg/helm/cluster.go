@@ -22,7 +22,7 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	helmstorage "helm.sh/helm/v3/pkg/storage"
 	helmdriver "helm.sh/helm/v3/pkg/storage/driver"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // Helm contains a helm version and kubernetes client interface

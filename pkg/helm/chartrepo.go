@@ -13,7 +13,7 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 
 	"gopkg.in/yaml.v2"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // Repo represents a Helm chart Repo
