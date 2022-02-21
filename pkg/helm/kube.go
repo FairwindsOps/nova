@@ -19,7 +19,7 @@ import (
 	"sync"
 
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 
 	// add all known auth providers
 	_ "k8s.io/client-go/plugin/pkg/client/auth"

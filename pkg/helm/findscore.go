@@ -20,7 +20,7 @@ import (
 	"github.com/fairwindsops/nova/pkg/output"
 	version "github.com/mcuadros/go-version"
 	"helm.sh/helm/v3/pkg/release"
-	"k8s.io/klog"
+	"k8s.io/klog/v2"
 )
 
 // FindBestArtifactHubMatch takes the helm releases found in the cluster and attempts to match those to a package in artifacthub
