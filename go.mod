@@ -9,7 +9,7 @@ require (
 	github.com/spf13/viper v1.10.1
 	github.com/stretchr/testify v1.7.0
 	gopkg.in/yaml.v2 v2.4.0
-	helm.sh/helm/v3 v3.8.0
+	helm.sh/helm/v3 v3.8.1
 	k8s.io/apimachinery v0.23.4
 	k8s.io/client-go v0.23.4
 	k8s.io/klog/v2 v2.40.1
