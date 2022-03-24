@@ -97,6 +97,7 @@ func (r *Repo) loadReleases() error {
 	return nil
 }
 
+
 // NewestVersion returns the newest chart release for the provided release name
 func (r *Repo) NewestVersion(releaseName string) *ChartRelease {
 	for name, entries := range r.Charts.Entries {
@@ -121,7 +122,7 @@ func (r *Repo) NewestVersion(releaseName string) *ChartRelease {
 }
 
 // NewestChartVersion returns the newest chart release for the provided release name and version
-func (r *Repo) NewestChartVersion(currentChart *chart.Metadata) *ChartRelease {
+func (r *Repo) NewestChartVersion(currentChart *chart.Metadata, argo bool) *ChartRelease {
 	for name, entries := range r.Charts.Entries {
 		if name == currentChart.Name {
 			var newest ChartRelease
@@ -129,7 +130,7 @@ func (r *Repo) NewestChartVersion(currentChart *chart.Metadata) *ChartRelease {
 			for _, release := range entries {
 				if IsValidRelease(release.Version) {
 					if release.Version == currentChart.Version {
-						repoHasCurrentVersion = checkChartsSimilarity(currentChart, &release)
+						repoHasCurrentVersion = checkChartsSimilarity(currentChart, &release, argo)
 					}
 
 					foundNewer := version.Compare(release.Version, newest.Version, ">")
@@ -148,10 +149,10 @@ func (r *Repo) NewestChartVersion(currentChart *chart.Metadata) *ChartRelease {
 }
 
 // TryToFindNewestReleaseByChart will return the newest chart release given a collection of repos
-func TryToFindNewestReleaseByChart(chart *release.Release, repos []*Repo) *ChartRelease {
+func TryToFindNewestReleaseByChart(chart *release.Release, repos []*Repo, argo bool) *ChartRelease {
 	var newestRelease *ChartRelease
 	for _, repo := range repos {
-		newestInRepo := repo.NewestChartVersion(chart.Chart.Metadata)
+		newestInRepo := repo.NewestChartVersion(chart.Chart.Metadata, argo)
 		if newestInRepo == nil {
 			continue
 		}
@@ -167,13 +168,13 @@ func TryToFindNewestReleaseByChart(chart *release.Release, repos []*Repo) *Chart
 }
 
 // GetHelmReleasesVersion returns a collection of deployed helm version 3 charts in a cluster.
-func (h *Helm) GetHelmReleasesVersion(helmRepos []*Repo, helmReleases []*release.Release) []output.ReleaseOutput {
+func (h *Helm) GetHelmReleasesVersion(helmRepos []*Repo, helmReleases []*release.Release, argo bool) []output.ReleaseOutput {
 	outputObjects := []output.ReleaseOutput{}
 
 	klog.V(5).Infof("Got %d installed releases in the cluster", len(helmReleases))
 	for _, chart := range helmReleases {
 		validRepos := IsRepoIncluded(chart.Chart.Metadata.Name, helmRepos)
-		newest := TryToFindNewestReleaseByChart(chart, validRepos)
+		newest := TryToFindNewestReleaseByChart(chart, validRepos, argo)
 		if newest != nil {
 			rls := output.ReleaseOutput{
 				ReleaseName: chart.Name,
@@ -214,29 +215,36 @@ func (h *Helm) overrideDesiredVersion(rls *output.ReleaseOutput) {
 	}
 }
 
-func checkChartsSimilarity(currentChartMeta *chart.Metadata, chartFromRepo *ChartRelease) bool {
+func checkChartsSimilarity(currentChartMeta *chart.Metadata, chartFromRepo *ChartRelease, argo bool) bool {
+
+	if currentChartMeta.Name != chartFromRepo.Name {
+		return false
+	}
 
 	if currentChartMeta.Home != chartFromRepo.Home {
 		return false
 	}
 
-	if currentChartMeta.Description != chartFromRepo.Description {
-		return false
-	}
+	if !argo {
 
-	for _, source := range currentChartMeta.Sources {
-		if !containsString(chartFromRepo.Sources, source) {
+		if currentChartMeta.Description != chartFromRepo.Description && !argo {
 			return false
 		}
-	}
 
-	chartFromRepoMaintainers := map[string]bool{}
-	for _, m := range chartFromRepo.Maintainers {
-		chartFromRepoMaintainers[m.Email+";"+m.Name+";"+m.URL] = true
-	}
-	for _, m := range currentChartMeta.Maintainers {
-		if !chartFromRepoMaintainers[m.Email+";"+m.Name+";"+m.URL] {
-			return false
+		for _, source := range currentChartMeta.Sources {
+			if !containsString(chartFromRepo.Sources, source) {
+				return false
+			}
+		}
+
+		chartFromRepoMaintainers := map[string]bool{}
+		for _, m := range chartFromRepo.Maintainers {
+			chartFromRepoMaintainers[m.Email+";"+m.Name+";"+m.URL] = true
+		}
+		for _, m := range currentChartMeta.Maintainers {
+			if !chartFromRepoMaintainers[m.Email+";"+m.Name+";"+m.URL] {
+				return false
+			}
 		}
 	}
 	return true
