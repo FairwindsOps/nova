@@ -86,6 +86,12 @@ func init() {
 		klog.Fatalf("Failed to bind include-all flag: %v", err)
 	}
 
+	rootCmd.PersistentFlags().Bool("argo-apps", false, "When true, searches for helm charts deployed via argo application. If true, argocd CLI is expected to be properly configured in environment. Default is false.")
+	err = viper.BindPFlag("argo-apps", rootCmd.PersistentFlags().Lookup("argo-apps"))
+	if err != nil {
+		klog.Fatalf("Failed to bind argo-apps flag: %v", err)
+	}
+
 	klog.InitFlags(nil)
 	_ = flag.Set("alsologtostderr", "true")
 	_ = flag.Set("logtostderr", "true")
@@ -202,7 +208,7 @@ var clusterCmd = &cobra.Command{
 				})
 			}
 		}
-		releases, chartNames, err := h.GetReleaseOutput()
+		releases, chartNames, err := h.GetReleaseOutput(viper.GetBool("argo-apps"))
 		if err != nil {
 			klog.Fatalf("error getting helm releases: %s", err)
 		}

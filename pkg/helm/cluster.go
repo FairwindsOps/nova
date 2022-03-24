@@ -16,13 +16,16 @@ package helm
 
 import (
 	"fmt"
+	"os/exec"
 
 	"github.com/fairwindsops/nova/pkg/output"
 	version "github.com/mcuadros/go-version"
 	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v3/pkg/chart"
 	helmstorage "helm.sh/helm/v3/pkg/storage"
 	helmdriver "helm.sh/helm/v3/pkg/storage/driver"
 	"k8s.io/klog/v2"
+	"encoding/json"
 )
 
 // Helm contains a helm version and kubernetes client interface
@@ -37,6 +40,25 @@ type DesiredVersion struct {
 	Version string
 }
 
+type ArgoApp struct {
+	Spec struct {
+		Source struct {
+			Chart string `json:"chart,omitempty"`
+			RepoURL string `json:"repoURL,omitempty"`
+			TargetRevision string `json:"targetRevision,omitempty"`
+			Helm struct {
+				ReleaseName string `json:"releaseName,omitempty"`
+			} `json:"helm,omitempty"`
+		} `json:"source"`
+		Destination struct {
+			Namespace string `json:"namespace,omitempty"`
+		} `json:"destination"`
+	} `json:"spec"`
+	Sync struct {
+		Revision int `json:"revision,omitempty"`
+	} `json:"sync"`
+}
+
 // NewHelm returns a basic helm struct with the version of helm requested
 func NewHelm(kubeContext string) *Helm {
 	return &Helm{
@@ -45,9 +67,16 @@ func NewHelm(kubeContext string) *Helm {
 }
 
 // GetReleaseOutput returns releases and chart names
-func (h *Helm) GetReleaseOutput() ([]*release.Release, []string, error) {
+func (h *Helm) GetReleaseOutput(argo bool) ([]*release.Release, []string, error) {
 	var chartNames = []string{}
-	outputObjects, err := h.GetHelmReleases()
+	var outputObjects []*release.Release
+	var err error
+	if argo {
+		outputObjects, err = h.GetArgoReleases()
+	}else{
+		outputObjects, err = h.GetHelmReleases()
+	}
+	
 	if err != nil {
 		err = fmt.Errorf("could not detect helm 3 charts: %v", err)
 	}
@@ -58,6 +87,51 @@ func (h *Helm) GetReleaseOutput() ([]*release.Release, []string, error) {
 		}
 	}
 	return outputObjects, chartNames, err
+}
+
+// GetHelmReleases returns a list of helm releases from the cluster
+func (h *Helm) GetArgoReleases() ([]*release.Release, error) {
+
+	cmd := exec.Command("argocd", "app", "list", "-o", "json")
+	stdout, err := cmd.Output()
+
+	var data []ArgoApp
+	err2 := json.Unmarshal([]byte(stdout), &data)
+
+	var applications []*release.Release
+	for _, i := range data {
+		if len(i.Spec.Source.Helm.ReleaseName) > 0 {
+			tempMetadata := chart.Metadata{
+				Name: i.Spec.Source.Chart,
+				Description: "n/a",
+				Icon: "n/a",
+				Home: i.Spec.Source.RepoURL,
+				Version: i.Spec.Source.TargetRevision,
+				AppVersion: i.Spec.Source.TargetRevision,
+			}
+			tempChart := chart.Chart{
+				Metadata: &tempMetadata,
+			}
+			tempRelease := release.Release {
+				Name: i.Spec.Source.Helm.ReleaseName,
+				Chart: &tempChart,
+				Version: i.Sync.Revision,
+				Namespace: i.Spec.Destination.Namespace,
+			}
+			applications = append(applications, &tempRelease);
+		}
+    }
+	if len(applications) <= 0 {
+		err = fmt.Errorf("Could not find any installed ArgoCD helm applications ", err) 
+	}
+	if err != nil {
+		return nil, err
+	}
+	if err2 != nil {
+		return nil, err2
+	}
+	return applications, nil
+
 }
 
 // GetHelmReleases returns a list of helm releases from the cluster
