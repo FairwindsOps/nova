@@ -233,7 +233,7 @@ var clusterCmd = &cobra.Command{
 		if len(viper.GetStringSlice("url")) > 0 {
 			repos := viper.GetStringSlice("url")
 			helmRepos := nova_helm.NewRepos(repos)
-			outputObjects := h.GetHelmReleasesVersion(helmRepos, releases)
+			outputObjects := h.GetHelmReleasesVersion(helmRepos, releases, viper.GetBool("argo-apps"))
 			out.HelmReleases = append(out.HelmReleases, outputObjects...)
 			if err != nil {
 				klog.Fatalf("Error getting helm releases from cluster: %v", err)
