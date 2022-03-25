@@ -189,7 +189,7 @@ var clusterCmd = &cobra.Command{
 		klog.V(5).Infof("Settings: %v", viper.AllSettings())
 		klog.V(5).Infof("All Keys: %v", viper.AllKeys())
 
-		h := nova_helm.NewHelm(viper.GetString("context"))
+		h := nova_helm.NewHelm(viper.GetString("context"), viper.GetBool("argo-apps"))
 		ahClient, err := nova_helm.NewArtifactHubPackageClient(version)
 		if err != nil {
 			klog.Fatalf("error setting up artifact hub client: %s", err)

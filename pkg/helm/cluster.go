@@ -60,9 +60,9 @@ type ArgoApp struct {
 }
 
 // NewHelm returns a basic helm struct with the version of helm requested
-func NewHelm(kubeContext string) *Helm {
+func NewHelm(kubeContext string, argo bool) *Helm {
 	return &Helm{
-		Kube: getConfigInstance(kubeContext),
+		Kube: getConfigInstance(kubeContext, argo),
 	}
 }
 
@@ -100,7 +100,7 @@ func (h *Helm) GetArgoReleases() ([]*release.Release, error) {
 
 	var applications []*release.Release
 	for _, i := range data {
-		if len(i.Spec.Source.Helm.ReleaseName) > 0 {
+		if len(i.Spec.Source.Helm.ReleaseName) > 0 && i.Spec.Destination.Namespace != "review" {
 			tempMetadata := chart.Metadata{
 				Name: i.Spec.Source.Chart,
 				Description: "n/a",
