@@ -12,13 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package helm
+package kube
 
 import (
 	"os"
 	"sync"
 
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/klog/v2"
 
 	// add all known auth providers
@@ -26,18 +27,20 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
-type kube struct {
+type Connection struct {
 	Client kubernetes.Interface
 }
 
-var kubeClient *kube
-var once sync.Once
+var (
+	kubeClient *Connection
+	once       sync.Once
+)
 
 // GetConfigInstance returns a Kubernetes interface based on the current configuration
-func getConfigInstance(context string) *kube {
+func GetConfigInstance(context string) *Connection {
 	once.Do(func() {
 		if kubeClient == nil {
-			kubeClient = &kube{
+			kubeClient = &Connection{
 				Client: getKubeClient(context),
 			}
 		}
@@ -60,5 +63,19 @@ func getKubeClient(context string) kubernetes.Interface {
 		os.Exit(1)
 	}
 	return clientset
+}
 
+// The functions below assist in testing with a fake kube client
+// SetAndGetMock sets the singleton's interface to use a fake ClientSet
+func SetAndGetMock() *Connection {
+	kc := Connection{
+		Client: fake.NewSimpleClientset(),
+	}
+	SetInstance(kc)
+	return &kc
+}
+
+// SetInstance allows the user to set the kubeClient singleton
+func SetInstance(kc Connection) {
+	kubeClient = &kc
 }

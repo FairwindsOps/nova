@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	nova_helm "github.com/fairwindsops/nova/pkg/helm"
+	"github.com/fairwindsops/nova/pkg/images"
 	"github.com/fairwindsops/nova/pkg/output"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -41,8 +42,10 @@ var (
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.AddCommand(clusterCmd)
-	rootCmd.AddCommand(genConfigCmd)
+	rootCmd.AddCommand(
+		findCmd,
+		genConfigCmd,
+	)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file to use. If empty, flags will be used instead")
 	rootCmd.PersistentFlags().String("output-file", "", "Path on local filesystem to write file output to")
@@ -84,6 +87,17 @@ func init() {
 	err = viper.BindPFlag("include-all", rootCmd.PersistentFlags().Lookup("include-all"))
 	if err != nil {
 		klog.Fatalf("Failed to bind include-all flag: %v", err)
+	}
+
+	findCmd.Flags().Bool("containers", false, "Show old container image versions instead of helm chart versions. There will be no helm output if this flag is set.")
+	err = viper.BindPFlag("containers", findCmd.Flags().Lookup("containers"))
+	if err != nil {
+		klog.Fatalf("Failed to bind containers flag: %v", err)
+	}
+	findCmd.Flags().Bool("show-non-semver", false, "When finding container images, show all containers even if they don't follow semver.")
+	err = viper.BindPFlag("show-non-semver", findCmd.Flags().Lookup("show-non-semver"))
+	if err != nil {
+		klog.Fatalf("Failed to bind show-non-semver flag: %v", err)
 	}
 
 	klog.InitFlags(nil)
@@ -172,7 +186,7 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-var clusterCmd = &cobra.Command{
+var findCmd = &cobra.Command{
 	Use:   "find",
 	Short: "Find out-of-date deployed releases.",
 	Long:  "Find deployed helm releases that have updated charts available in chart repos",
@@ -183,7 +197,22 @@ var clusterCmd = &cobra.Command{
 		klog.V(5).Infof("Settings: %v", viper.AllSettings())
 		klog.V(5).Infof("All Keys: %v", viper.AllKeys())
 
-		h := nova_helm.NewHelm(viper.GetString("context"))
+		kubeContext := viper.GetString("context")
+
+		if viper.GetBool("containers") {
+			showNonSemver := viper.GetBool("show-non-semver")
+			iClient := images.NewClient(kubeContext)
+			containers, err := iClient.Find()
+			if err != nil {
+				fmt.Println("ERROR during images.Find()", err)
+				os.Exit(1)
+			}
+			out := output.NewContainersOutput(containers.Images, containers.ErrImages, showNonSemver)
+			out.Print()
+			return
+		}
+
+		h := nova_helm.NewHelm(kubeContext)
 		ahClient, err := nova_helm.NewArtifactHubPackageClient(version)
 		if err != nil {
 			klog.Fatalf("error setting up artifact hub client: %s", err)
