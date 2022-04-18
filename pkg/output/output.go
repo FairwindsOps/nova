@@ -33,6 +33,7 @@ type Output struct {
 	IncludeAll   bool            `json:"include_all"`
 }
 
+// ContainersOutput represents the output data we need for displaying a table of out of date container images
 type ContainersOutput struct {
 	ContainerImages []ContainerOutput      `json:"container_images"`
 	ErrImages       []*images.ErroredImage `json:"err_images"`
@@ -55,6 +56,7 @@ type ReleaseOutput struct {
 	Overridden  bool   `json:"overridden"`
 }
 
+// ContainerOutput represents all the data we need for a single container image
 type ContainerOutput struct {
 	Name               string `json:"name"`
 	CurrentVersion     string `json:"current_version"`
@@ -163,6 +165,7 @@ func (output *Output) dedupe() {
 	output.HelmReleases = unique
 }
 
+// NewContainersOutput creates a new ContainersOutput object ready to be printed
 func NewContainersOutput(containers []*images.Image, errImages []*images.ErroredImage, showNonSemver bool) ContainersOutput {
 	var output ContainersOutput
 	for _, container := range containers {
@@ -195,6 +198,7 @@ func NewContainersOutput(containers []*images.Image, errImages []*images.Errored
 	return output
 }
 
+// Print prints the ContainersOutput to STDOUT
 func (output ContainersOutput) Print() {
 	if len(output.ContainerImages) == 0 {
 		fmt.Println("No images found")

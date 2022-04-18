@@ -27,6 +27,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
+// Connection holds a kubernetes.interface as the Client parameter
 type Connection struct {
 	Client kubernetes.Interface
 }
@@ -65,7 +66,6 @@ func getKubeClient(context string) kubernetes.Interface {
 	return clientset
 }
 
-// The functions below assist in testing with a fake kube client
 // SetAndGetMock sets the singleton's interface to use a fake ClientSet
 func SetAndGetMock() *Connection {
 	kc := Connection{

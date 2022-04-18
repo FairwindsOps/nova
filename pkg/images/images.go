@@ -20,20 +20,24 @@ import (
 
 var preReleaseIgnore = []string{"alpha", "beta", "rc", "snapshot", "dev", "prerelease", "pre"}
 
+// Client represents a kubernetes client. Having a struct around this allows us to implement a fake client in tests
 type Client struct {
 	Kube *kube.Connection
 }
 
+// Results is a struct that contains a list of Images and a list of ErroredImages. This is the main thing that is returned from this package
 type Results struct {
 	Images    []*Image
 	ErrImages []*ErroredImage
 }
 
+// ErroredImage is an image that failed to parse for any number of reasons. The error message is captured for later logging
 type ErroredImage struct {
 	Image string
 	Err   string
 }
 
+// Image contains all the relevant data for reporting an out of date image
 type Image struct {
 	Name          string
 	Prefix        string
@@ -47,6 +51,7 @@ type Image struct {
 	repo          name.Repository
 }
 
+// PodData represents a pod and it's images so that we can report the namespace and other information later
 type PodData struct {
 	Name           string
 	Namespace      string
@@ -54,17 +59,20 @@ type PodData struct {
 	Containers     []string
 }
 
+// Tag represents one single tag of a container image
 type Tag struct {
 	version *version.Version
 	Value   string
 }
 
+// NewClient is a constructor to create a new Client
 func NewClient(kubeContext string) *Client {
 	return &Client{
 		Kube: kube.GetConfigInstance(kubeContext),
 	}
 }
 
+// Find is the primary function for this package that returns the results of images found in the cluster and whether they are out of date or not
 func (c *Client) Find() (Results, error) {
 	wg := sync.WaitGroup{}
 	clusterImages, err := c.getContainerImages()
