@@ -24,8 +24,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/fairwindsops/nova/pkg/containers"
 	nova_helm "github.com/fairwindsops/nova/pkg/helm"
-	"github.com/fairwindsops/nova/pkg/images"
 	"github.com/fairwindsops/nova/pkg/output"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -201,7 +201,7 @@ var findCmd = &cobra.Command{
 
 		if viper.GetBool("containers") {
 			showNonSemver := viper.GetBool("show-non-semver")
-			iClient := images.NewClient(kubeContext)
+			iClient := containers.NewClient(kubeContext)
 			containers, err := iClient.Find()
 			if err != nil {
 				fmt.Println("ERROR during images.Find()", err)

@@ -21,7 +21,7 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/fairwindsops/nova/pkg/images"
+	"github.com/fairwindsops/nova/pkg/containers"
 	"helm.sh/helm/v3/pkg/release"
 
 	"k8s.io/klog/v2"
@@ -35,9 +35,9 @@ type Output struct {
 
 // ContainersOutput represents the output data we need for displaying a table of out of date container images
 type ContainersOutput struct {
-	ContainerImages []ContainerOutput      `json:"container_images"`
-	ErrImages       []*images.ErroredImage `json:"err_images"`
-	IncludeAll      bool                   `json:"include_all"`
+	ContainerImages []ContainerOutput          `json:"container_images"`
+	ErrImages       []*containers.ErroredImage `json:"err_images"`
+	IncludeAll      bool                       `json:"include_all"`
 }
 
 // ReleaseOutput represents a release
@@ -166,7 +166,7 @@ func (output *Output) dedupe() {
 }
 
 // NewContainersOutput creates a new ContainersOutput object ready to be printed
-func NewContainersOutput(containers []*images.Image, errImages []*images.ErroredImage, showNonSemver bool) ContainersOutput {
+func NewContainersOutput(containers []*containers.Image, errImages []*containers.ErroredImage, showNonSemver bool) ContainersOutput {
 	var output ContainersOutput
 	for _, container := range containers {
 		if container == nil {
