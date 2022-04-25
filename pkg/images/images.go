@@ -175,10 +175,18 @@ func newImage(fullImageTag string) (*Image, error) {
 
 	var (
 		err     error
-		repo    = strings.Split(fullImageTag, ":")[0]
-		currTag = strings.Split(fullImageTag, ":")[1]
+		repo    = ""
+		currTag = "latest"
 		image   = new(Image)
 	)
+
+	splitString := strings.Split(fullImageTag, ":")
+	if len(splitString) > 0 {
+		repo = splitString[0]
+		if len(splitString) > 1 {
+			currTag = splitString[1]
+		}
+	}
 
 	re, err := regexp.Compile(`^v[0-9]+.*$`)
 	if err != nil {
