@@ -6,7 +6,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"sync"
 
 	version "github.com/Masterminds/semver/v3"
 	"github.com/fairwindsops/nova/pkg/kube"
@@ -14,6 +13,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/pkg/errors"
+	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 )
@@ -49,6 +49,7 @@ type Image struct {
 	semverTags    []*version.Version
 	nonSemverTags []string
 	repo          name.Repository
+	allTags       []string
 }
 
 // PodData represents a pod and it's images so that we can report the namespace and other information later
@@ -74,7 +75,6 @@ func NewClient(kubeContext string) *Client {
 
 // Find is the primary function for this package that returns the results of images found in the cluster and whether they are out of date or not
 func (c *Client) Find() (Results, error) {
-	wg := sync.WaitGroup{}
 	clusterImages, err := c.getContainerImages()
 	if err != nil {
 		return Results{}, err
@@ -85,39 +85,36 @@ func (c *Client) Find() (Results, error) {
 
 	images := make([]*Image, len(clusterImages))
 	errored := make([]*ErroredImage, 0)
-	errorMu := sync.Mutex{}
+	g := new(errgroup.Group)
 	for i, fullName := range clusterImages {
-		wg.Add(1)
-		go func(fullName string, idx int) {
-			defer wg.Done()
-			image, err := newImage(fullName)
-			if err != nil {
-				errorMu.Lock()
-				defer errorMu.Unlock()
-				errored = append(errored, &ErroredImage{
-					Image: fullName,
-					Err:   err.Error(),
-				})
-				return
+		i, fullName := i, fullName
+		image, err := newImage(fullName)
+		if err != nil {
+			errored = append(errored, &ErroredImage{
+				Image: fullName,
+				Err:   err.Error(),
+			})
+			images[i] = nil
+			continue
+		}
+		klog.V(5).Infof("Getting tags for %s", image.Name)
+		g.Go(func() error {
+			err := image.getTags()
+			if err == nil {
+				images[i] = image
 			}
-			err = image.getTags()
-			if err != nil {
-				errorMu.Lock()
-				defer errorMu.Unlock()
-				errored = append(errored, &ErroredImage{
-					Image: fullName,
-					Err:   err.Error(),
-				})
-				return
-			}
-			images[idx] = image
-		}(fullName, i)
+			return err
+		})
 	}
-	wg.Wait()
+	if err := g.Wait(); err != nil {
+		fmt.Println("Got an error when getting remote tags:", err)
+		// return Results{}, err
+	}
 	for _, image := range images {
 		if image == nil {
 			continue
 		}
+		image.parseTags()
 		err := image.populateNewest()
 		if err != nil {
 			return Results{}, err
@@ -212,12 +209,16 @@ func newImage(fullImageTag string) (*Image, error) {
 }
 
 func (i *Image) getTags() error {
-	klog.V(5).Infof("Getting tags for %s", i.Name)
 	tags, err := remote.List(i.repo, remote.WithAuthFromKeychain(authn.DefaultKeychain))
 	if err != nil {
-		return errors.Wrap(err, "failed to list remote tags")
+		return err
 	}
-	for _, tag := range tags {
+	i.allTags = tags
+	return nil
+}
+
+func (i *Image) parseTags() {
+	for _, tag := range i.allTags {
 		if i.Prefix != "" {
 			tag = strings.TrimPrefix(tag, i.Prefix)
 		}
@@ -228,7 +229,6 @@ func (i *Image) getTags() error {
 			i.nonSemverTags = append(i.nonSemverTags, verString)
 		}
 	}
-	return nil
 }
 
 func (i *Image) populateNewest() error {
