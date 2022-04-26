@@ -10,16 +10,25 @@ nova find --wide
 ```
 
 ## Options
-* `-h`, `--help` - help for nova
-* `--config` - Pass a config file that can control the remaining settings. Command-line arguments still take precedence
-* `--context` - Sets a specific context in the kubeconfig. If blank, uses the currently set context.
-* `-d`, `--desired-versions` - A map of `chart=override_version` to override the helm repository when checking.
-* `-a`, `--include-all` - Show all charts even if no latest version is found.
-* `--output-file` - output JSON to a file
-* `-v Level`, `--v Level` - set the log verbosity level where `Level` is a number between 1 and 10.
-* `--wide` - show `Chart Name`,  `Namespace` and `HelmVersion`
-* `--alsologtostderr` - log to standard error as well as files
-* `--logtostderr` - log to standard error instead of files
+```
+Flags:
+      --containers        Show old container image versions instead of helm chart versions. There will be no helm output if this flag is set.
+  -h, --help              help for find
+      --show-non-semver   When finding container images, show all containers even if they don't follow semver.
+
+Global Flags:
+      --alsologtostderr                   log to standard error as well as files (default true)
+      --config string                     Config file to use. If empty, flags will be used instead
+      --context string                    A context to use in the kubeconfig.
+  -d, --desired-versions stringToString   A map of chart=override_version to override the helm repository when checking. (default [])
+  -a, --include-all                       Show all charts even if no latest version is found.
+      --logtostderr                       log to standard error instead of files (default true)
+      --output-file string                Path on local filesystem to write file output to
+      --poll-artifacthub                  When true, polls artifacthub to match against helm releases in the cluster. If false, you must provide a url list via --url/-u. Default is true. (default true)
+  -u, --url strings                       URL for a helm chart repo
+  -v, --v Level                           number for the log level verbosity
+      --wide                              Output chart name and namespace
+```
 
 ## Generate Config
 
@@ -36,7 +45,7 @@ output-file: ""
 wide: false
 ```
 
-## Output
+## Helm Scanning Output
 Below is sample output for Nova
 
 ### CLI
@@ -83,4 +92,18 @@ redis             redis             redis             3              15.4.1     
         }
     ]
 }
+```
+
+## Container Image Output
+Below is sample output for Nova when using the `--containers` flag
+
+```
+Container Name                              Current Version    Old     Latest     Latest Minor     Latest Patch
+==============                              ===============    ===     ======     =============    =============
+k8s.gcr.io/coredns/coredns                  v1.8.0             true    v1.8.6     v1.8.6           v1.8.6
+k8s.gcr.io/etcd                             3.4.13-0           true    3.5.3-0    3.4.13-0         3.4.13-0
+k8s.gcr.io/kube-apiserver                   v1.21.1            true    v1.23.6    v1.23.6          v1.21.12
+k8s.gcr.io/kube-controller-manager          v1.21.1            true    v1.23.6    v1.23.6          v1.21.12
+k8s.gcr.io/kube-proxy                       v1.21.1            true    v1.23.6    v1.23.6          v1.21.12
+k8s.gcr.io/kube-scheduler                   v1.21.1            true    v1.23.6    v1.23.6          v1.21.12
 ```

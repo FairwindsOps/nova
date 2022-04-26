@@ -19,3 +19,18 @@ grafana           2.1.3        3.1.1      true      false
 metrics-server    2.8.8        2.11.1     true      false
 nginx-ingress     1.25.0       1.40.3     true      false
 ```
+
+To check for outdated container images, instead of helm releases:
+
+```
+$ nova find --containers
+
+Container Name                              Current Version    Old     Latest     Latest Minor     Latest Patch
+==============                              ===============    ===     ======     =============    =============
+k8s.gcr.io/coredns/coredns                  v1.8.0             true    v1.8.6     v1.8.6           v1.8.6
+k8s.gcr.io/etcd                             3.4.13-0           true    3.5.3-0    3.4.13-0         3.4.13-0
+k8s.gcr.io/kube-apiserver                   v1.21.1            true    v1.23.6    v1.23.6          v1.21.12
+k8s.gcr.io/kube-controller-manager          v1.21.1            true    v1.23.6    v1.23.6          v1.21.12
+k8s.gcr.io/kube-proxy                       v1.21.1            true    v1.23.6    v1.23.6          v1.21.12
+k8s.gcr.io/kube-scheduler                   v1.21.1            true    v1.23.6    v1.23.6          v1.21.12
+```
