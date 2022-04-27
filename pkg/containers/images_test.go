@@ -304,6 +304,35 @@ func TestParseTagString(t *testing.T) {
 	}
 }
 
+func TestPreReleaseRegex(t *testing.T) {
+	tests := []struct {
+		name             string
+		preReleaseIgnore []string
+		inputPreRelease  string
+		want             bool
+	}{
+		{
+			name:             "TestPreReleaseRegex",
+			preReleaseIgnore: []string{"alpha", "beta", "rc"},
+			inputPreRelease:  "alpha",
+			want:             bool(true),
+		},
+		{
+			name:             "TestPreReleaseRegexFalse",
+			preReleaseIgnore: []string{"foobar", "alphax"},
+			inputPreRelease:  "alpha",
+			want:             bool(false),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := preReleaseRegex(tt.preReleaseIgnore, tt.inputPreRelease); got != tt.want {
+				t.Errorf("preReleaseRegex() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func setupKubeObjects(t *testing.T, c *Client) {
 	k := c.Kube.Client.(*fake.Clientset)
 	_, err := k.CoreV1().Pods(testNamespace).Create(context.TODO(), testPodSpec, metav1.CreateOptions{})
