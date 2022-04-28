@@ -89,12 +89,9 @@ func NewClient(kubeContext string) *Client {
 
 // Find is the primary function for this package that returns the results of images found in the cluster and whether they are out of date or not
 func (c *Client) Find() (Results, error) {
-	// clusterImages, err := c.getContainerImages()
-	// if err != nil {
-	// 	return Results{}, err
-	// }
-	clusterImages := []string{
-		"k8s.gcr.io/pause:latest",
+	clusterImages, err := c.getContainerImages()
+	if err != nil {
+		return Results{}, err
 	}
 	if len(clusterImages) == 0 {
 		return Results{}, fmt.Errorf("no container images found in cluster")
