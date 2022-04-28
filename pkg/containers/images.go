@@ -89,9 +89,12 @@ func NewClient(kubeContext string) *Client {
 
 // Find is the primary function for this package that returns the results of images found in the cluster and whether they are out of date or not
 func (c *Client) Find() (Results, error) {
-	clusterImages, err := c.getContainerImages()
-	if err != nil {
-		return Results{}, err
+	// clusterImages, err := c.getContainerImages()
+	// if err != nil {
+	// 	return Results{}, err
+	// }
+	clusterImages := []string{
+		"k8s.gcr.io/pause:latest",
 	}
 	if len(clusterImages) == 0 {
 		return Results{}, fmt.Errorf("no container images found in cluster")
@@ -122,7 +125,7 @@ func (c *Client) Find() (Results, error) {
 	}
 	if err := g.Wait(); err != nil {
 		fmt.Println("Got an error when getting remote tags:", err)
-		// return Results{}, err
+		return Results{}, err
 	}
 	for _, image := range images {
 		if image == nil {

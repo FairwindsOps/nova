@@ -35,9 +35,10 @@ type Output struct {
 
 // ContainersOutput represents the output data we need for displaying a table of out of date container images
 type ContainersOutput struct {
-	ContainerImages []ContainerOutput          `json:"container_images"`
-	ErrImages       []*containers.ErroredImage `json:"err_images"`
-	IncludeAll      bool                       `json:"include_all"`
+	ContainerImages   []ContainerOutput          `json:"container_images"`
+	ErrImages         []*containers.ErroredImage `json:"err_images"`
+	IncludeAll        bool                       `json:"include_all"`
+	LatestStringFound bool                       `json:"latest_string_found"`
 }
 
 // ReleaseOutput represents a release
@@ -166,8 +167,9 @@ func (output *Output) dedupe() {
 }
 
 // NewContainersOutput creates a new ContainersOutput object ready to be printed
-func NewContainersOutput(containers []*containers.Image, errImages []*containers.ErroredImage, showNonSemver bool) ContainersOutput {
+func NewContainersOutput(containers []*containers.Image, errImages []*containers.ErroredImage, showNonSemver, includeAll bool) ContainersOutput {
 	var output ContainersOutput
+	output.IncludeAll = includeAll
 	for _, container := range containers {
 		if container == nil {
 			continue
@@ -193,6 +195,9 @@ func NewContainersOutput(containers []*containers.Image, errImages []*containers
 		if container.NewestPatch != nil {
 			containerOutput.LatestPatchVersion = prefix + container.NewestPatch.Value
 		}
+		if containerOutput.CurrentVersion == "latest" {
+			output.LatestStringFound = true
+		}
 		output.ContainerImages = append(output.ContainerImages, containerOutput)
 	}
 	return output
@@ -203,6 +208,9 @@ func (output ContainersOutput) Print() {
 	if len(output.ContainerImages) == 0 {
 		fmt.Println("No images found")
 		return
+	}
+	if output.LatestStringFound {
+		fmt.Printf("Found a container utilizing the 'latest' tag. This is bad practice and should be avoided.\n\n")
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 	header := "Container Name\tCurrent Version\tOld\tLatest\tLatest Minor\tLatest Patch"

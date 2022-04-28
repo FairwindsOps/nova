@@ -201,13 +201,14 @@ var findCmd = &cobra.Command{
 
 		if viper.GetBool("containers") {
 			showNonSemver := viper.GetBool("show-non-semver")
+			includeAll := viper.GetBool("include-all")
 			iClient := containers.NewClient(kubeContext)
 			containers, err := iClient.Find()
 			if err != nil {
 				fmt.Println("ERROR during images.Find()", err)
 				os.Exit(1)
 			}
-			out := output.NewContainersOutput(containers.Images, containers.ErrImages, showNonSemver)
+			out := output.NewContainersOutput(containers.Images, containers.ErrImages, showNonSemver, includeAll)
 			out.Print()
 			return
 		}
