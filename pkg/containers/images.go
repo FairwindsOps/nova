@@ -20,6 +20,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"sync"
 
 	version "github.com/Masterminds/semver/v3"
 	"github.com/fairwindsops/nova/pkg/kube"
@@ -27,7 +28,6 @@ import (
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/pkg/errors"
-	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
 )
@@ -88,7 +88,7 @@ func NewClient(kubeContext string) *Client {
 }
 
 // Find is the primary function for this package that returns the results of images found in the cluster and whether they are out of date or not
-func (c *Client) Find() (Results, error) {
+func (c *Client) Find(ctx context.Context) (Results, error) {
 	clusterImages, err := c.getContainerImages()
 	if err != nil {
 		return Results{}, err
@@ -99,7 +99,8 @@ func (c *Client) Find() (Results, error) {
 
 	images := make([]*Image, len(clusterImages))
 	errored := make([]*ErroredImage, 0)
-	g := new(errgroup.Group)
+
+	wg := new(sync.WaitGroup)
 	for i, fullName := range clusterImages {
 		i, fullName := i, fullName
 		image, err := newImage(fullName)
@@ -111,19 +112,24 @@ func (c *Client) Find() (Results, error) {
 			images[i] = nil
 			continue
 		}
-		klog.V(5).Infof("Getting tags for %s", image.Name)
-		g.Go(func() error {
-			err := image.getTags()
-			if err == nil {
-				images[i] = image
+		klog.V(8).Infof("Getting tags for %s", image.Name)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			err := image.getTags(ctx)
+			if err != nil {
+				errored = append(errored, &ErroredImage{
+					Image: fullName,
+					Err:   err.Error(),
+				})
+				return
 			}
-			return err
-		})
+			images[i] = image
+			klog.V(8).Infof("Done grabbing tags for %s", image.Name)
+		}()
 	}
-	if err := g.Wait(); err != nil {
-		fmt.Println("Got an error when getting remote tags:", err)
-		return Results{}, err
-	}
+	klog.V(5).Infof("Waiting for all tag reciever goroutines to finish")
+	wg.Wait()
 	for _, image := range images {
 		if image == nil {
 			continue
@@ -182,7 +188,7 @@ func removeDuplicateStr(strSlice []string) []string {
 }
 
 func newImage(fullImageTag string) (*Image, error) {
-	klog.V(3).Infof("Creating image object for %s", fullImageTag)
+	klog.V(8).Infof("Creating image object for %s", fullImageTag)
 
 	var (
 		err     error
@@ -222,8 +228,8 @@ func newImage(fullImageTag string) (*Image, error) {
 	return image, nil
 }
 
-func (i *Image) getTags() error {
-	tags, err := remote.List(i.repo, remote.WithAuthFromKeychain(authn.DefaultKeychain))
+func (i *Image) getTags(ctx context.Context) error {
+	tags, err := remote.List(i.repo, remote.WithAuthFromKeychain(authn.DefaultKeychain), remote.WithContext(ctx))
 	if err != nil {
 		return err
 	}

@@ -95,9 +95,14 @@ redis             redis             redis             3              15.4.1     
 ```
 
 ## Container Image Output
+There are a couple flags that are unique to the container image output.
+- `--show-non-semver` will also show any container tags running in the cluster that do not have valid semver versions. By default these are not shown.
+- `--show-errored-containers` will show any containers that returned some sort of error when reaching out to the registry and/or when processing the tags.
+
 Below is sample output for Nova when using the `--containers` flag
 
 ```
+$ nova find --containers
 Container Name                              Current Version    Old     Latest     Latest Minor     Latest Patch
 ==============                              ===============    ===     ======     =============    =============
 k8s.gcr.io/coredns/coredns                  v1.8.0             true    v1.8.6     v1.8.6           v1.8.6
@@ -106,4 +111,25 @@ k8s.gcr.io/kube-apiserver                   v1.21.1            true    v1.23.6  
 k8s.gcr.io/kube-controller-manager          v1.21.1            true    v1.23.6    v1.23.6          v1.21.12
 k8s.gcr.io/kube-proxy                       v1.21.1            true    v1.23.6    v1.23.6          v1.21.12
 k8s.gcr.io/kube-scheduler                   v1.21.1            true    v1.23.6    v1.23.6          v1.21.12
+```
+
+### Container output with errors
+When scanning all containers, nova will capture any errors and move on. To show which containers had errors, use the `--show-errored-containers` flag. Output will look like:
+
+```
+$ nova find --containers --show-errored-containers
+Container Name                              Current Version    Old     Latest     Latest Minor     Latest Patch
+==============                              ===============    ===     ======     =============    =============
+k8s.gcr.io/coredns/coredns                  v1.8.0             true    v1.8.6     v1.8.6           v1.8.6
+k8s.gcr.io/etcd                             3.4.13-0           true    3.5.3-0    3.4.13-0         3.4.13-0
+k8s.gcr.io/kube-apiserver                   v1.21.1            true    v1.23.6    v1.23.6          v1.21.12
+k8s.gcr.io/kube-controller-manager          v1.21.1            true    v1.23.6    v1.23.6          v1.21.12
+k8s.gcr.io/kube-proxy                       v1.21.1            true    v1.23.6    v1.23.6          v1.21.12
+k8s.gcr.io/kube-scheduler                   v1.21.1            true    v1.23.6    v1.23.6          v1.21.12
+
+
+Errors:
+Container Name                        Error
+==============                        =====
+examplething.com/testing:v1.0.0       Get "https://examplething.com/v2/": dial tcp: lookup examplethingert.com: no such host                                                                                                 =====
 ```

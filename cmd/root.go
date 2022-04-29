@@ -15,6 +15,7 @@
 package cmd
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io"
@@ -22,7 +23,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
+	"time"
 
 	"github.com/fairwindsops/nova/pkg/containers"
 	nova_helm "github.com/fairwindsops/nova/pkg/helm"
@@ -98,6 +102,12 @@ func init() {
 	err = viper.BindPFlag("show-non-semver", findCmd.Flags().Lookup("show-non-semver"))
 	if err != nil {
 		klog.Fatalf("Failed to bind show-non-semver flag: %v", err)
+	}
+
+	findCmd.Flags().Bool("show-errored-containers", false, "When finding container images, show errors encountered when scanning.")
+	err = viper.BindPFlag("show-errored-containers", findCmd.Flags().Lookup("show-errored-containers"))
+	if err != nil {
+		klog.Fatalf("Failed to bind show-errored-containers flag: %v", err)
 	}
 
 	klog.InitFlags(nil)
@@ -200,15 +210,32 @@ var findCmd = &cobra.Command{
 		kubeContext := viper.GetString("context")
 
 		if viper.GetBool("containers") {
+			// Set up a context we can use to cancel all operations to external container registries if we need to
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+			signals := make(chan os.Signal, 1)
+			signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+			defer func() {
+				signal.Stop(signals)
+				cancel()
+			}()
+			go func() {
+				select {
+				case <-signals:
+					fmt.Print("\nCancelling operations to external container registries\n")
+					cancel()
+				case <-ctx.Done():
+				}
+			}()
 			showNonSemver := viper.GetBool("show-non-semver")
+			showErrored := viper.GetBool("show-errored-containers")
 			includeAll := viper.GetBool("include-all")
 			iClient := containers.NewClient(kubeContext)
-			containers, err := iClient.Find()
+			containers, err := iClient.Find(ctx)
 			if err != nil {
 				fmt.Println("ERROR during images.Find()", err)
 				os.Exit(1)
 			}
-			out := output.NewContainersOutput(containers.Images, containers.ErrImages, showNonSemver, includeAll)
+			out := output.NewContainersOutput(containers.Images, containers.ErrImages, showNonSemver, showErrored, includeAll)
 			out.Print()
 			return
 		}

@@ -167,7 +167,7 @@ func (output *Output) dedupe() {
 }
 
 // NewContainersOutput creates a new ContainersOutput object ready to be printed
-func NewContainersOutput(containers []*containers.Image, errImages []*containers.ErroredImage, showNonSemver, includeAll bool) ContainersOutput {
+func NewContainersOutput(containers []*containers.Image, errImages []*containers.ErroredImage, showNonSemver, showErrored, includeAll bool) ContainersOutput {
 	var output ContainersOutput
 	output.IncludeAll = includeAll
 	for _, container := range containers {
@@ -200,42 +200,43 @@ func NewContainersOutput(containers []*containers.Image, errImages []*containers
 		}
 		output.ContainerImages = append(output.ContainerImages, containerOutput)
 	}
+	if showErrored {
+		output.ErrImages = errImages
+	}
 	return output
 }
 
 // Print prints the ContainersOutput to STDOUT
 func (output ContainersOutput) Print() {
-	if len(output.ContainerImages) == 0 {
+	if len(output.ContainerImages) == 0 && len(output.ErrImages) == 0 {
 		fmt.Println("No images found")
 		return
 	}
-	if output.LatestStringFound {
-		fmt.Printf("Found a container utilizing the 'latest' tag. This is bad practice and should be avoided.\n\n")
-	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
-	header := "Container Name\tCurrent Version\tOld\tLatest\tLatest Minor\tLatest Patch"
-	fmt.Fprintln(w, header)
-	separator := "==============\t===============\t===\t======\t=============\t============="
-	fmt.Fprintln(w, separator)
+	if len(output.ContainerImages) != 0 {
+		header := "Container Name\tCurrent Version\tOld\tLatest\tLatest Minor\tLatest Patch"
+		fmt.Fprintln(w, header)
+		separator := "==============\t===============\t===\t======\t=============\t============="
+		fmt.Fprintln(w, separator)
 
-	for _, c := range output.ContainerImages {
-		if !output.IncludeAll && c.LatestVersion == c.CurrentVersion {
-			continue
+		for _, c := range output.ContainerImages {
+			if !output.IncludeAll && c.LatestVersion == c.CurrentVersion {
+				continue
+			}
+			line := c.Name + "\t"
+			line += c.CurrentVersion + "\t"
+			line += fmt.Sprintf("%t", c.IsOld) + "\t"
+			line += c.LatestVersion + "\t"
+			line += c.LatestMinorVersion + "\t"
+			line += c.LatestPatchVersion + "\t"
+			fmt.Fprintln(w, line)
 		}
-		line := c.Name + "\t"
-		line += c.CurrentVersion + "\t"
-		line += fmt.Sprintf("%t", c.IsOld) + "\t"
-		line += c.LatestVersion + "\t"
-		line += c.LatestMinorVersion + "\t"
-		line += c.LatestPatchVersion + "\t"
-		fmt.Fprintln(w, line)
 	}
 
 	if len(output.ErrImages) == 0 {
 		w.Flush()
 		return
 	}
-
 	fmt.Fprintln(w, "\n\nErrors:")
 	errHeader := "Container Name\tError"
 	fmt.Fprintln(w, errHeader)
@@ -247,4 +248,7 @@ func (output ContainersOutput) Print() {
 		fmt.Fprintln(w, line)
 	}
 	w.Flush()
+	if output.LatestStringFound {
+		fmt.Printf("Found a container utilizing the 'latest' tag. This is bad practice and should be avoided.\n\n")
+	}
 }
