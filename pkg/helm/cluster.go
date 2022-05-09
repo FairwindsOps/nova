@@ -17,6 +17,7 @@ package helm
 import (
 	"fmt"
 
+	"github.com/fairwindsops/nova/pkg/kube"
 	"github.com/fairwindsops/nova/pkg/output"
 	version "github.com/mcuadros/go-version"
 	"helm.sh/helm/v3/pkg/release"
@@ -27,7 +28,7 @@ import (
 
 // Helm contains a helm version and kubernetes client interface
 type Helm struct {
-	Kube            *kube
+	Kube            *kube.Connection
 	DesiredVersions []DesiredVersion
 }
 
@@ -40,7 +41,7 @@ type DesiredVersion struct {
 // NewHelm returns a basic helm struct with the version of helm requested
 func NewHelm(kubeContext string) *Helm {
 	return &Helm{
-		Kube: getConfigInstance(kubeContext),
+		Kube: kube.GetConfigInstance(kubeContext),
 	}
 }
 

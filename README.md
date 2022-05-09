@@ -19,6 +19,8 @@ Nova scans your cluster for installed Helm charts, then cross-checks them agains
 all known Helm repositories. If it finds an updated version of the chart you're using,
 or notices your current version is deprecated, it will let you know.
 
+Nova can also scan your cluster for out of date container images. Find out more in the [docs](https://nova.docs.fairwinds.com).
+
 ## Documentation
 
 Check out the [documentation at docs.fairwinds.com](https://nova.docs.fairwinds.com)
