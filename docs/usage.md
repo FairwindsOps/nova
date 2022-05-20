@@ -25,6 +25,7 @@ Global Flags:
       --logtostderr                       log to standard error instead of files (default true)
       --output-file string                Path on local filesystem to write file output to
       --poll-artifacthub                  When true, polls artifacthub to match against helm releases in the cluster. If false, you must provide a url list via --url/-u. Default is true. (default true)
+      --show-old                          Only output charts that are not on the latest version
   -u, --url strings                       URL for a helm chart repo
   -v, --v Level                           number for the log level verbosity
       --wide                              Output chart name and namespace
