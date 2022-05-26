@@ -259,14 +259,14 @@ func (ac *ArtifactHubPackageClient) MultiSearch(searchTerms []string) ([]Artifac
 		go func(wg *sync.WaitGroup, term string, r *map[string][]ArtifactHubPackageRepo, m *sync.Mutex) {
 			defer wg.Done()
 			packages, err := ac.SearchForPackageRepo(term)
+			m.Lock()
+			defer m.Unlock()
 			if err != nil {
 				klog.V(3).Infof("error searching for term %s", err)
 				(*r)[term] = nil
 				return
 			}
 			if _, exists := (*r)[term]; !exists {
-				m.Lock()
-				defer m.Unlock()
 				(*r)[term] = packages
 			}
 
