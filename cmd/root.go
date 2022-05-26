@@ -55,25 +55,29 @@ func init() {
 	rootCmd.PersistentFlags().String("output-file", "", "Path on local filesystem to write file output to")
 	err := viper.BindPFlag("output-file", rootCmd.PersistentFlags().Lookup("output-file"))
 	if err != nil {
-		klog.Fatalf("Failed to bind output-file flag: %v", err)
+		klog.Errorf("Failed to bind output-file flag: %v", err)
+		os.Exit(1)
 	}
 
 	rootCmd.PersistentFlags().StringToStringP("desired-versions", "d", nil, "A map of chart=override_version to override the helm repository when checking.")
 	err = viper.BindPFlag("desired-versions", rootCmd.PersistentFlags().Lookup("desired-versions"))
 	if err != nil {
-		klog.Fatalf("Failed to bind desired-versions flag: %v", err)
+		klog.Errorf("Failed to bind desired-versions flag: %v", err)
+		os.Exit(1)
 	}
 
 	rootCmd.PersistentFlags().StringSliceP("url", "u", []string{}, "URL for a helm chart repo")
 	err = viper.BindPFlag("url", rootCmd.PersistentFlags().Lookup("url"))
 	if err != nil {
-		klog.Fatalf("Failed to bind url flag: %v", err)
+		klog.Errorf("Failed to bind url flag: %v", err)
+		os.Exit(1)
 	}
 
 	rootCmd.PersistentFlags().Bool("poll-artifacthub", true, "When true, polls artifacthub to match against helm releases in the cluster. If false, you must provide a url list via --url/-u. Default is true.")
 	err = viper.BindPFlag("poll-artifacthub", rootCmd.PersistentFlags().Lookup("poll-artifacthub"))
 	if err != nil {
-		klog.Fatalf("Failed to bind poll-artifacthub flag: %v", err)
+		klog.Errorf("Failed to bind poll-artifacthub flag: %v", err)
+		os.Exit(1)
 	}
 
 	rootCmd.PersistentFlags().String("context", "", "A context to use in the kubeconfig.")
@@ -135,7 +139,8 @@ func initConfig() {
 		var err error
 		cfgFile, err = downloadConfig(cfgFile)
 		if err != nil {
-			klog.Fatalf("failed to download config: %s", err.Error())
+			klog.Errorf("failed to download config: %s", err.Error())
+			os.Exit(1)
 		}
 		defer os.Remove(cfgFile)
 	}
