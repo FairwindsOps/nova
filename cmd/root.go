@@ -55,59 +55,59 @@ func init() {
 	rootCmd.PersistentFlags().String("output-file", "", "Path on local filesystem to write file output to")
 	err := viper.BindPFlag("output-file", rootCmd.PersistentFlags().Lookup("output-file"))
 	if err != nil {
-		klog.Fatalf("Failed to bind output-file flag: %v", err)
+		klog.Exitf("Failed to bind output-file flag: %v", err)
 	}
 
 	rootCmd.PersistentFlags().StringToStringP("desired-versions", "d", nil, "A map of chart=override_version to override the helm repository when checking.")
 	err = viper.BindPFlag("desired-versions", rootCmd.PersistentFlags().Lookup("desired-versions"))
 	if err != nil {
-		klog.Fatalf("Failed to bind desired-versions flag: %v", err)
+		klog.Exitf("Failed to bind desired-versions flag: %v", err)
 	}
 
 	rootCmd.PersistentFlags().StringSliceP("url", "u", []string{}, "URL for a helm chart repo")
 	err = viper.BindPFlag("url", rootCmd.PersistentFlags().Lookup("url"))
 	if err != nil {
-		klog.Fatalf("Failed to bind url flag: %v", err)
+		klog.Exitf("Failed to bind url flag: %v", err)
 	}
 
 	rootCmd.PersistentFlags().Bool("poll-artifacthub", true, "When true, polls artifacthub to match against helm releases in the cluster. If false, you must provide a url list via --url/-u. Default is true.")
 	err = viper.BindPFlag("poll-artifacthub", rootCmd.PersistentFlags().Lookup("poll-artifacthub"))
 	if err != nil {
-		klog.Fatalf("Failed to bind poll-artifacthub flag: %v", err)
+		klog.Exitf("Failed to bind poll-artifacthub flag: %v", err)
 	}
 
 	rootCmd.PersistentFlags().String("context", "", "A context to use in the kubeconfig.")
 	err = viper.BindPFlag("context", rootCmd.PersistentFlags().Lookup("context"))
 	if err != nil {
-		klog.Fatalf("Failed to bind context flag: %v", err)
+		klog.Exitf("Failed to bind context flag: %v", err)
 	}
 
 	rootCmd.PersistentFlags().Bool("wide", false, "Output chart name and namespace")
 	err = viper.BindPFlag("wide", rootCmd.PersistentFlags().Lookup("wide"))
 	if err != nil {
-		klog.Fatalf("Failed to bind wide flag: %v", err)
+		klog.Exitf("Failed to bind wide flag: %v", err)
 	}
 	rootCmd.PersistentFlags().BoolP("include-all", "a", false, "Show all charts even if no latest version is found.")
 	err = viper.BindPFlag("include-all", rootCmd.PersistentFlags().Lookup("include-all"))
 	if err != nil {
-		klog.Fatalf("Failed to bind include-all flag: %v", err)
+		klog.Exitf("Failed to bind include-all flag: %v", err)
 	}
 
 	findCmd.Flags().Bool("containers", false, "Show old container image versions instead of helm chart versions. There will be no helm output if this flag is set.")
 	err = viper.BindPFlag("containers", findCmd.Flags().Lookup("containers"))
 	if err != nil {
-		klog.Fatalf("Failed to bind containers flag: %v", err)
+		klog.Exitf("Failed to bind containers flag: %v", err)
 	}
 	findCmd.Flags().Bool("show-non-semver", false, "When finding container images, show all containers even if they don't follow semver.")
 	err = viper.BindPFlag("show-non-semver", findCmd.Flags().Lookup("show-non-semver"))
 	if err != nil {
-		klog.Fatalf("Failed to bind show-non-semver flag: %v", err)
+		klog.Exitf("Failed to bind show-non-semver flag: %v", err)
 	}
 
 	findCmd.Flags().Bool("show-errored-containers", false, "When finding container images, show errors encountered when scanning.")
 	err = viper.BindPFlag("show-errored-containers", findCmd.Flags().Lookup("show-errored-containers"))
 	if err != nil {
-		klog.Fatalf("Failed to bind show-errored-containers flag: %v", err)
+		klog.Exitf("Failed to bind show-errored-containers flag: %v", err)
 	}
 
 	klog.InitFlags(nil)
@@ -129,7 +129,7 @@ func initConfig() {
 		var err error
 		cfgFile, err = downloadConfig(cfgFile)
 		if err != nil {
-			klog.Fatalf("failed to download config: %s", err.Error())
+			klog.Exitf("failed to download config: %s", err.Error())
 		}
 		defer os.Remove(cfgFile)
 	}
@@ -202,7 +202,7 @@ var findCmd = &cobra.Command{
 	Long:  "Find deployed helm releases that have updated charts available in chart repos",
 	Run: func(cmd *cobra.Command, args []string) {
 		if !viper.GetBool("poll-artifacthub") && len(viper.GetStringSlice("url")) == 0 {
-			klog.Fatalf("--poll-artifacthub=false requires urls provided to the --url flag. none were provided.")
+			klog.Exitf("--poll-artifacthub=false requires urls provided to the --url flag. none were provided.")
 		}
 		klog.V(5).Infof("Settings: %v", viper.AllSettings())
 		klog.V(5).Infof("All Keys: %v", viper.AllKeys())
@@ -232,8 +232,7 @@ var findCmd = &cobra.Command{
 			iClient := containers.NewClient(kubeContext)
 			containers, err := iClient.Find(ctx)
 			if err != nil {
-				fmt.Println("ERROR during images.Find()", err)
-				os.Exit(1)
+				klog.Exitf("ERROR during images.Find() %v", err)
 			}
 			out := output.NewContainersOutput(containers.Images, containers.ErrImages, showNonSemver, showErrored, includeAll)
 			out.Print()
@@ -243,7 +242,7 @@ var findCmd = &cobra.Command{
 		h := nova_helm.NewHelm(kubeContext)
 		ahClient, err := nova_helm.NewArtifactHubPackageClient(version)
 		if err != nil {
-			klog.Fatalf("error setting up artifact hub client: %s", err)
+			klog.Exitf("error setting up artifact hub client: %s", err)
 		}
 
 		if viper.IsSet("desired-versions") {
@@ -261,7 +260,7 @@ var findCmd = &cobra.Command{
 		}
 		releases, chartNames, err := h.GetReleaseOutput()
 		if err != nil {
-			klog.Fatalf("error getting helm releases: %s", err)
+			klog.Exitf("error getting helm releases: %s", err)
 		}
 		out := output.NewOutputWithHelmReleases(releases)
 		out.IncludeAll = viper.GetBool("include-all")
@@ -269,7 +268,7 @@ var findCmd = &cobra.Command{
 		if viper.GetBool("poll-artifacthub") {
 			packageRepos, err := ahClient.MultiSearch(chartNames)
 			if err != nil {
-				klog.Fatalf("Error getting artifacthub package repos: %v", err)
+				klog.Exitf("Error getting artifacthub package repos: %v", err)
 			}
 			packages := ahClient.GetPackages(packageRepos)
 			klog.V(2).Infof("found %d possible package matches", len(packages))
@@ -287,7 +286,7 @@ var findCmd = &cobra.Command{
 			outputObjects := h.GetHelmReleasesVersion(helmRepos, releases)
 			out.HelmReleases = append(out.HelmReleases, outputObjects...)
 			if err != nil {
-				klog.Fatalf("Error getting helm releases from cluster: %v", err)
+				klog.Exitf("Error getting helm releases from cluster: %v", err)
 			}
 		}
 
@@ -295,7 +294,7 @@ var findCmd = &cobra.Command{
 		if outputFile != "" {
 			err = out.ToFile(outputFile)
 			if err != nil {
-				klog.Fatalf("error outputting to file: %s", err)
+				klog.Exitf("error outputting to file: %s", err)
 			}
 		} else {
 			out.Print(viper.GetBool("wide"))
@@ -310,7 +309,7 @@ var genConfigCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		err := viper.SafeWriteConfigAs(cfgFile)
 		if err != nil {
-			klog.Fatal(err)
+			klog.Exit(err)
 		}
 	},
 }
@@ -320,7 +319,6 @@ func Execute(VERSION, COMMIT string) {
 	version = VERSION
 	versionCommit = COMMIT
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		klog.Exit(err)
 	}
 }
