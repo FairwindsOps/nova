@@ -113,7 +113,7 @@ func init() {
 	rootCmd.PersistentFlags().Bool("show-old", false, "Only show charts that are not on the latest version")
 	err = viper.BindPFlag("show-old", rootCmd.PersistentFlags().Lookup("show-old"))
 	if err != nil {
-		klog.Fatalf("Failed to bind show-old flag: %v", err)
+		klog.Exitf("Failed to bind show-old flag: %v", err)
 	}
 
 	klog.InitFlags(nil)
