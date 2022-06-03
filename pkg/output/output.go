@@ -107,7 +107,7 @@ func (output Output) ToFile(filename string) error {
 }
 
 // Print sends the output to STDOUT
-func (output Output) Print(wide bool) {
+func (output Output) Print(wide, showOld bool) {
 	if len(output.HelmReleases) == 0 {
 		fmt.Println("No releases found")
 		return
@@ -128,7 +128,7 @@ func (output Output) Print(wide bool) {
 	fmt.Fprintln(w, separator)
 
 	for _, release := range output.HelmReleases {
-		if !output.IncludeAll && release.Latest.Version == "" {
+		if (!output.IncludeAll && release.Latest.Version == "") || (showOld && !release.IsOld) {
 			continue
 		}
 		line := release.ReleaseName + "\t"

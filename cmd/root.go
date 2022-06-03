@@ -110,6 +110,12 @@ func init() {
 		klog.Exitf("Failed to bind show-errored-containers flag: %v", err)
 	}
 
+	rootCmd.PersistentFlags().Bool("show-old", false, "Only show charts that are not on the latest version")
+	err = viper.BindPFlag("show-old", rootCmd.PersistentFlags().Lookup("show-old"))
+	if err != nil {
+		klog.Exitf("Failed to bind show-old flag: %v", err)
+	}
+
 	klog.InitFlags(nil)
 	_ = flag.Set("alsologtostderr", "true")
 	_ = flag.Set("logtostderr", "true")
@@ -297,7 +303,7 @@ var findCmd = &cobra.Command{
 				klog.Exitf("error outputting to file: %s", err)
 			}
 		} else {
-			out.Print(viper.GetBool("wide"))
+			out.Print(viper.GetBool("wide"), viper.GetBool("show-old"))
 		}
 	},
 }
