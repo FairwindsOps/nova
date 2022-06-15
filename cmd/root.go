@@ -222,7 +222,7 @@ var findCmd = &cobra.Command{
 		kubeContext := viper.GetString("context")
 
 		format := viper.GetString("format")
-		if !(format == output.TableFormat || format == output.JsonFormat) {
+		if !(format == output.TableFormat || format == output.JSONFormat) {
 			klog.Exitf("--format flag value is not valid")
 		}
 

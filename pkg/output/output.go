@@ -30,8 +30,8 @@ import (
 )
 
 const (
-	// JsonFormat json output format
-	JsonFormat = "json"
+	// JSONFormat json output format
+	JSONFormat = "json"
 	// TableFormat table/csv output format
 	TableFormat = "table"
 )
@@ -102,7 +102,7 @@ func NewOutputWithHelmReleases(helmReleases []*release.Release) Output {
 // ToFile dispatches a message to file
 func (output Output) ToFile(filename string, format string) error {
 	output.dedupe()
-	if format == JsonFormat {
+	if format == JSONFormat {
 		data, err := json.Marshal(output)
 		if err != nil {
 			klog.Errorf("Error marshaling json: %v", err)
@@ -140,7 +140,7 @@ func (output Output) Print(format string, wide, showOld bool) {
 		return
 	}
 	output.dedupe()
-	if format == JsonFormat {
+	if format == JSONFormat {
 		data, _ := json.Marshal(output.HelmReleases)
 		fmt.Fprintln(os.Stdout, string(data))
 	} else if format == TableFormat {
@@ -244,7 +244,7 @@ func (output ContainersOutput) Print(format string) {
 		fmt.Println("No images found")
 		return
 	}
-	if format == JsonFormat {
+	if format == JSONFormat {
 		data, _ := json.Marshal(output)
 		fmt.Fprintln(os.Stdout, string(data))
 	} else if format == TableFormat {
