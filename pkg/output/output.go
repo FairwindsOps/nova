@@ -114,7 +114,7 @@ func (output Output) ToFile(filename string, format string) error {
 			klog.Errorf("Error writing to file %s: %v", filename, err)
 		}
 	} else if format == TableFormat {
-		file, err := os.Create("records.csv")
+		file, err := os.Create(filename)
 		defer file.Close()
 		if err != nil {
 			return err
