@@ -47,7 +47,7 @@ func TestFileOutput_Send(t *testing.T) {
 		},
 	}
 
-	err := out.ToFile(path)
+	err := out.ToFile(path, "json")
 	assert.Nil(t, err)
 
 	_, existsErr := os.Stat(path)
