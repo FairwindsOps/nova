@@ -17,9 +17,11 @@ package output
 import (
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"strconv"
 	"text/tabwriter"
 
@@ -100,9 +102,11 @@ func NewOutputWithHelmReleases(helmReleases []*release.Release) Output {
 }
 
 // ToFile dispatches a message to file
-func (output Output) ToFile(filename string, format string) error {
+func (output Output) ToFile(filename string) error {
 	output.dedupe()
-	if format == JSONFormat {
+	extension := path.Ext(filename)
+	switch extension {
+	case ".json":
 		data, err := json.Marshal(output)
 		if err != nil {
 			klog.Errorf("Error marshaling json: %v", err)
@@ -113,7 +117,7 @@ func (output Output) ToFile(filename string, format string) error {
 		if err != nil {
 			klog.Errorf("Error writing to file %s: %v", filename, err)
 		}
-	} else if format == TableFormat {
+	case ".csv":
 		file, err := os.Create(filename)
 		defer file.Close()
 		if err != nil {
@@ -129,6 +133,10 @@ func (output Output) ToFile(filename string, format string) error {
 			data = append(data, row)
 		}
 		w.WriteAll(data)
+	default:
+		err := errors.New("File format is not supported. The supported file format are json and table only")
+		return err
+
 	}
 	return nil
 }
@@ -140,10 +148,11 @@ func (output Output) Print(format string, wide, showOld bool) {
 		return
 	}
 	output.dedupe()
-	if format == JSONFormat {
+	switch format {
+	case JSONFormat:
 		data, _ := json.Marshal(output.HelmReleases)
 		fmt.Fprintln(os.Stdout, string(data))
-	} else if format == TableFormat {
+	case TableFormat:
 		w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 		header := "Release Name\t"
 		if wide {
@@ -244,10 +253,11 @@ func (output ContainersOutput) Print(format string) {
 		fmt.Println("No images found")
 		return
 	}
-	if format == JSONFormat {
+	switch format {
+	case JSONFormat:
 		data, _ := json.Marshal(output)
 		fmt.Fprintln(os.Stdout, string(data))
-	} else if format == TableFormat {
+	case TableFormat:
 		w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 		if len(output.ContainerImages) != 0 {
 			header := "Container Name\tCurrent Version\tOld\tLatest\tLatest Minor\tLatest Patch"

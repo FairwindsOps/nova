@@ -58,7 +58,7 @@ func init() {
 		klog.Exitf("Failed to bind output-file flag: %v", err)
 	}
 
-	rootCmd.PersistentFlags().String("format", "json", "A format of the output which could be table or json. default json")
+	rootCmd.PersistentFlags().String("format", "json", "An output format (table, json)")
 	err = viper.BindPFlag("format", rootCmd.PersistentFlags().Lookup("format"))
 	if err != nil {
 		klog.Exitf("Failed to bind format flag: %v", err)
@@ -223,7 +223,7 @@ var findCmd = &cobra.Command{
 
 		format := viper.GetString("format")
 		if !(format == output.TableFormat || format == output.JSONFormat) {
-			klog.Exitf("--format flag value is not valid")
+			klog.Exitf("--format flag value is not valid. Run `nova find --help` to see flag options")
 		}
 
 		if viper.GetBool("containers") {
@@ -308,7 +308,7 @@ var findCmd = &cobra.Command{
 		}
 		outputFile := viper.GetString("output-file")
 		if outputFile != "" {
-			err = out.ToFile(outputFile, format)
+			err = out.ToFile(outputFile)
 			if err != nil {
 				klog.Exitf("error outputting to file: %s", err)
 			}

@@ -48,10 +48,10 @@ func TestFileOutput_Send(t *testing.T) {
 		},
 	}
 
-	err := out.ToFile(path, "json")
+	err := out.ToFile(path)
 	assert.Nil(t, err)
 
-	err = out.ToFile(pathcsv, "table")
+	err = out.ToFile(pathcsv)
 	assert.Nil(t, err)
 
 	_, existsErr := os.Stat(path)
