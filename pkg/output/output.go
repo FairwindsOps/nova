@@ -30,7 +30,9 @@ import (
 )
 
 const (
-	JsonFormat  = "json"
+	// JsonFormat json output format
+	JsonFormat = "json"
+	// TableFormat table/csv output format
 	TableFormat = "table"
 )
 
