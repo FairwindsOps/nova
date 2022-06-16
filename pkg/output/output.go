@@ -184,6 +184,8 @@ func (output Output) Print(format string, wide, showOld bool) {
 			fmt.Fprintln(w, line)
 		}
 		w.Flush()
+	default:
+		klog.Errorf("Output format is not supported. The supported formats are json and table only")
 	}
 }
 
@@ -297,5 +299,7 @@ func (output ContainersOutput) Print(format string) {
 		if output.LatestStringFound {
 			fmt.Printf("Found a container utilizing the 'latest' tag. This is bad practice and should be avoided.\n\n")
 		}
+	default:
+		klog.Errorf("Output format is not supported. The supported formats are json and table only")
 	}
 }
