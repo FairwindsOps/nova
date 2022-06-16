@@ -134,7 +134,7 @@ func (output Output) ToFile(filename string) error {
 		}
 		w.WriteAll(data)
 	default:
-		err := errors.New("File format is not supported. The supported file format are json and table only")
+		err := errors.New("File format is not supported. The supported file format are json and csv only")
 		return err
 
 	}
