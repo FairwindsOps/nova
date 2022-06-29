@@ -58,6 +58,12 @@ func init() {
 		klog.Exitf("Failed to bind output-file flag: %v", err)
 	}
 
+	rootCmd.PersistentFlags().String("format", "json", "An output format (table, json)")
+	err = viper.BindPFlag("format", rootCmd.PersistentFlags().Lookup("format"))
+	if err != nil {
+		klog.Exitf("Failed to bind format flag: %v", err)
+	}
+
 	rootCmd.PersistentFlags().StringToStringP("desired-versions", "d", nil, "A map of chart=override_version to override the helm repository when checking.")
 	err = viper.BindPFlag("desired-versions", rootCmd.PersistentFlags().Lookup("desired-versions"))
 	if err != nil {
@@ -215,6 +221,11 @@ var findCmd = &cobra.Command{
 
 		kubeContext := viper.GetString("context")
 
+		format := viper.GetString("format")
+		if !(format == output.TableFormat || format == output.JSONFormat) {
+			klog.Exitf("--format flag value is not valid. Run `nova find --help` to see flag options")
+		}
+
 		if viper.GetBool("containers") {
 			// Set up a context we can use to cancel all operations to external container registries if we need to
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -241,7 +252,7 @@ var findCmd = &cobra.Command{
 				klog.Exitf("ERROR during images.Find() %v", err)
 			}
 			out := output.NewContainersOutput(containers.Images, containers.ErrImages, showNonSemver, showErrored, includeAll)
-			out.Print()
+			out.Print(format)
 			return
 		}
 
@@ -295,7 +306,6 @@ var findCmd = &cobra.Command{
 				klog.Exitf("Error getting helm releases from cluster: %v", err)
 			}
 		}
-
 		outputFile := viper.GetString("output-file")
 		if outputFile != "" {
 			err = out.ToFile(outputFile)
@@ -303,7 +313,7 @@ var findCmd = &cobra.Command{
 				klog.Exitf("error outputting to file: %s", err)
 			}
 		} else {
-			out.Print(viper.GetBool("wide"), viper.GetBool("show-old"))
+			out.Print(format, viper.GetBool("wide"), viper.GetBool("show-old"))
 		}
 	},
 }

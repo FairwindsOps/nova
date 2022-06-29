@@ -15,16 +15,27 @@
 package output
 
 import (
+	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
+	"strconv"
 	"text/tabwriter"
 
 	"github.com/fairwindsops/nova/pkg/containers"
 	"helm.sh/helm/v3/pkg/release"
 
 	"k8s.io/klog/v2"
+)
+
+const (
+	// JSONFormat json output format
+	JSONFormat = "json"
+	// TableFormat table/csv output format
+	TableFormat = "table"
 )
 
 // Output is the object that Nova outputs
@@ -93,57 +104,89 @@ func NewOutputWithHelmReleases(helmReleases []*release.Release) Output {
 // ToFile dispatches a message to file
 func (output Output) ToFile(filename string) error {
 	output.dedupe()
-	data, err := json.Marshal(output)
-	if err != nil {
-		klog.Errorf("Error marshaling json: %v", err)
-		return err
-	}
+	extension := path.Ext(filename)
+	switch extension {
+	case ".json":
+		data, err := json.Marshal(output)
+		if err != nil {
+			klog.Errorf("Error marshaling json: %v", err)
+			return err
+		}
 
-	err = ioutil.WriteFile(filename, data, 0644)
-	if err != nil {
-		klog.Errorf("Error writing to file %s: %v", filename, err)
+		err = ioutil.WriteFile(filename, data, 0644)
+		if err != nil {
+			klog.Errorf("Error writing to file %s: %v", filename, err)
+		}
+	case ".csv":
+		file, err := os.Create(filename)
+		defer file.Close()
+		if err != nil {
+			return err
+		}
+		w := csv.NewWriter(file)
+		defer w.Flush()
+		header := []string{"Release Name", "Chart Name", "Namespace", "HelmVersion", "Installed", "Latest", "Old", "Deprecated"}
+		var data [][]string
+		data = append(data, header)
+		for _, rl := range output.HelmReleases {
+			row := []string{rl.ReleaseName, rl.ChartName, rl.Namespace, rl.HelmVersion, rl.Installed.Version, rl.Latest.Version, strconv.FormatBool(rl.IsOld), strconv.FormatBool(rl.Deprecated)}
+			data = append(data, row)
+		}
+		w.WriteAll(data)
+	default:
+		err := errors.New("File format is not supported. The supported file format are json and csv only")
+		return err
+
 	}
 	return nil
 }
 
 // Print sends the output to STDOUT
-func (output Output) Print(wide, showOld bool) {
+func (output Output) Print(format string, wide, showOld bool) {
 	if len(output.HelmReleases) == 0 {
 		fmt.Println("No releases found")
 		return
 	}
 	output.dedupe()
-	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
-	header := "Release Name\t"
-	if wide {
-		header += "Chart Name\tNamespace\tHelmVersion\t"
-	}
-	header += "Installed\tLatest\tOld\tDeprecated"
-	fmt.Fprintln(w, header)
-	separator := "============\t"
-	if wide {
-		separator += "==========\t=========\t===========\t"
-	}
-	separator += "=========\t======\t===\t=========="
-	fmt.Fprintln(w, separator)
-
-	for _, release := range output.HelmReleases {
-		if (!output.IncludeAll && release.Latest.Version == "") || (showOld && !release.IsOld) {
-			continue
-		}
-		line := release.ReleaseName + "\t"
+	switch format {
+	case JSONFormat:
+		data, _ := json.Marshal(output.HelmReleases)
+		fmt.Fprintln(os.Stdout, string(data))
+	case TableFormat:
+		w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
+		header := "Release Name\t"
 		if wide {
-			line += release.ChartName + "\t"
-			line += release.Namespace + "\t"
-			line += release.HelmVersion + "\t"
+			header += "Chart Name\tNamespace\tHelmVersion\t"
 		}
-		line += release.Installed.Version + "\t"
-		line += release.Latest.Version + "\t"
-		line += fmt.Sprintf("%t", release.IsOld) + "\t"
-		line += fmt.Sprintf("%t", release.Deprecated) + "\t"
-		fmt.Fprintln(w, line)
+		header += "Installed\tLatest\tOld\tDeprecated"
+		fmt.Fprintln(w, header)
+		separator := "============\t"
+		if wide {
+			separator += "==========\t=========\t===========\t"
+		}
+		separator += "=========\t======\t===\t=========="
+		fmt.Fprintln(w, separator)
+
+		for _, release := range output.HelmReleases {
+			if (!output.IncludeAll && release.Latest.Version == "") || (showOld && !release.IsOld) {
+				continue
+			}
+			line := release.ReleaseName + "\t"
+			if wide {
+				line += release.ChartName + "\t"
+				line += release.Namespace + "\t"
+				line += release.HelmVersion + "\t"
+			}
+			line += release.Installed.Version + "\t"
+			line += release.Latest.Version + "\t"
+			line += fmt.Sprintf("%t", release.IsOld) + "\t"
+			line += fmt.Sprintf("%t", release.Deprecated) + "\t"
+			fmt.Fprintln(w, line)
+		}
+		w.Flush()
+	default:
+		klog.Errorf("Output format is not supported. The supported formats are json and table only")
 	}
-	w.Flush()
 }
 
 // dedupe will remove duplicate releases from the output if both artifacthub and a custom URL to a helm repository find matches.
@@ -207,48 +250,56 @@ func NewContainersOutput(containers []*containers.Image, errImages []*containers
 }
 
 // Print prints the ContainersOutput to STDOUT
-func (output ContainersOutput) Print() {
+func (output ContainersOutput) Print(format string) {
 	if len(output.ContainerImages) == 0 && len(output.ErrImages) == 0 {
 		fmt.Println("No images found")
 		return
 	}
-	w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
-	if len(output.ContainerImages) != 0 {
-		header := "Container Name\tCurrent Version\tOld\tLatest\tLatest Minor\tLatest Patch"
-		fmt.Fprintln(w, header)
-		separator := "==============\t===============\t===\t======\t=============\t============="
-		fmt.Fprintln(w, separator)
+	switch format {
+	case JSONFormat:
+		data, _ := json.Marshal(output)
+		fmt.Fprintln(os.Stdout, string(data))
+	case TableFormat:
+		w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
+		if len(output.ContainerImages) != 0 {
+			header := "Container Name\tCurrent Version\tOld\tLatest\tLatest Minor\tLatest Patch"
+			fmt.Fprintln(w, header)
+			separator := "==============\t===============\t===\t======\t=============\t============="
+			fmt.Fprintln(w, separator)
 
-		for _, c := range output.ContainerImages {
-			if !output.IncludeAll && c.LatestVersion == c.CurrentVersion {
-				continue
+			for _, c := range output.ContainerImages {
+				if !output.IncludeAll && c.LatestVersion == c.CurrentVersion {
+					continue
+				}
+				line := c.Name + "\t"
+				line += c.CurrentVersion + "\t"
+				line += fmt.Sprintf("%t", c.IsOld) + "\t"
+				line += c.LatestVersion + "\t"
+				line += c.LatestMinorVersion + "\t"
+				line += c.LatestPatchVersion + "\t"
+				fmt.Fprintln(w, line)
 			}
-			line := c.Name + "\t"
-			line += c.CurrentVersion + "\t"
-			line += fmt.Sprintf("%t", c.IsOld) + "\t"
-			line += c.LatestVersion + "\t"
-			line += c.LatestMinorVersion + "\t"
-			line += c.LatestPatchVersion + "\t"
+		}
+
+		if len(output.ErrImages) == 0 {
+			w.Flush()
+			return
+		}
+		fmt.Fprintln(w, "\n\nErrors:")
+		errHeader := "Container Name\tError"
+		fmt.Fprintln(w, errHeader)
+		errSeparator := "==============\t====="
+		fmt.Fprintln(w, errSeparator)
+		for _, e := range output.ErrImages {
+			line := e.Image + "\t"
+			line += e.Err + "\t"
 			fmt.Fprintln(w, line)
 		}
-	}
-
-	if len(output.ErrImages) == 0 {
 		w.Flush()
-		return
-	}
-	fmt.Fprintln(w, "\n\nErrors:")
-	errHeader := "Container Name\tError"
-	fmt.Fprintln(w, errHeader)
-	errSeparator := "==============\t====="
-	fmt.Fprintln(w, errSeparator)
-	for _, e := range output.ErrImages {
-		line := e.Image + "\t"
-		line += e.Err + "\t"
-		fmt.Fprintln(w, line)
-	}
-	w.Flush()
-	if output.LatestStringFound {
-		fmt.Printf("Found a container utilizing the 'latest' tag. This is bad practice and should be avoided.\n\n")
+		if output.LatestStringFound {
+			fmt.Printf("Found a container utilizing the 'latest' tag. This is bad practice and should be avoided.\n\n")
+		}
+	default:
+		klog.Errorf("Output format is not supported. The supported formats are json and table only")
 	}
 }

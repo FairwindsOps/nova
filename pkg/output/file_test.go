@@ -23,6 +23,7 @@ import (
 
 func TestFileOutput_Send(t *testing.T) {
 	path := "/tmp/output.json"
+	pathcsv := "/tmp/output.csv"
 
 	out := Output{
 		HelmReleases: []ReleaseOutput{
@@ -50,11 +51,21 @@ func TestFileOutput_Send(t *testing.T) {
 	err := out.ToFile(path)
 	assert.Nil(t, err)
 
+	err = out.ToFile(pathcsv)
+	assert.Nil(t, err)
+
 	_, existsErr := os.Stat(path)
 	assert.Nil(t, existsErr)
 
 	if existsErr == nil {
 		os.Remove(path)
+	}
+
+	_, existsCSVErr := os.Stat(pathcsv)
+	assert.Nil(t, existsCSVErr)
+
+	if existsErr == nil {
+		os.Remove(pathcsv)
 	}
 
 }
