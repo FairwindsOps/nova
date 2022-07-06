@@ -94,7 +94,7 @@ workflows:
   release:
     jobs:
       - oss-docs/publish-docs:
-          repository: goldilocks
+          repository: nova
           filters:
             branches:
               #ignore: /.*/
