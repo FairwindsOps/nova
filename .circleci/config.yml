@@ -97,8 +97,7 @@ workflows:
           repository: nova
           filters:
             branches:
-              #ignore: /.*/
-              only: sudermanjr/docs-orb
+              ignore: /.*/
             tags:
               only: /^.*/
       - release:
