@@ -9,7 +9,7 @@ meta:
 Visit the [releases page](https://github.com/FairwindsOps/nova/releases) to find the release
 that's right for your environment. For example, on Linux:
 ```
-curl -L "https://github.com/FairwindsOps/nova/releases/download/1.0.0/nova_1.0.0_linux_amd64.tar.gz" > nova.tar.gz
+curl -L "https://github.com/FairwindsOps/nova/releases/download/3.2.0/nova_3.2.0_linux_amd64.tar.gz" > nova.tar.gz
 tar -xvf nova.tar.gz
 sudo mv nova /usr/local/bin/
 ```
