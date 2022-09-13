@@ -52,6 +52,12 @@ type ContainersOutput struct {
 	LatestStringFound bool                       `json:"latest_string_found"`
 }
 
+// ContainersOutput represents the output data we need for displaying a table of out of date container images
+type HelmAndContainersOutput struct {
+	Helm      Output
+	Container ContainersOutput
+}
+
 // ReleaseOutput represents a release
 type ReleaseOutput struct {
 	ReleaseName string `json:"release"`
@@ -134,9 +140,7 @@ func (output Output) ToFile(filename string) error {
 		}
 		w.WriteAll(data)
 	default:
-		err := errors.New("File format is not supported. The supported file format are json and csv only")
-		return err
-
+		return errors.New("File format is not supported. The supported file format are json and csv only")
 	}
 	return nil
 }
@@ -190,7 +194,7 @@ func (output Output) Print(format string, wide, showOld bool) {
 }
 
 // dedupe will remove duplicate releases from the output if both artifacthub and a custom URL to a helm repository find matches.
-// this will always overrite any found by artifacthub with the version from a custom helm repo url because those are found last and
+// this will always override any found by artifacthub with the version from a custom helm repo url because those are found last and
 // will therefore always be at the end of the output.HelmReleases array.
 func (output *Output) dedupe() {
 	var unique []ReleaseOutput
@@ -210,7 +214,7 @@ func (output *Output) dedupe() {
 }
 
 // NewContainersOutput creates a new ContainersOutput object ready to be printed
-func NewContainersOutput(containers []*containers.Image, errImages []*containers.ErroredImage, showNonSemver, showErrored, includeAll bool) ContainersOutput {
+func NewContainersOutput(containers []*containers.Image, errImages []*containers.ErroredImage, showNonSemver, showErrored, includeAll bool) *ContainersOutput {
 	var output ContainersOutput
 	output.IncludeAll = includeAll
 	for _, container := range containers {
@@ -246,7 +250,7 @@ func NewContainersOutput(containers []*containers.Image, errImages []*containers
 	if showErrored {
 		output.ErrImages = errImages
 	}
-	return output
+	return &output
 }
 
 // Print prints the ContainersOutput to STDOUT
@@ -302,4 +306,66 @@ func (output ContainersOutput) Print(format string) {
 	default:
 		klog.Errorf("Output format is not supported. The supported formats are json and table only")
 	}
+}
+
+// CombinedOutputFormat has both helm releases and containers info in a backwards compatible way
+type CombinedOutputFormat struct {
+	Helm       []ReleaseOutput `json:"helm"`
+	IncludeAll bool            `json:"include_all"`
+	Container  struct {
+		ContainersOutput
+	} `json:"container"`
+}
+
+// NewHelmAndContainersOutput creates a new HelmAndContainersOutput object ready to be printed
+func NewHelmAndContainersOutput(helm Output, container ContainersOutput) *HelmAndContainersOutput {
+	return &HelmAndContainersOutput{
+		Helm:      helm,
+		Container: container,
+	}
+}
+
+// Print prints the HelmAndContainersOutput to STDOUT
+func (output HelmAndContainersOutput) Print(format string, wide, showOld bool) {
+	switch format {
+	case TableFormat:
+		output.Helm.Print(format, wide, showOld)
+		fmt.Println("")
+		output.Container.Print(format)
+	case JSONFormat:
+		outputFormat := CombinedOutputFormat{
+			Helm:       output.Helm.HelmReleases,
+			Container:  struct{ ContainersOutput }{ContainersOutput: output.Container},
+			IncludeAll: output.Helm.IncludeAll,
+		}
+		data, _ := json.Marshal(outputFormat)
+		fmt.Fprintln(os.Stdout, string(data))
+	}
+}
+
+// Print prints the HelmAndContainersOutput to STDOUT
+func (output HelmAndContainersOutput) ToFile(filename string) error {
+	output.Helm.dedupe()
+	extension := path.Ext(filename)
+	switch extension {
+	case ".json":
+		outputFormat := CombinedOutputFormat{
+			Helm:       output.Helm.HelmReleases,
+			Container:  struct{ ContainersOutput }{ContainersOutput: output.Container},
+			IncludeAll: output.Helm.IncludeAll,
+		}
+		data, err := json.Marshal(outputFormat)
+		if err != nil {
+			klog.Errorf("Error marshaling json: %v", err)
+			return err
+		}
+		err = ioutil.WriteFile(filename, data, 0644)
+		if err != nil {
+			klog.Errorf("Error writing to file %s: %v", filename, err)
+		}
+	default:
+		// TODO - when both flags are used should it have CSV output?!
+		return errors.New("File format is not supported. The supported file format is json only")
+	}
+	return nil
 }
