@@ -1,5 +1,8 @@
 # Changelog
 
+# 2.3.0
+* Add support for `--helm` flag on `find` command
+
 # 2.2.0
 * Add support for config files
 * Add support for overriding desired-versions
