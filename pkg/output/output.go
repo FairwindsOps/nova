@@ -313,7 +313,9 @@ type CombinedOutputFormat struct {
 	Helm       []ReleaseOutput `json:"helm"`
 	IncludeAll bool            `json:"include_all"`
 	Container  struct {
-		ContainersOutput
+		ContainerImages   []ContainerOutput          `json:"container_images"`
+		ErrImages         []*containers.ErroredImage `json:"err_images"`
+		LatestStringFound bool                       `json:"latest_string_found"`
 	} `json:"container"`
 }
 
@@ -334,8 +336,16 @@ func (output HelmAndContainersOutput) Print(format string, wide, showOld bool) {
 		output.Container.Print(format)
 	case JSONFormat:
 		outputFormat := CombinedOutputFormat{
-			Helm:       output.Helm.HelmReleases,
-			Container:  struct{ ContainersOutput }{ContainersOutput: output.Container},
+			Helm: output.Helm.HelmReleases,
+			Container: struct {
+				ContainerImages   []ContainerOutput          `json:"container_images"`
+				ErrImages         []*containers.ErroredImage `json:"err_images"`
+				LatestStringFound bool                       `json:"latest_string_found"`
+			}{
+				ContainerImages:   output.Container.ContainerImages,
+				ErrImages:         output.Container.ErrImages,
+				LatestStringFound: output.Container.LatestStringFound,
+			},
 			IncludeAll: output.Helm.IncludeAll,
 		}
 		data, _ := json.Marshal(outputFormat)
@@ -350,8 +360,16 @@ func (output HelmAndContainersOutput) ToFile(filename string) error {
 	switch extension {
 	case ".json":
 		outputFormat := CombinedOutputFormat{
-			Helm:       output.Helm.HelmReleases,
-			Container:  struct{ ContainersOutput }{ContainersOutput: output.Container},
+			Helm: output.Helm.HelmReleases,
+			Container: struct {
+				ContainerImages   []ContainerOutput          `json:"container_images"`
+				ErrImages         []*containers.ErroredImage `json:"err_images"`
+				LatestStringFound bool                       `json:"latest_string_found"`
+			}{
+				ContainerImages:   output.Container.ContainerImages,
+				ErrImages:         output.Container.ErrImages,
+				LatestStringFound: output.Container.LatestStringFound,
+			},
 			IncludeAll: output.Helm.IncludeAll,
 		}
 		data, err := json.Marshal(outputFormat)

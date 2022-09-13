@@ -200,7 +200,6 @@ $ nova --format=json find --helm --containers | jq
       }
     ],
     "err_images": null,
-    "include_all": false,
     "latest_string_found": false
   }
 }
