@@ -52,7 +52,7 @@ type ContainersOutput struct {
 	LatestStringFound bool                       `json:"latest_string_found"`
 }
 
-// ContainersOutput represents the output data we need for displaying a table of out of date container images
+// HelmAndContainersOutput represents the output data we need for displaying a table of out of date container images
 type HelmAndContainersOutput struct {
 	Helm      Output
 	Container ContainersOutput
@@ -353,7 +353,7 @@ func (output HelmAndContainersOutput) Print(format string, wide, showOld bool) {
 	}
 }
 
-// Print prints the HelmAndContainersOutput to STDOUT
+// ToFile writes the output to a file
 func (output HelmAndContainersOutput) ToFile(filename string) error {
 	output.Helm.dedupe()
 	extension := path.Ext(filename)
