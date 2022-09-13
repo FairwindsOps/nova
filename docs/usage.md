@@ -12,8 +12,8 @@ nova find --wide
 ## Options
 ```
 Flags:
-      --containers        Show old container image versions instead of helm chart versions. There will be no helm output if this flag is set.
-      --helm              Show old helm releases instead of helm chart versions. You can combine this flag with `--containers` to have both output in a single run.
+      --containers        Show old container image versions. There will be no helm output unless the --helm flag is set as well
+      --helm              Show old helm releases. You can combine this flag with `--containers` to have both output in a single run.
   -h, --help              help for find
       --show-non-semver   When finding container images, show all containers even if they don't follow semver.
 
