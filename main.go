@@ -21,7 +21,7 @@ import (
 var (
 	// version is set during build
 	version = "development"
-	// comit is set during build
+	// commit is set during build
 	commit = "n/a"
 )
 

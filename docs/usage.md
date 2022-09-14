@@ -12,7 +12,8 @@ nova find --wide
 ## Options
 ```
 Flags:
-      --containers        Show old container image versions instead of helm chart versions. There will be no helm output if this flag is set.
+      --containers        Show old container image versions. There will be no helm output unless the --helm flag is set as well
+      --helm              Show old helm releases. You can combine this flag with `--containers` to have both output in a single run.
   -h, --help              help for find
       --show-non-semver   When finding container images, show all containers even if they don't follow semver.
 
@@ -133,4 +134,73 @@ Errors:
 Container Name                        Error
 ==============                        =====
 examplething.com/testing:v1.0.0       Get "https://examplething.com/v2/": dial tcp: lookup examplethingert.com: no such host                                                                                                 =====
+```
+
+## Helm Releases and Container Images combined output
+If you want to run nova and both helm releases and containers images results in a single run
+
+Below is sample output for Nova when using the `--helm --containers` flag
+
+```
+$ nova --format=table find --helm --containers
+Release Name      Installed    Latest    Old      Deprecated
+============      =========    ======    ===      ==========
+cert-manager      v1.9.1       1.9.1     false    false    
+insights-agent    2.0.7        2.6.8     true     false    
+
+Container Name                        Current Version    Old     Latest     Latest Minor     Latest Patch
+==============                        ===============    ===     ======     =============    =============
+k8s.gcr.io/coredns/coredns            v1.8.4             true    v1.9.3     v1.9.3           v1.8.6      
+k8s.gcr.io/etcd                       3.5.0-0            true    3.5.4-0    3.5.0-0          3.5.0-0     
+k8s.gcr.io/kube-apiserver             v1.22.9            true    v1.25.0    v1.25.0          v1.22.13    
+k8s.gcr.io/kube-controller-manager    v1.22.9            true    v1.25.0    v1.25.0          v1.22.13    
+k8s.gcr.io/kube-proxy                 v1.22.9            true    v1.25.0    v1.25.0          v1.22.13    
+k8s.gcr.io/kube-scheduler             v1.22.9            true    v1.25.0    v1.25.0          v1.22.13  
+```
+
+You can print the output in `json` format
+
+```
+$ nova --format=json find --helm --containers | jq
+{
+  "helm": [
+    {
+      "release": "cert-manager",
+      "chartName": "cert-manager",
+      "namespace": "cert-manager",
+      "description": "A Helm chart for cert-manager",
+      "home": "https://github.com/cert-manager/cert-manager",
+      "icon": "https://raw.githubusercontent.com/cert-manager/cert-manager/d53c0b9270f8cd90d908460d69502694e1838f5f/logo/logo-small.png",
+      "Installed": { "version": "v1.9.1", "appVersion": "v1.9.1" },
+      "Latest": { "version": "1.9.1", "appVersion": "v1.9.1" },
+      "outdated": false,
+      "deprecated": false,
+      "helmVersion": "3",
+      "overridden": false
+    }
+  ],
+  "include_all": false,
+  "container": {
+    "container_images": [
+      {
+        "name": "k8s.gcr.io/kube-scheduler",
+        "current_version": "v1.22.9",
+        "latest_version": "v1.25.0",
+        "latest_minor_version": "v1.25.0",
+        "latest_patch_version": "v1.22.13",
+        "outdated": true,
+        "affectedWorkloads": [
+          {
+            "name": "kube-scheduler-kind-control-plane",
+            "namespace": "kube-system",
+            "kind": "Pod",
+            "container": "kube-scheduler"
+          }
+        ]
+      }
+    ],
+    "err_images": null,
+    "latest_string_found": false
+  }
+}
 ```

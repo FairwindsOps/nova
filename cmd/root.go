@@ -104,6 +104,11 @@ func init() {
 	if err != nil {
 		klog.Exitf("Failed to bind containers flag: %v", err)
 	}
+	findCmd.Flags().Bool("helm", false, "Show old helm chart versions. You can combine this flag with --containers to have both output in a single run.")
+	err = viper.BindPFlag("helm", findCmd.Flags().Lookup("helm"))
+	if err != nil {
+		klog.Exitf("Failed to bind containers flag: %v", err)
+	}
 	findCmd.Flags().Bool("show-non-semver", false, "When finding container images, show all containers even if they don't follow semver.")
 	err = viper.BindPFlag("show-non-semver", findCmd.Flags().Lookup("show-non-semver"))
 	if err != nil {
@@ -226,94 +231,44 @@ var findCmd = &cobra.Command{
 			klog.Exitf("--format flag value is not valid. Run `nova find --help` to see flag options")
 		}
 
-		if viper.GetBool("containers") {
-			// Set up a context we can use to cancel all operations to external container registries if we need to
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			signals := make(chan os.Signal, 1)
-			signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
-			defer func() {
-				signal.Stop(signals)
-				cancel()
-			}()
-			go func() {
-				select {
-				case <-signals:
-					fmt.Print("\nCancelling operations to external container registries\n")
-					cancel()
-				case <-ctx.Done():
-				}
-			}()
-			showNonSemver := viper.GetBool("show-non-semver")
-			showErrored := viper.GetBool("show-errored-containers")
-			includeAll := viper.GetBool("include-all")
-			iClient := containers.NewClient(kubeContext)
-			containers, err := iClient.Find(ctx)
+		if viper.GetBool("helm") && viper.GetBool("containers") {
+			output, err := handleHelmAndContainers(kubeContext)
 			if err != nil {
-				klog.Exitf("ERROR during images.Find() %v", err)
+				klog.Exit(err)
 			}
-			out := output.NewContainersOutput(containers.Images, containers.ErrImages, showNonSemver, showErrored, includeAll)
-			out.Print(format)
+			outputFile := viper.GetString("output-file")
+			if outputFile != "" {
+				err = output.ToFile(outputFile)
+				if err != nil {
+					klog.Exitf("error outputting to file: %s", err)
+				}
+			} else {
+				output.Print(format, viper.GetBool("wide"), viper.GetBool("show-old"))
+			}
 			return
 		}
 
-		h := nova_helm.NewHelm(kubeContext)
-		ahClient, err := nova_helm.NewArtifactHubPackageClient(version)
-		if err != nil {
-			klog.Exitf("error setting up artifact hub client: %s", err)
-		}
-
-		if viper.IsSet("desired-versions") {
-			klog.V(3).Infof("desired-versions is set - attempting to load them")
-			klog.V(8).Infof("raw desired-versions: %v", viper.Get("desired-versions"))
-
-			desiredVersion := viper.GetStringMapString("desired-versions")
-			for k, v := range desiredVersion {
-				klog.V(2).Infof("version override for %s: %s", k, v)
-				h.DesiredVersions = append(h.DesiredVersions, nova_helm.DesiredVersion{
-					Name:    k,
-					Version: v,
-				})
-			}
-		}
-		releases, chartNames, err := h.GetReleaseOutput()
-		if err != nil {
-			klog.Exitf("error getting helm releases: %s", err)
-		}
-		out := output.NewOutputWithHelmReleases(releases)
-		out.IncludeAll = viper.GetBool("include-all")
-
-		if viper.GetBool("poll-artifacthub") {
-			packageRepos, err := ahClient.MultiSearch(chartNames)
+		if viper.GetBool("containers") {
+			output, err := handleContainers(kubeContext)
 			if err != nil {
-				klog.Exitf("Error getting artifacthub package repos: %v", err)
+				klog.Exit(err)
 			}
-			packages := ahClient.GetPackages(packageRepos)
-			klog.V(2).Infof("found %d possible package matches", len(packages))
-			for _, release := range releases {
-				o := nova_helm.FindBestArtifactHubMatch(release, packages)
-				if o != nil {
-					h.OverrideDesiredVersion(o)
-					out.HelmReleases = append(out.HelmReleases, *o)
-				}
-			}
+			output.Print(format)
+			return
 		}
-		if len(viper.GetStringSlice("url")) > 0 {
-			repos := viper.GetStringSlice("url")
-			helmRepos := nova_helm.NewRepos(repos)
-			outputObjects := h.GetHelmReleasesVersion(helmRepos, releases)
-			out.HelmReleases = append(out.HelmReleases, outputObjects...)
-			if err != nil {
-				klog.Exitf("Error getting helm releases from cluster: %v", err)
-			}
+
+		output, err := handleHelm(kubeContext)
+		if err != nil {
+			klog.Exit(err)
 		}
 		outputFile := viper.GetString("output-file")
 		if outputFile != "" {
-			err = out.ToFile(outputFile)
+			err = output.ToFile(outputFile)
 			if err != nil {
 				klog.Exitf("error outputting to file: %s", err)
 			}
 		} else {
-			out.Print(format, viper.GetBool("wide"), viper.GetBool("show-old"))
+			output.Print(format, viper.GetBool("wide"), viper.GetBool("show-old"))
 		}
 	},
 }
@@ -337,4 +292,94 @@ func Execute(VERSION, COMMIT string) {
 	if err := rootCmd.Execute(); err != nil {
 		klog.Exit(err)
 	}
+}
+
+func handleContainers(kubeContext string) (*output.ContainersOutput, error) {
+	// Set up a context we can use to cancel all operations to external container registries if we need to
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
+	defer func() {
+		signal.Stop(signals)
+		cancel()
+	}()
+	go func() {
+		select {
+		case <-signals:
+			fmt.Print("\nCancelling operations to external container registries\n")
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+	iClient := containers.NewClient(kubeContext)
+	containers, err := iClient.Find(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("ERROR during images.Find() %w", err)
+	}
+	showNonSemver := viper.GetBool("show-non-semver")
+	showErrored := viper.GetBool("show-errored-containers")
+	includeAll := viper.GetBool("include-all")
+	return output.NewContainersOutput(containers.Images, containers.ErrImages, showNonSemver, showErrored, includeAll), nil
+}
+
+func handleHelm(kubeContext string) (*output.Output, error) {
+	h := nova_helm.NewHelm(kubeContext)
+	if viper.IsSet("desired-versions") {
+		klog.V(3).Infof("desired-versions is set - attempting to load them")
+		klog.V(8).Infof("raw desired-versions: %v", viper.Get("desired-versions"))
+
+		desiredVersion := viper.GetStringMapString("desired-versions")
+		for k, v := range desiredVersion {
+			klog.V(2).Infof("version override for %s: %s", k, v)
+			h.DesiredVersions = append(h.DesiredVersions, nova_helm.DesiredVersion{
+				Name:    k,
+				Version: v,
+			})
+		}
+	}
+	releases, chartNames, err := h.GetReleaseOutput()
+	if err != nil {
+		return nil, fmt.Errorf("error getting helm releases: %s", err)
+	}
+	out := output.NewOutputWithHelmReleases(releases)
+	out.IncludeAll = viper.GetBool("include-all")
+
+	if viper.GetBool("poll-artifacthub") {
+		ahClient, err := nova_helm.NewArtifactHubPackageClient(version)
+		if err != nil {
+			return nil, fmt.Errorf("error setting up artifact hub client: %s", err)
+		}
+		packageRepos, err := ahClient.MultiSearch(chartNames)
+		if err != nil {
+			return nil, fmt.Errorf("Error getting artifacthub package repos: %v", err)
+		}
+		packages := ahClient.GetPackages(packageRepos)
+		klog.V(2).Infof("found %d possible package matches", len(packages))
+		for _, release := range releases {
+			o := nova_helm.FindBestArtifactHubMatch(release, packages)
+			if o != nil {
+				h.OverrideDesiredVersion(o)
+				out.HelmReleases = append(out.HelmReleases, *o)
+			}
+		}
+	}
+	if len(viper.GetStringSlice("url")) > 0 {
+		repos := viper.GetStringSlice("url")
+		helmRepos := nova_helm.NewRepos(repos)
+		outputObjects := h.GetHelmReleasesVersion(helmRepos, releases)
+		out.HelmReleases = append(out.HelmReleases, outputObjects...)
+	}
+	return &out, nil
+}
+
+func handleHelmAndContainers(kubeContext string) (*output.HelmAndContainersOutput, error) {
+	helmOutput, err := handleHelm(kubeContext)
+	if err != nil {
+		return nil, err
+	}
+	containersOutput, err := handleContainers(kubeContext)
+	if err != nil {
+		return nil, err
+	}
+	return output.NewHelmAndContainersOutput(*helmOutput, *containersOutput), nil
 }
