@@ -402,7 +402,6 @@ func (output HelmAndContainersOutput) ToFile(filename string) error {
 			klog.Errorf("Error writing to file %s: %v", filename, err)
 		}
 	default:
-		// TODO - when both flags are used should it have CSV output?!
 		return errors.New("File format is not supported. The supported file format is json only")
 	}
 	return nil

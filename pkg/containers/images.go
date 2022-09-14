@@ -169,7 +169,8 @@ func (c *Client) getContainerImages(topControllerGetter topControllerGetter) (ma
 	}
 	images := make(map[string][]Workload, 0)
 	for _, w := range topControllers {
-		for _, unstructuredPod := range w.Pods {
+		if len(w.Pods) > 0 {
+			unstructuredPod := w.Pods[0] // just need to check the first pod (to avoid workload duplication)
 			pod, err := toV1Pod(unstructuredPod)
 			if err != nil {
 				return nil, fmt.Errorf("unable to parse Pod from unstructured object: %w", err)
@@ -196,7 +197,6 @@ func (c *Client) getContainerImages(topControllerGetter topControllerGetter) (ma
 					})
 				}
 			}
-			break // just need to check the first pod (to avoid workload duplication)
 		}
 	}
 	return images, nil
