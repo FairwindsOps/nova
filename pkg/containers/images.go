@@ -24,14 +24,16 @@ import (
 	"sync"
 
 	version "github.com/Masterminds/semver/v3"
-	controllerUtils "github.com/fairwindsops/controller-utils/pkg/controller"
+	"github.com/fairwindsops/controller-utils/pkg/controller"
 	"github.com/fairwindsops/nova/pkg/kube"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/klog/v2"
 )
 
@@ -101,7 +103,7 @@ func NewClient(kubeContext string) *Client {
 
 // Find is the primary function for this package that returns the results of images found in the cluster and whether they are out of date or not
 func (c *Client) Find(ctx context.Context) (*Results, error) {
-	clusterImages, err := c.getContainerImages()
+	clusterImages, err := c.getContainerImages(controller.GetAllTopControllers)
 	if err != nil {
 		return nil, err
 	}
@@ -155,10 +157,13 @@ func (c *Client) Find(ctx context.Context) (*Results, error) {
 	}, nil
 }
 
+// topControllerGetter was extract out to facilitate kubernetes mocking for tests
+type topControllerGetter = func(ctx context.Context, dynamicClient dynamic.Interface, restMapper meta.RESTMapper, namespace string) ([]controller.Workload, error)
+
 // getContainerImages fetches all pods and returns a slice of container images
-func (c *Client) getContainerImages() (map[string][]Workload, error) {
+func (c *Client) getContainerImages(topControllerGetter topControllerGetter) (map[string][]Workload, error) {
 	klog.V(3).Infof("Getting all top controllers from cluster")
-	topControllers, err := controllerUtils.GetAllTopControllers(context.TODO(), c.Kube.DynamicClient, c.Kube.RESTMapper, "")
+	topControllers, err := topControllerGetter(context.TODO(), c.Kube.DynamicClient, c.Kube.RESTMapper, "")
 	if err != nil {
 		return nil, err
 	}

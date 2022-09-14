@@ -16,14 +16,18 @@ package containers
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 	"testing"
 
 	version "github.com/Masterminds/semver/v3"
+	"github.com/fairwindsops/controller-utils/pkg/controller"
 	"github.com/fairwindsops/nova/pkg/kube"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 )
 
 const (
@@ -92,24 +96,42 @@ var (
 )
 
 func TestGetContainerImages(t *testing.T) {
-	setupKubeObjects(t, testClient)
-	defer teardownKubeObjects(t, testClient)
+	b, err := json.Marshal(testPodSpec)
+	if err != nil {
+		t.Error(err)
+	}
+	var obj map[string]interface{}
+	err = json.Unmarshal(b, &obj)
+	if err != nil {
+		t.Error(err)
+	}
+	fakeTopControllerGetter := func(ctx context.Context, dynamicClient dynamic.Interface, restMapper meta.RESTMapper, namespace string) ([]controller.Workload, error) {
+		return []controller.Workload{
+			{
+				TopController: unstructured.Unstructured{Object: map[string]interface{}{"kind": "Deployment", "metadata": map[string]interface{}{"name": "name", "namespace": "my-namespace"}}},
+				Pods:          []unstructured.Unstructured{{Object: obj}},
+			},
+		}, nil
+	}
 
 	tests := []struct {
 		name    string
-		want    []string
+		want    map[string][]Workload
 		wantErr bool
 	}{
 		{
-			name:    "TestGetContainerImages",
-			want:    []string{testInitContainerImage, testContainerImage},
+			name: "TestGetContainerImages",
+			want: map[string][]Workload{
+				"test-image:v1.0.0":                {{Name: "name", Namespace: "my-namespace", Kind: "Deployment", Container: "test-container"}},
+				"test-init-container-image:v1.0.0": {{Name: "name", Namespace: "my-namespace", Kind: "Deployment", Container: "test-init-container"}},
+			},
 			wantErr: bool(false),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := testClient.getContainerImages()
+			got, err := testClient.getContainerImages(fakeTopControllerGetter)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("getContainerImages() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -360,16 +382,14 @@ func TestPreReleaseRegex(t *testing.T) {
 }
 
 func setupKubeObjects(t *testing.T, c *Client) {
-	k := c.Kube.Client.(*fake.Clientset)
-	_, err := k.CoreV1().Pods(testNamespace).Create(context.TODO(), testPodSpec, metav1.CreateOptions{})
+	_, err := c.Kube.Client.CoreV1().Pods(testNamespace).Create(context.TODO(), testPodSpec, metav1.CreateOptions{})
 	if err != nil {
 		t.Errorf("Error creating pod: %v", err)
 	}
 }
 
 func teardownKubeObjects(t *testing.T, c *Client) {
-	k := c.Kube.Client.(*fake.Clientset)
-	err := k.CoreV1().Pods(testNamespace).Delete(context.TODO(), testPodName, metav1.DeleteOptions{})
+	err := c.Kube.Client.CoreV1().Pods(testNamespace).Delete(context.TODO(), testPodName, metav1.DeleteOptions{})
 	if err != nil {
 		t.Errorf("Error deleting pod: %v", err)
 	}

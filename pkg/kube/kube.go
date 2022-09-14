@@ -18,7 +18,9 @@ import (
 	"sync"
 
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/dynamic"
+	dfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/klog/v2"
@@ -94,7 +96,9 @@ func getRESTMapper(context string) meta.RESTMapper {
 // SetAndGetMock sets the singleton's interface to use a fake ClientSet
 func SetAndGetMock() *Connection {
 	kc := Connection{
-		Client: fake.NewSimpleClientset(),
+		Client:        fake.NewSimpleClientset(),
+		DynamicClient: dfake.NewSimpleDynamicClient(runtime.NewScheme()),
+		RESTMapper:    &meta.DefaultRESTMapper{},
 	}
 	SetInstance(kc)
 	return &kc
