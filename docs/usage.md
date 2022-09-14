@@ -183,20 +183,20 @@ $ nova --format=json find --helm --containers | jq
   "container": {
     "container_images": [
       {
-        "name": "quay.io/jetstack/cert-manager-controller",
-        "current_version": "v1.9.1",
-        "latest_version": "v1.9.1",
-        "latest_minor_version": "v1.9.1",
-        "latest_patch_version": "v1.9.1",
-        "outdated": false
-      },
-      {
-        "name": "quay.io/jetstack/cert-manager-cainjector",
-        "current_version": "v1.9.1",
-        "latest_version": "v1.9.1",
-        "latest_minor_version": "v1.9.1",
-        "latest_patch_version": "v1.9.1",
-        "outdated": false
+        "name": "k8s.gcr.io/kube-scheduler",
+        "current_version": "v1.22.9",
+        "latest_version": "v1.25.0",
+        "latest_minor_version": "v1.25.0",
+        "latest_patch_version": "v1.22.13",
+        "outdated": true,
+        "affectedWorkloads": [
+          {
+            "name": "kube-scheduler-kind-control-plane",
+            "namespace": "kube-system",
+            "kind": "Pod",
+            "container": "kube-scheduler"
+          }
+        ]
       }
     ],
     "err_images": null,

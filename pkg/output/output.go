@@ -111,6 +111,7 @@ func NewOutputWithHelmReleases(helmReleases []*release.Release) Output {
 		release.Home = helmRelease.Chart.Metadata.Home
 		release.Icon = helmRelease.Chart.Metadata.Icon
 		release.Installed = VersionInfo{helmRelease.Chart.Metadata.Version, helmRelease.Chart.Metadata.AppVersion}
+		release.HelmVersion = "3"
 		output.HelmReleases = append(output.HelmReleases, release)
 	}
 	return output
