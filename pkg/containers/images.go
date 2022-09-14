@@ -157,7 +157,7 @@ func (c *Client) Find(ctx context.Context) (*Results, error) {
 	}, nil
 }
 
-// topControllerGetter was extract out to facilitate kubernetes mocking for tests
+// topControllerGetter was extract out to facilitate mocking controller.GetAllTopControllers function for testing
 type topControllerGetter = func(ctx context.Context, dynamicClient dynamic.Interface, restMapper meta.RESTMapper, namespace string) ([]controller.Workload, error)
 
 // getContainerImages fetches all pods and returns a slice of container images
