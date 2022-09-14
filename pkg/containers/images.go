@@ -70,6 +70,14 @@ type Image struct {
 	WorkLoads     []Workload
 }
 
+// Workload contains all the relevant data for the container workload
+type Workload struct {
+	Name      string
+	Namespace string
+	Kind      string
+	Container string
+}
+
 // PodData represents a pod and it's images so that we can report the namespace and other information later
 type PodData struct {
 	Name           string
@@ -145,13 +153,6 @@ func (c *Client) Find(ctx context.Context) (*Results, error) {
 		Images:    images,
 		ErrImages: errored,
 	}, nil
-}
-
-type Workload struct {
-	Name      string
-	Namespace string
-	Kind      string
-	Container string
 }
 
 // getContainerImages fetches all pods and returns a slice of container images

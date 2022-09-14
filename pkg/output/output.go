@@ -74,7 +74,8 @@ type ReleaseOutput struct {
 	Overridden  bool   `json:"overridden"`
 }
 
-type AffectedWorkload struct {
+// WorkloadOutput represents a workload
+type WorkloadOutput struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 	Kind      string `json:"kind"`
@@ -83,13 +84,13 @@ type AffectedWorkload struct {
 
 // ContainerOutput represents all the data we need for a single container image
 type ContainerOutput struct {
-	Name               string             `json:"name"`
-	CurrentVersion     string             `json:"current_version"`
-	LatestVersion      string             `json:"latest_version"`
-	LatestMinorVersion string             `json:"latest_minor_version"`
-	LatestPatchVersion string             `json:"latest_patch_version"`
-	IsOld              bool               `json:"outdated"`
-	AffectedWorkloads  []AffectedWorkload `json:"affectedWorkloads"`
+	Name               string           `json:"name"`
+	CurrentVersion     string           `json:"current_version"`
+	LatestVersion      string           `json:"latest_version"`
+	LatestMinorVersion string           `json:"latest_minor_version"`
+	LatestPatchVersion string           `json:"latest_patch_version"`
+	IsOld              bool             `json:"outdated"`
+	AffectedWorkloads  []WorkloadOutput `json:"affectedWorkloads"`
 }
 
 // VersionInfo contains both a chart version and an app version
@@ -253,9 +254,9 @@ func NewContainersOutput(containers []*containers.Image, errImages []*containers
 		if containerOutput.CurrentVersion == "latest" {
 			output.LatestStringFound = true
 		}
-		var affectedWorkloads = make([]AffectedWorkload, len(container.WorkLoads))
+		var affectedWorkloads = make([]WorkloadOutput, len(container.WorkLoads))
 		for i, w := range container.WorkLoads {
-			affectedWorkloads[i] = AffectedWorkload{
+			affectedWorkloads[i] = WorkloadOutput{
 				Name:      w.Name,
 				Namespace: w.Namespace,
 				Kind:      w.Kind,
