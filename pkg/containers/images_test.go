@@ -148,6 +148,7 @@ func TestNewImage(t *testing.T) {
 	tests := []struct {
 		name         string
 		fullImageTag string
+		workloads    []Workload
 		want         *Image
 		wantErr      bool
 	}{
@@ -164,10 +165,35 @@ func TestNewImage(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name:         "TestNewImageWithWorkloads_Good",
+			fullImageTag: testContainerImage,
+			workloads: []Workload{{
+				Name:      "coredns",
+				Namespace: "kube-system",
+				Kind:      "Deployment",
+				Container: "coredns",
+			}},
+			want: &Image{
+				Name:   "test-image",
+				Prefix: "v",
+				Current: &Tag{
+					Value: "1.0.0",
+				},
+				WorkLoads: []Workload{{
+					Name:      "coredns",
+					Namespace: "kube-system",
+					Kind:      "Deployment",
+					Container: "coredns",
+				}},
+				StrictSemver: true,
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := newImage(tt.fullImageTag)
+			got, err := newImage(tt.fullImageTag, tt.workloads)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewImage() error = %v, wantErr %v", err, tt.wantErr)
 				return

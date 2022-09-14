@@ -15,21 +15,25 @@
 package kube
 
 import (
-	"os"
 	"sync"
 
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
 	"k8s.io/klog/v2"
 
 	// add all known auth providers
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 )
 
 // Connection holds a kubernetes.interface as the Client parameter
 type Connection struct {
-	Client kubernetes.Interface
+	Client        kubernetes.Interface
+	DynamicClient dynamic.Interface
+	RESTMapper    meta.RESTMapper
 }
 
 var (
@@ -40,30 +44,51 @@ var (
 // GetConfigInstance returns a Kubernetes interface based on the current configuration
 func GetConfigInstance(context string) *Connection {
 	once.Do(func() {
-		if kubeClient == nil {
-			kubeClient = &Connection{
-				Client: getKubeClient(context),
-			}
+		kubeClient = &Connection{
+			Client:        getKubeClient(context),
+			DynamicClient: getDynamicKubeClient(context),
+			RESTMapper:    getRESTMapper(context),
 		}
 	})
 	return kubeClient
 }
 
 func getKubeClient(context string) kubernetes.Interface {
-	var clientset *kubernetes.Clientset
-
 	kubeConf, err := config.GetConfigWithContext(context)
 	if err != nil {
-		klog.Errorf("error getting config with context %s: %v", context, err)
-		os.Exit(1)
+		klog.Fatalf("error getting config with context %s: %v", context, err)
 	}
 
-	clientset, err = kubernetes.NewForConfig(kubeConf)
+	clientset, err := kubernetes.NewForConfig(kubeConf)
 	if err != nil {
-		klog.Errorf("error create kubernetes client: %v", err)
-		os.Exit(1)
+		klog.Fatalf("error create kubernetes client: %v", err)
 	}
 	return clientset
+}
+
+func getDynamicKubeClient(context string) dynamic.Interface {
+	kubeConf, err := config.GetConfigWithContext(context)
+	if err != nil {
+		klog.Fatalf("error getting config with context %s: %v", context, err)
+	}
+	dynamicClient, err := dynamic.NewForConfig(kubeConf)
+	if err != nil {
+		klog.Fatalf("error create dynamic kubernetes client: %v", err)
+	}
+	return dynamicClient
+}
+
+func getRESTMapper(context string) meta.RESTMapper {
+	kubeConf, err := config.GetConfigWithContext(context)
+	if err != nil {
+		klog.Fatalf("error getting config with context %s: %v", context, err)
+	}
+
+	restMapper, err := apiutil.NewDynamicRESTMapper(kubeConf)
+	if err != nil {
+		klog.Fatalf("Error creating REST Mapper: %v", err)
+	}
+	return restMapper
 }
 
 // SetAndGetMock sets the singleton's interface to use a fake ClientSet

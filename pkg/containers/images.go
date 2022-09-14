@@ -16,6 +16,7 @@ package containers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"sort"
@@ -23,12 +24,14 @@ import (
 	"sync"
 
 	version "github.com/Masterminds/semver/v3"
+	controllerUtils "github.com/fairwindsops/controller-utils/pkg/controller"
 	"github.com/fairwindsops/nova/pkg/kube"
 	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/pkg/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/klog/v2"
 )
 
@@ -64,6 +67,7 @@ type Image struct {
 	nonSemverTags []string
 	repo          name.Repository
 	allTags       []string
+	WorkLoads     []Workload
 }
 
 // PodData represents a pod and it's images so that we can report the namespace and other information later
@@ -88,33 +92,30 @@ func NewClient(kubeContext string) *Client {
 }
 
 // Find is the primary function for this package that returns the results of images found in the cluster and whether they are out of date or not
-func (c *Client) Find(ctx context.Context) (Results, error) {
+func (c *Client) Find(ctx context.Context) (*Results, error) {
 	clusterImages, err := c.getContainerImages()
 	if err != nil {
-		return Results{}, err
+		return nil, err
 	}
 	if len(clusterImages) == 0 {
-		return Results{}, fmt.Errorf("no container images found in cluster")
+		return nil, fmt.Errorf("no container images found in cluster")
 	}
 
-	images := make([]*Image, len(clusterImages))
+	images := make([]*Image, 0)
 	errored := make([]*ErroredImage, 0)
-
 	wg := new(sync.WaitGroup)
-	for i, fullName := range clusterImages {
-		i, fullName := i, fullName
-		image, err := newImage(fullName)
+	for fullName, workloads := range clusterImages {
+		image, err := newImage(fullName, workloads)
 		if err != nil {
 			errored = append(errored, &ErroredImage{
 				Image: fullName,
 				Err:   err.Error(),
 			})
-			images[i] = nil
 			continue
 		}
 		klog.V(8).Infof("Getting tags for %s", image.Name)
 		wg.Add(1)
-		go func() {
+		go func(fullName string) {
 			defer wg.Done()
 			err := image.getTags(ctx)
 			if err != nil {
@@ -124,11 +125,11 @@ func (c *Client) Find(ctx context.Context) (Results, error) {
 				})
 				return
 			}
-			images[i] = image
+			images = append(images, image)
 			klog.V(8).Infof("Done grabbing tags for %s", image.Name)
-		}()
+		}(fullName)
 	}
-	klog.V(5).Infof("Waiting for all tag reciever goroutines to finish")
+	klog.V(5).Infof("Waiting for all tag receiver goroutines to finish")
 	wg.Wait()
 	for _, image := range images {
 		if image == nil {
@@ -137,42 +138,72 @@ func (c *Client) Find(ctx context.Context) (Results, error) {
 		image.parseTags()
 		err := image.populateNewest()
 		if err != nil {
-			return Results{}, err
+			return nil, err
 		}
 	}
-	return Results{
+	return &Results{
 		Images:    images,
 		ErrImages: errored,
 	}, nil
 }
 
+type Workload struct {
+	Name      string
+	Namespace string
+	Kind      string
+	Container string
+}
+
 // getContainerImages fetches all pods and returns a slice of container images
-func (c *Client) getContainerImages() ([]string, error) {
-	klog.V(3).Infof("Getting container images from pods")
-
-	k := c.Kube.Client
-	pods, err := k.CoreV1().Pods("").List(context.TODO(), metav1.ListOptions{})
+func (c *Client) getContainerImages() (map[string][]Workload, error) {
+	klog.V(3).Infof("Getting all top controllers from cluster")
+	topControllers, err := controllerUtils.GetAllTopControllers(context.TODO(), c.Kube.DynamicClient, c.Kube.RESTMapper, "")
 	if err != nil {
-		return nil, errors.Wrap(err, "getting all pods")
+		return nil, err
 	}
-
-	imagesFound := make([]string, 0)
-	for _, pod := range pods.Items {
-		if len(pod.Spec.InitContainers) > 0 {
-			for _, container := range pod.Spec.InitContainers {
-				if container.Image != "" {
-					imagesFound = append(imagesFound, container.Image)
+	images := make(map[string][]Workload, 0)
+	for _, w := range topControllers {
+		for _, unstructuredPod := range w.Pods {
+			pod, err := toV1Pod(unstructuredPod)
+			if err != nil {
+				return nil, fmt.Errorf("unable to parse Pod from unstructured object: %w", err)
+			}
+			if len(pod.Spec.InitContainers) > 0 {
+				for _, container := range pod.Spec.InitContainers {
+					if container.Image != "" {
+						images[container.Image] = append(images[container.Image], Workload{
+							Name:      w.TopController.GetName(),
+							Namespace: w.TopController.GetNamespace(),
+							Kind:      w.TopController.GetKind(),
+							Container: container.Name,
+						})
+					}
 				}
 			}
-		}
-		for _, container := range pod.Spec.Containers {
-			if container.Image != "" {
-				imagesFound = append(imagesFound, container.Image)
+			for _, container := range pod.Spec.Containers {
+				if container.Image != "" {
+					images[container.Image] = append(images[container.Image], Workload{
+						Name:      w.TopController.GetName(),
+						Namespace: w.TopController.GetNamespace(),
+						Kind:      w.TopController.GetKind(),
+						Container: container.Name,
+					})
+				}
 			}
+			break // just need to check the first pod (to avoid workload duplication)
 		}
 	}
-	imagesFound = removeDuplicateStr(imagesFound)
-	return imagesFound, nil
+	return images, nil
+}
+
+func toV1Pod(possiblePod unstructured.Unstructured) (*v1.Pod, error) {
+	b, err := possiblePod.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	var pod v1.Pod
+	err = json.Unmarshal(b, &pod)
+	return &pod, err
 }
 
 func removeDuplicateStr(strSlice []string) []string {
@@ -187,7 +218,7 @@ func removeDuplicateStr(strSlice []string) []string {
 	return list
 }
 
-func newImage(fullImageTag string) (*Image, error) {
+func newImage(fullImageTag string, workloads []Workload) (*Image, error) {
 	klog.V(8).Infof("Creating image object for %s", fullImageTag)
 
 	var (
@@ -224,7 +255,7 @@ func newImage(fullImageTag string) (*Image, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	image.WorkLoads = workloads
 	return image, nil
 }
 
