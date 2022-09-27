@@ -30,3 +30,8 @@ brew install fairwindsops/tap/nova
 ```
 go get github.com/fairwindsops/nova
 ```
+
+### nix (on linux or macOS)
+```
+nix profile install github:FairwindsOps/Nova
+```
