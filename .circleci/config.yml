@@ -27,7 +27,6 @@ references:
 
 jobs:
   test:
-    working_directory: /go/src/github.com/fairwindsops/nova
     docker:
       - image: cimg/go:1.19
     steps:
