@@ -31,7 +31,9 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/klog/v2"
 )
 
@@ -101,7 +103,7 @@ func NewClient(kubeContext string) *Client {
 
 // Find is the primary function for this package that returns the results of images found in the cluster and whether they are out of date or not
 func (c *Client) Find(ctx context.Context) (*Results, error) {
-	clusterImages, err := c.getContainerImages(c.wrapGetAllTopControllersSummary)
+	clusterImages, err := c.getContainerImages(controller.GetAllTopControllers)
 	if err != nil {
 		return nil, err
 	}
@@ -156,12 +158,12 @@ func (c *Client) Find(ctx context.Context) (*Results, error) {
 }
 
 // topControllerGetter was extract out to facilitate mocking controller.GetAllTopControllers function for testing
-type topControllerGetter = func() ([]controller.Workload, error)
+type topControllerGetter = func(ctx context.Context, dynamicClient dynamic.Interface, restMapper meta.RESTMapper, namespace string) ([]controller.Workload, error)
 
 // getContainerImages fetches all pods and returns a slice of container images
 func (c *Client) getContainerImages(topControllerGetter topControllerGetter) (map[string][]Workload, error) {
 	klog.V(3).Infof("Getting all top controllers from cluster")
-	topControllers, err := topControllerGetter()
+	topControllers, err := topControllerGetter(context.TODO(), c.Kube.DynamicClient, c.Kube.RESTMapper, "")
 	if err != nil {
 		return nil, err
 	}
@@ -376,17 +378,4 @@ func preReleaseRegex(strings []string, prerelease string) bool {
 		}
 	}
 	return false
-}
-
-// wrapGetAllTopControllersSummary wraps a call to
-// controller-utils.GetAllTopControllersSummary(), using members from this
-// Client type to instantiate the controller-utils Client.
-func (c *Client) wrapGetAllTopControllersSummary() ([]controller.Workload, error) {
-	client := controller.Client{
-		Context:    context.TODO(),
-		Dynamic:    c.Kube.DynamicClient,
-		RESTMapper: c.Kube.RESTMapper,
-	}
-	workloads, err := client.GetAllTopControllersSummary("")
-	return workloads, err
 }

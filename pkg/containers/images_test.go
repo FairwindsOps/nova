@@ -24,8 +24,10 @@ import (
 	"github.com/fairwindsops/controller-utils/pkg/controller"
 	"github.com/fairwindsops/nova/pkg/kube"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 )
 
 const (
@@ -103,7 +105,7 @@ func TestGetContainerImages(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	fakeTopControllerGetter := func() ([]controller.Workload, error) {
+	fakeTopControllerGetter := func(ctx context.Context, dynamicClient dynamic.Interface, restMapper meta.RESTMapper, namespace string) ([]controller.Workload, error) {
 		return []controller.Workload{
 			{
 				TopController: unstructured.Unstructured{Object: map[string]interface{}{"kind": "Deployment", "metadata": map[string]interface{}{"name": "name", "namespace": "my-namespace"}}},
