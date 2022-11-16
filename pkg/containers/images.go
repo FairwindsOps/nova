@@ -101,7 +101,7 @@ func NewClient(kubeContext string) *Client {
 
 // Find is the primary function for this package that returns the results of images found in the cluster and whether they are out of date or not
 func (c *Client) Find(ctx context.Context) (*Results, error) {
-	clusterImages, err := c.getContainerImages(c.wrapGetAllTopControllersSummary)
+	clusterImages, err := c.getContainerImages(c.wrapGetAllTopControllersWithPods)
 	if err != nil {
 		return nil, err
 	}
@@ -378,15 +378,15 @@ func preReleaseRegex(strings []string, prerelease string) bool {
 	return false
 }
 
-// wrapGetAllTopControllersSummary wraps a call to
-// controller-utils.GetAllTopControllersSummary(), using members from this
+// wrapGetAllTopControllersWithPods wraps a call to
+// controller-utils.GetAllTopControllersWithPods(), using members from this
 // Client type to instantiate the controller-utils Client.
-func (c *Client) wrapGetAllTopControllersSummary() ([]controller.Workload, error) {
+func (c *Client) wrapGetAllTopControllersWithPods() ([]controller.Workload, error) {
 	client := controller.Client{
 		Context:    context.TODO(),
 		Dynamic:    c.Kube.DynamicClient,
 		RESTMapper: c.Kube.RESTMapper,
 	}
-	workloads, err := client.GetAllTopControllersSummary("")
+	workloads, err := client.GetAllTopControllersWithPods("")
 	return workloads, err
 }
