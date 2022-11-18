@@ -318,7 +318,13 @@ func handleContainers(kubeContext string) (*output.ContainersOutput, error) {
 		}
 	}()
 	iClient := containers.NewClient(kubeContext)
-	containers, err := iClient.Find(ctx)
+	namespace := viper.GetString("namespace")
+	if viper.IsSet("namespace") {
+		klog.V(3).Infof("Scanning namespace %v",namespace)
+	} else {
+		klog.V(3).Infof("Scanning whole cluster")
+	}
+	containers, err := iClient.Find(ctx,namespace)
 	if err != nil {
 		return nil, fmt.Errorf("ERROR during images.Find() %w", err)
 	}
@@ -344,6 +350,11 @@ func handleHelm(kubeContext string) (*output.Output, error) {
 		}
 	}
 	namespace := viper.GetString("namespace")
+	if viper.IsSet("namespace") {
+		klog.V(3).Infof("Scanning namespace %v",namespace)
+	} else {
+		klog.V(3).Infof("Scanning whole cluster")
+	}
 	releases, chartNames, err := h.GetReleaseOutput(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("error getting helm releases: %s", err)

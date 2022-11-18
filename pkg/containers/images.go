@@ -102,8 +102,8 @@ func NewClient(kubeContext string) *Client {
 }
 
 // Find is the primary function for this package that returns the results of images found in the cluster and whether they are out of date or not
-func (c *Client) Find(ctx context.Context) (*Results, error) {
-	clusterImages, err := c.getContainerImages(controller.GetAllTopControllers)
+func (c *Client) Find(ctx context.Context, namespace string) (*Results, error) {
+	clusterImages, err := c.getContainerImages(controller.GetAllTopControllers, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -161,9 +161,9 @@ func (c *Client) Find(ctx context.Context) (*Results, error) {
 type topControllerGetter = func(ctx context.Context, dynamicClient dynamic.Interface, restMapper meta.RESTMapper, namespace string) ([]controller.Workload, error)
 
 // getContainerImages fetches all pods and returns a slice of container images
-func (c *Client) getContainerImages(topControllerGetter topControllerGetter) (map[string][]Workload, error) {
-	klog.V(3).Infof("Getting all top controllers from cluster")
-	topControllers, err := topControllerGetter(context.TODO(), c.Kube.DynamicClient, c.Kube.RESTMapper, "")
+func (c *Client) getContainerImages(topControllerGetter topControllerGetter, namespace string) (map[string][]Workload, error) {
+	klog.V(3).Infof("Getting all top controllers")
+	topControllers, err := topControllerGetter(context.TODO(), c.Kube.DynamicClient, c.Kube.RESTMapper, namespace)
 	if err != nil {
 		return nil, err
 	}
