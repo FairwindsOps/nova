@@ -31,9 +31,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/remote"
 	"github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/klog/v2"
 )
 
@@ -103,7 +101,7 @@ func NewClient(kubeContext string) *Client {
 
 // Find is the primary function for this package that returns the results of images found in the cluster and whether they are out of date or not
 func (c *Client) Find(ctx context.Context, namespace string) (*Results, error) {
-	clusterImages, err := c.getContainerImages(controller.GetAllTopControllers, namespace)
+	clusterImages, err := c.getContainerImages(c.wrapGetAllTopControllersWithPods, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -158,12 +156,16 @@ func (c *Client) Find(ctx context.Context, namespace string) (*Results, error) {
 }
 
 // topControllerGetter was extract out to facilitate mocking controller.GetAllTopControllers function for testing
-type topControllerGetter = func(ctx context.Context, dynamicClient dynamic.Interface, restMapper meta.RESTMapper, namespace string) ([]controller.Workload, error)
+type topControllerGetter = func(string) ([]controller.Workload, error)
 
 // getContainerImages fetches all pods and returns a slice of container images
 func (c *Client) getContainerImages(topControllerGetter topControllerGetter, namespace string) (map[string][]Workload, error) {
-	klog.V(3).Infof("Getting all top controllers")
-	topControllers, err := topControllerGetter(context.TODO(), c.Kube.DynamicClient, c.Kube.RESTMapper, namespace)
+	if (namespace != "") {
+		klog.V(3).Infof("Getting all top controllers from namespace %s", namespace)
+	} else {
+		klog.V(3).Infof("Getting all top controllers from cluster")
+	}
+	topControllers, err := topControllerGetter(namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -378,4 +380,17 @@ func preReleaseRegex(strings []string, prerelease string) bool {
 		}
 	}
 	return false
+}
+
+// wrapGetAllTopControllersWithPods wraps a call to
+// controller-utils.GetAllTopControllersWithPods(), using members from this
+// Client type to instantiate the controller-utils Client.
+func (c *Client) wrapGetAllTopControllersWithPods(namespace string) ([]controller.Workload, error) {
+	client := controller.Client{
+		Context:    context.TODO(),
+		Dynamic:    c.Kube.DynamicClient,
+		RESTMapper: c.Kube.RESTMapper,
+	}
+	workloads, err := client.GetAllTopControllersWithPods(namespace)
+	return workloads, err
 }
