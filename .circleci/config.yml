@@ -34,8 +34,11 @@ jobs:
       - run:
           name: lint
           command: |
+            echo "installing golint"
             go install golang.org/x/lint/golint@latest
+            echo "linting..."
             golint -set_exit_status ./... | tee golint-report.out
+            echo "checking go fmt..."
             if ! go fmt ./...; then
               echo "Please run go fmt ./... to format your code"
             fi
