@@ -103,7 +103,7 @@ func TestGetContainerImages(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	fakeTopControllerGetter := func() ([]controller.Workload, error) {
+	fakeTopControllerGetter := func(ns string) ([]controller.Workload, error) {
 		return []controller.Workload{
 			{
 				TopController: unstructured.Unstructured{Object: map[string]interface{}{"kind": "Deployment", "metadata": map[string]interface{}{"name": "name", "namespace": "my-namespace"}}},
@@ -129,7 +129,7 @@ func TestGetContainerImages(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := testClient.getContainerImages(fakeTopControllerGetter)
+			got, err := testClient.getContainerImages(fakeTopControllerGetter, "")
 			if (err != nil) != tt.wantErr {
 				t.Errorf("getContainerImages() error = %v, wantErr %v", err, tt.wantErr)
 				return
