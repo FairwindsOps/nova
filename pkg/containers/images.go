@@ -160,7 +160,7 @@ type topControllerGetter = func(string) ([]controller.Workload, error)
 
 // getContainerImages fetches all pods and returns a slice of container images
 func (c *Client) getContainerImages(topControllerGetter topControllerGetter, namespace string) (map[string][]Workload, error) {
-	if (namespace != "") {
+	if namespace != "" {
 		klog.V(3).Infof("Getting all top controllers from namespace %s", namespace)
 	} else {
 		klog.V(3).Infof("Getting all top controllers from cluster")
