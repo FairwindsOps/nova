@@ -99,7 +99,7 @@ func TestGetContainerImages(t *testing.T) {
 		t.Error(err)
 	}
 	var obj map[string]interface{}
-	err = json.Unmarshal(b, &obj)
+	err = json.Unmarshal(b,&obj)
 	if err != nil {
 		t.Error(err)
 	}
