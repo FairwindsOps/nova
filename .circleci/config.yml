@@ -36,7 +36,7 @@ jobs:
           command: |
             go install golang.org/x/lint/golint@latest
             golint -set_exit_status ./... | tee golint-report.out
-            if !go fmt ./...; then
+            if ! go fmt ./...; then
               echo "Please run go fmt ./... to format your code"
             fi
       - run:
