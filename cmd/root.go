@@ -58,6 +58,12 @@ func init() {
 		klog.Exitf("Failed to bind output-file flag: %v", err)
 	}
 
+	rootCmd.PersistentFlags().StringP("namespace", "n", "", "Namespace to look in. If empty, scan will be cluster-wide")
+	err = viper.BindPFlag("namespace", rootCmd.PersistentFlags().Lookup("namespace"))
+	if err != nil {
+		klog.Exitf("Failed to bind namespace flag: %v", err)
+	}
+
 	rootCmd.PersistentFlags().String("format", "json", "An output format (table, json)")
 	err = viper.BindPFlag("format", rootCmd.PersistentFlags().Lookup("format"))
 	if err != nil {
@@ -312,7 +318,13 @@ func handleContainers(kubeContext string) (*output.ContainersOutput, error) {
 		}
 	}()
 	iClient := containers.NewClient(kubeContext)
-	containers, err := iClient.Find(ctx)
+	namespace := viper.GetString("namespace")
+	if viper.IsSet("namespace") {
+		klog.V(3).Infof("Scanning namespace %v",namespace)
+	} else {
+		klog.V(3).Infof("Scanning whole cluster")
+	}
+	containers, err := iClient.Find(ctx,namespace)
 	if err != nil {
 		return nil, fmt.Errorf("ERROR during images.Find() %w", err)
 	}
@@ -337,7 +349,13 @@ func handleHelm(kubeContext string) (*output.Output, error) {
 			})
 		}
 	}
-	releases, chartNames, err := h.GetReleaseOutput()
+	namespace := viper.GetString("namespace")
+	if viper.IsSet("namespace") {
+		klog.V(3).Infof("Scanning namespace %v",namespace)
+	} else {
+		klog.V(3).Infof("Scanning whole cluster")
+	}
+	releases, chartNames, err := h.GetReleaseOutput(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("error getting helm releases: %s", err)
 	}

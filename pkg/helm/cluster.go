@@ -46,9 +46,9 @@ func NewHelm(kubeContext string) *Helm {
 }
 
 // GetReleaseOutput returns releases and chart names
-func (h *Helm) GetReleaseOutput() ([]*release.Release, []string, error) {
+func (h *Helm) GetReleaseOutput(namespace string) ([]*release.Release, []string, error) {
 	var chartNames = []string{}
-	outputObjects, err := h.GetHelmReleases()
+	outputObjects, err := h.GetHelmReleases(namespace)
 	if err != nil {
 		err = fmt.Errorf("could not detect helm 3 charts: %v", err)
 	}
@@ -62,8 +62,8 @@ func (h *Helm) GetReleaseOutput() ([]*release.Release, []string, error) {
 }
 
 // GetHelmReleases returns a list of helm releases from the cluster
-func (h *Helm) GetHelmReleases() ([]*release.Release, error) {
-	hs := helmdriver.NewSecrets(h.Kube.Client.CoreV1().Secrets(""))
+func (h *Helm) GetHelmReleases(namespace string) ([]*release.Release, error) {
+	hs := helmdriver.NewSecrets(h.Kube.Client.CoreV1().Secrets(namespace))
 	helmClient := helmstorage.Init(hs)
 	deployed, err := helmClient.ListDeployed()
 
