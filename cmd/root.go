@@ -52,7 +52,7 @@ func init() {
 	)
 
 	rootCmd.PersistentPostRun = func(cmd *cobra.Command, args []string) {
-		os.Stderr.WriteString("\n\nWant more? Upgrade to the free tier of Fairwinds Insights! https://fairwinds.com/insights-signup/nova 🚀 \n")
+		os.Stderr.WriteString("\n\nWant more? Automate Nova for free with Fairwinds Insights!\n🚀 https://fairwinds.com/insights-signup/nova 🚀\n")
 	}
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file to use. If empty, flags will be used instead")
