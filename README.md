@@ -51,9 +51,9 @@ Or [check out the full list](https://www.fairwinds.com/open-source-software?utm_
 If you're interested in running Nova in multiple clusters,
 tracking the results over time, integrating with Slack, Datadog, and Jira,
 or unlocking other functionality, check out
-[Fairwinds Insights](https://www.fairwinds.com/nova-user-insights-demo?utm_source=nova&utm_medium=nova&utm_campaign=nova),
+[Fairwinds Insights](https://fairwinds.com/pricing),
 a platform for auditing and enforcing policy in Kubernetes clusters.
 
-<a href="https://www.fairwinds.com/nova-user-insights-demo?utm_source=nova&utm_medium=ad&utm_campaign=novaad">
+<a href="https://fairwinds.com/pricing">
   <img src="https://www.fairwinds.com/hubfs/Doc_Banners/Fairwinds_Nova_Ad.png" alt="Fairwinds Insights" />
 </a>
