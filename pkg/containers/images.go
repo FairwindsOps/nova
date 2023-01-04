@@ -100,8 +100,8 @@ func NewClient(kubeContext string) *Client {
 }
 
 // Find is the primary function for this package that returns the results of images found in the cluster and whether they are out of date or not
-func (c *Client) Find(ctx context.Context) (*Results, error) {
-	clusterImages, err := c.getContainerImages(c.wrapGetAllTopControllersWithPods)
+func (c *Client) Find(ctx context.Context, namespace string) (*Results, error) {
+	clusterImages, err := c.getContainerImages(c.wrapGetAllTopControllersWithPods, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -156,12 +156,16 @@ func (c *Client) Find(ctx context.Context) (*Results, error) {
 }
 
 // topControllerGetter was extract out to facilitate mocking controller.GetAllTopControllers function for testing
-type topControllerGetter = func() ([]controller.Workload, error)
+type topControllerGetter = func(string) ([]controller.Workload, error)
 
 // getContainerImages fetches all pods and returns a slice of container images
-func (c *Client) getContainerImages(topControllerGetter topControllerGetter) (map[string][]Workload, error) {
-	klog.V(3).Infof("Getting all top controllers from cluster")
-	topControllers, err := topControllerGetter()
+func (c *Client) getContainerImages(topControllerGetter topControllerGetter, namespace string) (map[string][]Workload, error) {
+	if namespace != "" {
+		klog.V(3).Infof("Getting all top controllers from namespace %s", namespace)
+	} else {
+		klog.V(3).Infof("Getting all top controllers from cluster")
+	}
+	topControllers, err := topControllerGetter(namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -381,12 +385,12 @@ func preReleaseRegex(strings []string, prerelease string) bool {
 // wrapGetAllTopControllersWithPods wraps a call to
 // controller-utils.GetAllTopControllersWithPods(), using members from this
 // Client type to instantiate the controller-utils Client.
-func (c *Client) wrapGetAllTopControllersWithPods() ([]controller.Workload, error) {
+func (c *Client) wrapGetAllTopControllersWithPods(namespace string) ([]controller.Workload, error) {
 	client := controller.Client{
 		Context:    context.TODO(),
 		Dynamic:    c.Kube.DynamicClient,
 		RESTMapper: c.Kube.RESTMapper,
 	}
-	workloads, err := client.GetAllTopControllersWithPods("")
+	workloads, err := client.GetAllTopControllersWithPods(namespace)
 	return workloads, err
 }

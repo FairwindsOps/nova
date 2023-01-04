@@ -24,6 +24,7 @@ Global Flags:
   -d, --desired-versions stringToString   A map of chart=override_version to override the helm repository when checking. (default [])
   -a, --include-all                       Show all charts even if no latest version is found.
       --logtostderr                       log to standard error instead of files (default true)
+  -n, --namespace string                  Namespace to look in. If empty, scan will be cluster-wide
       --output-file string                Path on local filesystem to write file output to
       --poll-artifacthub                  When true, polls artifacthub to match against helm releases in the cluster. If false, you must provide a url list via --url/-u. Default is true. (default true)
       --show-old                          Only output charts that are not on the latest version

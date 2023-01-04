@@ -51,11 +51,21 @@ func init() {
 		genConfigCmd,
 	)
 
+	rootCmd.PersistentPostRun = func(cmd *cobra.Command, args []string) {
+		os.Stderr.WriteString("\n\nWant more? Automate Nova for free with Fairwinds Insights!\n🚀 https://fairwinds.com/insights-signup/nova 🚀\n")
+	}
+
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file to use. If empty, flags will be used instead")
 	rootCmd.PersistentFlags().String("output-file", "", "Path on local filesystem to write file output to")
 	err := viper.BindPFlag("output-file", rootCmd.PersistentFlags().Lookup("output-file"))
 	if err != nil {
 		klog.Exitf("Failed to bind output-file flag: %v", err)
+	}
+
+	rootCmd.PersistentFlags().StringP("namespace", "n", "", "Namespace to look in. If empty, scan will be cluster-wide")
+	err = viper.BindPFlag("namespace", rootCmd.PersistentFlags().Lookup("namespace"))
+	if err != nil {
+		klog.Exitf("Failed to bind namespace flag: %v", err)
 	}
 
 	rootCmd.PersistentFlags().String("format", "json", "An output format (table, json)")
@@ -312,7 +322,13 @@ func handleContainers(kubeContext string) (*output.ContainersOutput, error) {
 		}
 	}()
 	iClient := containers.NewClient(kubeContext)
-	containers, err := iClient.Find(ctx)
+	namespace := viper.GetString("namespace")
+	if viper.IsSet("namespace") {
+		klog.V(3).Infof("Scanning namespace %v", namespace)
+	} else {
+		klog.V(3).Infof("Scanning whole cluster")
+	}
+	containers, err := iClient.Find(ctx, namespace)
 	if err != nil {
 		return nil, fmt.Errorf("ERROR during images.Find() %w", err)
 	}
@@ -337,7 +353,13 @@ func handleHelm(kubeContext string) (*output.Output, error) {
 			})
 		}
 	}
-	releases, chartNames, err := h.GetReleaseOutput()
+	namespace := viper.GetString("namespace")
+	if viper.IsSet("namespace") {
+		klog.V(3).Infof("Scanning namespace %v", namespace)
+	} else {
+		klog.V(3).Infof("Scanning whole cluster")
+	}
+	releases, chartNames, err := h.GetReleaseOutput(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("error getting helm releases: %s", err)
 	}
