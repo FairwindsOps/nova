@@ -51,6 +51,10 @@ func init() {
 		genConfigCmd,
 	)
 
+	rootCmd.PersistentPostRun = func(cmd *cobra.Command, args []string) {
+		os.Stderr.WriteString("\n\nWant more? Automate Nova for free with Fairwinds Insights!\n🚀 https://fairwinds.com/insights-signup/nova 🚀\n")
+	}
+
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "Config file to use. If empty, flags will be used instead")
 	rootCmd.PersistentFlags().String("output-file", "", "Path on local filesystem to write file output to")
 	err := viper.BindPFlag("output-file", rootCmd.PersistentFlags().Lookup("output-file"))
