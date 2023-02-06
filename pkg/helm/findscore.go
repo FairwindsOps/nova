@@ -151,6 +151,8 @@ func IsValidRelease(version string) bool {
 		"#",
 		"p",
 		"pl",
+		"weekly",
+		"daily",
 	}
 
 	for _, invalid := range specialForms {
