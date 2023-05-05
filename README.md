@@ -15,6 +15,8 @@
   </a>
 </div>
 
+> NOTICE: Nova is currently being rate limited by Artifact Hub. You may experience issues using nova as of 10/5/2023. We are actively working with AH to fix the issue. See: https://github.com/FairwindsOps/nova/issues/214
+
 Nova scans your cluster for installed Helm charts, then cross-checks them against
 all known Helm repositories. If it finds an updated version of the chart you're using,
 or notices your current version is deprecated, it will let you know.
