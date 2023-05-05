@@ -181,6 +181,10 @@ func (output Output) Print(format string, wide, showOld bool) {
 		separator += "=========\t======\t===\t=========="
 		fmt.Fprintln(w, separator)
 
+		// sort.Slice(output.HelmReleases, func(i, j int) bool {
+		// 	return output.HelmReleases[i].IsOld < output.HelmReleases[i].IsOld
+		// })
+
 		for _, release := range output.HelmReleases {
 			if (!output.IncludeAll && release.Latest.Version == "") || (showOld && !release.IsOld) {
 				continue

@@ -137,6 +137,12 @@ func init() {
 		klog.Exitf("Failed to bind show-old flag: %v", err)
 	}
 
+	rootCmd.PersistentFlags().String("sort-order", "ascending", "The sort order for table output (ascending, descending)")
+	err = viper.BindPFlag("sort-order", rootCmd.PersistentFlags().Lookup("sort-order"))
+	if err != nil {
+		klog.Exitf("Failed to bind sort-order flag: %v", err)
+	}
+
 	klog.InitFlags(nil)
 	_ = flag.Set("alsologtostderr", "true")
 	_ = flag.Set("logtostderr", "true")
@@ -241,6 +247,11 @@ var findCmd = &cobra.Command{
 			klog.Exitf("--format flag value is not valid. Run `nova find --help` to see flag options")
 		}
 
+		sort_order := viper.GetString("sort-order")
+		if !(sort_order == "ascending" || sort_order == "descending") {
+			klog.Exitf("--sort-order flag value is not valid. Run `nova find --help` to see flag options")
+		}
+
 		if viper.GetBool("helm") && viper.GetBool("containers") {
 			output, err := handleHelmAndContainers(kubeContext)
 			if err != nil {
@@ -278,6 +289,9 @@ var findCmd = &cobra.Command{
 				klog.Exitf("error outputting to file: %s", err)
 			}
 		} else {
+			if !(sort_order == "") {
+				fmt.Printf("The sort order is set to %s", sort_order)
+			}
 			output.Print(format, viper.GetBool("wide"), viper.GetBool("show-old"))
 		}
 	},
