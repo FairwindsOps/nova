@@ -15,9 +15,9 @@
 package helm
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"testing"
-	"encoding/json"
 
 	"github.com/stretchr/testify/assert"
 )

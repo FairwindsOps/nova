@@ -89,30 +89,30 @@ type ArtifactHubSecurityReportSummary struct {
 
 // ArtifactHubRepository is a child struct of ArtifactHubPackageSearch represents a helm chart repository as provided by the ArtifactHub API.
 type ArtifactHubRepository struct {
-	URL                     string `json:"url"`
-	Name                    string `json:"name"`
-	VerifiedPublisher       bool   `json:"verified_publisher"`
+	URL               string `json:"url"`
+	Name              string `json:"name"`
+	VerifiedPublisher bool   `json:"verified_publisher"`
 }
 
 // ArtifactHubHelmPackage represents a helm package (chart) as provided by the ArtifactHub API.
 type ArtifactHubHelmPackage struct {
-	Name                           string                           `json:"name"`
-	DisplayName                    string                           `json:"display_name"`
-	LogoImageID                    string                           `json:"logo_image_id"`
-	Description                    string                           `json:"description"`
-	AppVersion                     string                           `json:"app_version"`
-	Deprecated                     bool                             `json:"deprecated"`
-	Repository                     ArtifactHubRepository            `json:"repository"`
-	Version                  string                                  `json:"version"`
-	HomeURL                        string                           `json:"home_url"`
-	AvailableVersions              []AvailableVersion               `json:"available_versions"`
-	Maintainers                    []Maintainer                     `json:"maintainers"`
-	Links                          []Link                           `json:"links"`
+	Name              string                `json:"name"`
+	DisplayName       string                `json:"display_name"`
+	LogoImageID       string                `json:"logo_image_id"`
+	Description       string                `json:"description"`
+	AppVersion        string                `json:"app_version"`
+	Deprecated        bool                  `json:"deprecated"`
+	Repository        ArtifactHubRepository `json:"repository"`
+	Version           string                `json:"version"`
+	HomeURL           string                `json:"home_url"`
+	AvailableVersions []AvailableVersion    `json:"available_versions"`
+	Maintainers       []Maintainer          `json:"maintainers"`
+	Links             []Link                `json:"links"`
 }
 
 // AvailableVersion is a sub struct of ArtifactHubHelmPackage and provides a version that is available for a given helm chart.
 type AvailableVersion struct {
-	Version                 string `json:"version"`
+	Version string `json:"version"`
 }
 
 // Maintainer is a child struct of ArtifactHubHelmPackage and provides information about maintainers of a helm chart.

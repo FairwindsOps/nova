@@ -42,13 +42,13 @@ type ArtifactHubCachedPackagesList []ArtifactHubCachedPackage
 
 // ArtifactHubCachedPackage represents a single entry in the API output. It's a single chart registered in AH
 type ArtifactHubCachedPackage struct {
-	Name        string                       `json:"name"`
-	Description string                       `json:"description"`
-	HomeURL     string                       `json:"home_url"`
-	Repository  ArtifactHubCachedRepository  `json:"repository"`
-	Versions     []ArtifactHubCachedVersionInfo `json:"versions"`
-	Links       []Link                       `json:"links"`
-	Maintainers []Maintainer                 `json:"maintainers"`
+	Name        string                         `json:"name"`
+	Description string                         `json:"description"`
+	HomeURL     string                         `json:"home_url"`
+	Repository  ArtifactHubCachedRepository    `json:"repository"`
+	Versions    []ArtifactHubCachedVersionInfo `json:"versions"`
+	Links       []Link                         `json:"links"`
+	Maintainers []Maintainer                   `json:"maintainers"`
 }
 
 // ArtifactHubCachedRepository is a sub-struct of the Package struct, and represents the repository containing the package.
@@ -61,7 +61,7 @@ type ArtifactHubCachedRepository struct {
 
 // ArtifactHubCachedVersionInfo represents the chart and application version of a package
 type ArtifactHubCachedVersionInfo struct {
-	Version string `json:"pkg"`
+	Version    string `json:"pkg"`
 	AppVersion string `json:"app"`
 }
 
@@ -92,15 +92,15 @@ func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, erro
 	packages := make([]ArtifactHubHelmPackage, len(list))
 	for idx, cachedPackage := range list {
 		packages[idx] = ArtifactHubHelmPackage{
-			Name: cachedPackage.Name,
+			Name:        cachedPackage.Name,
 			Description: cachedPackage.Description,
 			Maintainers: cachedPackage.Maintainers,
-			HomeURL: cachedPackage.HomeURL,
-			Links: cachedPackage.Links,
+			HomeURL:     cachedPackage.HomeURL,
+			Links:       cachedPackage.Links,
 			Repository: ArtifactHubRepository{
-				Name: cachedPackage.Repository.Name,
+				Name:              cachedPackage.Repository.Name,
 				VerifiedPublisher: cachedPackage.Repository.Verified,
-				URL: cachedPackage.Repository.URL,
+				URL:               cachedPackage.Repository.URL,
 			},
 			// LogoImageID: cachedPackage.LogoImageID,
 			// Version: cachedPackage.Version (what does this represent?)
@@ -110,9 +110,9 @@ func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, erro
 		}
 		for _, version := range cachedPackage.Versions {
 			/*
-			if version == cachedPackage.LatestVersion {
-				packages[idx].AppVersion = version.AppVersion
-			}
+				if version == cachedPackage.LatestVersion {
+					packages[idx].AppVersion = version.AppVersion
+				}
 			*/
 			packages[idx].AvailableVersions = append(packages[idx].AvailableVersions, AvailableVersion{
 				Version: version.Version,
