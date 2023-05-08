@@ -359,7 +359,7 @@ func handleHelm(kubeContext string) (*output.Output, error) {
 	} else {
 		klog.V(3).Infof("Scanning whole cluster")
 	}
-	releases, chartNames, err := h.GetReleaseOutput(namespace)
+	releases, _, err := h.GetReleaseOutput(namespace)
 	if err != nil {
 		return nil, fmt.Errorf("error getting helm releases: %s", err)
 	}
@@ -367,15 +367,14 @@ func handleHelm(kubeContext string) (*output.Output, error) {
 	out.IncludeAll = viper.GetBool("include-all")
 
 	if viper.GetBool("poll-artifacthub") {
-		ahClient, err := nova_helm.NewArtifactHubPackageClient(version)
+		ahClient, err := nova_helm.NewArtifactHubCachedPackageClient(version)
 		if err != nil {
 			return nil, fmt.Errorf("error setting up artifact hub client: %s", err)
 		}
-		packageRepos, err := ahClient.MultiSearch(chartNames)
+		packages, err := ahClient.List()
 		if err != nil {
 			return nil, fmt.Errorf("Error getting artifacthub package repos: %v", err)
 		}
-		packages := ahClient.GetPackages(packageRepos)
 		klog.V(2).Infof("found %d possible package matches", len(packages))
 		for _, release := range releases {
 			o := nova_helm.FindBestArtifactHubMatch(release, packages)

@@ -42,8 +42,11 @@ type ArtifactHubCachedPackagesList []ArtifactHubCachedPackage
 type ArtifactHubCachedPackage struct {
 	Name        string                       `json:"name"`
 	Description string                       `json:"description"`
+	HomeURL     string                       `json:"home_url"`
 	Repository  ArtifactHubCachedRepository  `json:"repository"`
-	Version     ArtifactHubCachedVersionInfo `json:"version"`
+	Versions     []ArtifactHubCachedVersionInfo `json:"versions"`
+	Links       []Link                       `json:"links"`
+	Maintainers []Maintainer                 `json:"maintainers"`
 }
 
 type ArtifactHubCachedRepository struct {
@@ -54,8 +57,8 @@ type ArtifactHubCachedRepository struct {
 }
 
 type ArtifactHubCachedVersionInfo struct {
-	Latest string   `json:"latest"`
-	All    []string `json:"all"`
+	Version string `json:"pkg"`
+	AppVersion string `json:"app"`
 }
 
 // NewArtifactHubCachedPackageClient returns a new client for the unauthenticated paths of the ArtifactHubCached API.
@@ -74,14 +77,44 @@ func NewArtifactHubCachedPackageClient(version string) (*ArtifactHubCachedPackag
 	}, nil
 }
 
-func (ac *ArtifactHubCachedPackageClient) List(path string, urlValues url.Values) (*ArtifactHubCachedPackagesList, error) {
+func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, error) {
 	resp, err := ac.get("", url.Values{})
 	if err != nil {
 		return nil, err
 	}
 	list := ArtifactHubCachedPackagesList{}
 	err = json.NewDecoder(resp.Body).Decode(&list)
-	return &list, err
+	packages := make([]ArtifactHubHelmPackage, len(list))
+	for idx, cachedPackage := range list {
+		packages[idx] = ArtifactHubHelmPackage{
+			Name: cachedPackage.Name,
+			Description: cachedPackage.Description,
+			Maintainers: cachedPackage.Maintainers,
+			HomeURL: cachedPackage.HomeURL,
+			Links: cachedPackage.Links,
+			Repository: ArtifactHubRepository{
+				Name: cachedPackage.Repository.Name,
+				VerifiedPublisher: cachedPackage.Repository.Verified,
+				URL: cachedPackage.Repository.URL,
+			},
+			// LogoImageID: cachedPackage.LogoImageID,
+			// Version: cachedPackage.Version (what does this represent?)
+			// Deprecated: cachedPackage.Deprecated,
+			// LatestVersion: cachedPackage.LatestVersion,
+			AvailableVersions: []AvailableVersion{},
+		}
+		for _, version := range cachedPackage.Versions {
+			/*
+			if version == cachedPackage.LatestVersion {
+				packages[idx].AppVersion = version.AppVersion
+			}
+			*/
+			packages[idx].AvailableVersions = append(packages[idx].AvailableVersions, AvailableVersion{
+				Version: version.Version,
+			})
+		}
+	}
+	return packages, err
 }
 
 // get is the basic getter for the artifacthub package client
