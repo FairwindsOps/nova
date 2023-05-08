@@ -37,8 +37,10 @@ type ArtifactHubCachedPackageClient struct {
 	UserAgent string
 }
 
+// ArtifactHubCachedPackagesList contains the output from the AH cached API
 type ArtifactHubCachedPackagesList []ArtifactHubCachedPackage
 
+// ArtifactHubCachedPackage represents a single entry in the API output. It's a single chart registered in AH
 type ArtifactHubCachedPackage struct {
 	Name        string                       `json:"name"`
 	Description string                       `json:"description"`
@@ -49,6 +51,7 @@ type ArtifactHubCachedPackage struct {
 	Maintainers []Maintainer                 `json:"maintainers"`
 }
 
+// ArtifactHubCachedRepository is a sub-struct of the Package struct, and represents the repository containing the package.
 type ArtifactHubCachedRepository struct {
 	Name     string `json:"name"`
 	URL      string `json:"url"`
@@ -56,6 +59,7 @@ type ArtifactHubCachedRepository struct {
 	Verified bool   `json:"verified"`
 }
 
+// ArtifactHubCachedVersionInfo represents the chart and application version of a package
 type ArtifactHubCachedVersionInfo struct {
 	Version string `json:"pkg"`
 	AppVersion string `json:"app"`
@@ -77,6 +81,7 @@ func NewArtifactHubCachedPackageClient(version string) (*ArtifactHubCachedPackag
 	}, nil
 }
 
+// List returns all packages from ArtifactHub
 func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, error) {
 	resp, err := ac.get("", url.Values{})
 	if err != nil {
