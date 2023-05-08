@@ -42,14 +42,16 @@ type ArtifactHubCachedPackagesList []ArtifactHubCachedPackage
 
 // ArtifactHubCachedPackage represents a single entry in the API output. It's a single chart registered in AH
 type ArtifactHubCachedPackage struct {
-	Name        string                         `json:"name"`
-	Description string                         `json:"description"`
-	HomeURL     string                         `json:"home"`
-	Repository  ArtifactHubCachedRepository    `json:"repository"`
-	Official    bool                           `json:"official"`
-	Versions    []ArtifactHubCachedVersionInfo `json:"versions"`
-	Links       []Link                         `json:"links"`
-	Maintainers []Maintainer                   `json:"maintainers"`
+	Name          string                         `json:"name"`
+	Description   string                         `json:"description"`
+	HomeURL       string                         `json:"home"`
+	Repository    ArtifactHubCachedRepository    `json:"repository"`
+	Official      bool                           `json:"official"`
+	LatestVersion string                         `json:"latest_version"`
+	Versions      []ArtifactHubCachedVersionInfo `json:"versions"`
+	Links         []Link                         `json:"links"`
+	Maintainers   []Maintainer                   `json:"maintainers"`
+	Deprecated    bool                           `json:"deprecated"`
 }
 
 // ArtifactHubCachedRepository is a sub-struct of the Package struct, and represents the repository containing the package.
@@ -106,13 +108,13 @@ func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, erro
 				VerifiedPublisher: cachedPackage.Repository.Verified,
 				Official:          cachedPackage.Repository.Official,
 			},
-			Deprecated: cachedPackage.Deprecated,
-			LatestVersion: cachedPackage.LatestVersion,
+			Version:           cachedPackage.LatestVersion,
 			AvailableVersions: []AvailableVersion{},
 		}
 		for _, version := range cachedPackage.Versions {
-			if version == cachedPackage.LatestVersion {
+			if version.Version == cachedPackage.LatestVersion {
 				packages[idx].AppVersion = version.AppVersion
+				packages[idx].Deprecated = version.Deprecated
 			}
 			packages[idx].AvailableVersions = append(packages[idx].AvailableVersions, AvailableVersion{
 				Version: version.Version,

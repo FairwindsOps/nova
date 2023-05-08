@@ -34,7 +34,7 @@ func Test_ingestSample(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, 1, len(resp))
-	assert.Equal(t, "secrets-store-csi-driver-provider-gc", resp[0].Name)
+	assert.Equal(t, "secrets-store-csi-driver-provider-gcp", resp[0].Name)
 	assert.Equal(t, "A Helm chart for Google Secret Manager Provider for Secret Store CSI Driver", resp[0].Description)
 	assert.Equal(t, 4, len(resp[0].Links))
 	assert.Equal(t, "https://github.com/portefaix/portefaix-hub/tree/master/charts/secrets-store-csi-driver-provider-gcp", resp[0].Links[0].URL)
