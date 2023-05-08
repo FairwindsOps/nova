@@ -15,6 +15,8 @@
 package helm
 
 import (
+	"os"
+	"io/ioutil"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -87,12 +89,26 @@ func NewArtifactHubCachedPackageClient(version string) (*ArtifactHubCachedPackag
 
 // List returns all packages from ArtifactHub
 func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, error) {
-	resp, err := ac.get("", url.Values{})
-	if err != nil {
-		return nil, err
-	}
 	list := ArtifactHubCachedPackagesList{}
-	err = json.NewDecoder(resp.Body).Decode(&list)
+	if os.Getenv("ARTIFACT_HUB_CACHE_FILE") == "" {
+		resp, err := ac.get("", url.Values{})
+		if err != nil {
+			return nil, err
+		}
+		err = json.NewDecoder(resp.Body).Decode(&list)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		cache, err := ioutil.ReadFile(os.Getenv("ARTIFACT_HUB_CACHE_FILE"))
+		if err != nil {
+			return nil, err
+		}
+		err = json.Unmarshal(cache, &list)
+		if err != nil {
+			return nil, err
+		}
+	}
 	packages := make([]ArtifactHubHelmPackage, len(list))
 	for idx, cachedPackage := range list {
 		packages[idx] = ArtifactHubHelmPackage{
@@ -121,7 +137,7 @@ func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, erro
 			})
 		}
 	}
-	return packages, err
+	return packages, nil
 }
 
 // get is the basic getter for the artifacthub package client
