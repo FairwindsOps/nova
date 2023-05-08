@@ -63,6 +63,7 @@ type ArtifactHubCachedRepository struct {
 type ArtifactHubCachedVersionInfo struct {
 	Version    string `json:"pkg"`
 	AppVersion string `json:"app"`
+	Deprecated bool   `json:"deprecated"`
 }
 
 // NewArtifactHubCachedPackageClient returns a new client for the unauthenticated paths of the ArtifactHubCached API.
@@ -99,10 +100,9 @@ func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, erro
 			Links:       cachedPackage.Links,
 			Repository: ArtifactHubRepository{
 				Name:              cachedPackage.Repository.Name,
-				VerifiedPublisher: cachedPackage.Repository.Verified,
 				URL:               cachedPackage.Repository.URL,
+				VerifiedPublisher: cachedPackage.Repository.Verified,
 			},
-			// LogoImageID: cachedPackage.LogoImageID,
 			// Version: cachedPackage.Version (what does this represent?)
 			// Deprecated: cachedPackage.Deprecated,
 			// LatestVersion: cachedPackage.LatestVersion,

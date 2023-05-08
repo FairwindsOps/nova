@@ -98,7 +98,6 @@ type ArtifactHubRepository struct {
 type ArtifactHubHelmPackage struct {
 	Name              string                `json:"name"`
 	DisplayName       string                `json:"display_name"`
-	LogoImageID       string                `json:"logo_image_id"`
 	Description       string                `json:"description"`
 	AppVersion        string                `json:"app_version"`
 	Deprecated        bool                  `json:"deprecated"`
