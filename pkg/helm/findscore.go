@@ -106,6 +106,14 @@ func scoreChartSimilarity(release *release.Release, pkg ArtifactHubHelmPackage) 
 		klog.V(10).Infof("+1 score for %s verified publisher (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
 		ret++
 	}
+	if pkg.Official {
+		klog.V(10).Infof("+1 score for %s verified publisher (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		ret++
+	}
+	if pkg.Repository.Official {
+		klog.V(10).Infof("+1 score for %s verified publisher (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		ret++
+	}
 	if clusterVersionExistsInPackage(release.Chart.Metadata.Version, pkg) {
 		klog.V(10).Infof("+1 score for %s, current version exists in available versions (ahub package %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
 		ret++

@@ -46,6 +46,7 @@ type ArtifactHubCachedPackage struct {
 	Description string                         `json:"description"`
 	HomeURL     string                         `json:"home_url"`
 	Repository  ArtifactHubCachedRepository    `json:"repository"`
+	Official    bool                           `json:"official"`
 	Versions    []ArtifactHubCachedVersionInfo `json:"versions"`
 	Links       []Link                         `json:"links"`
 	Maintainers []Maintainer                   `json:"maintainers"`
@@ -98,10 +99,12 @@ func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, erro
 			Maintainers: cachedPackage.Maintainers,
 			HomeURL:     cachedPackage.HomeURL,
 			Links:       cachedPackage.Links,
+			Official:    cachedPackage.Official,
 			Repository: ArtifactHubRepository{
 				Name:              cachedPackage.Repository.Name,
 				URL:               cachedPackage.Repository.URL,
 				VerifiedPublisher: cachedPackage.Repository.Verified,
+				Official:          cachedPackage.Repository.Official,
 			},
 			// Version: cachedPackage.Version (what does this represent?)
 			// Deprecated: cachedPackage.Deprecated,

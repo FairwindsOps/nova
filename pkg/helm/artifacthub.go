@@ -92,6 +92,7 @@ type ArtifactHubRepository struct {
 	URL               string `json:"url"`
 	Name              string `json:"name"`
 	VerifiedPublisher bool   `json:"verified_publisher"`
+	Official          bool   `json:"official"`
 }
 
 // ArtifactHubHelmPackage represents a helm package (chart) as provided by the ArtifactHub API.
@@ -100,6 +101,7 @@ type ArtifactHubHelmPackage struct {
 	DisplayName       string                `json:"display_name"`
 	Description       string                `json:"description"`
 	AppVersion        string                `json:"app_version"`
+	Official          bool                  `json:"official"`
 	Deprecated        bool                  `json:"deprecated"`
 	Repository        ArtifactHubRepository `json:"repository"`
 	Version           string                `json:"version"`
