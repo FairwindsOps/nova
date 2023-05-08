@@ -106,17 +106,14 @@ func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, erro
 				VerifiedPublisher: cachedPackage.Repository.Verified,
 				Official:          cachedPackage.Repository.Official,
 			},
-			// Version: cachedPackage.Version (what does this represent?)
-			// Deprecated: cachedPackage.Deprecated,
-			// LatestVersion: cachedPackage.LatestVersion,
+			Deprecated: cachedPackage.Deprecated,
+			LatestVersion: cachedPackage.LatestVersion,
 			AvailableVersions: []AvailableVersion{},
 		}
 		for _, version := range cachedPackage.Versions {
-			/*
-				if version == cachedPackage.LatestVersion {
-					packages[idx].AppVersion = version.AppVersion
-				}
-			*/
+			if version == cachedPackage.LatestVersion {
+				packages[idx].AppVersion = version.AppVersion
+			}
 			packages[idx].AvailableVersions = append(packages[idx].AvailableVersions, AvailableVersion{
 				Version: version.Version,
 			})
