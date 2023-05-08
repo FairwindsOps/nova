@@ -44,7 +44,7 @@ type ArtifactHubCachedPackagesList []ArtifactHubCachedPackage
 type ArtifactHubCachedPackage struct {
 	Name        string                         `json:"name"`
 	Description string                         `json:"description"`
-	HomeURL     string                         `json:"home_url"`
+	HomeURL     string                         `json:"home"`
 	Repository  ArtifactHubCachedRepository    `json:"repository"`
 	Official    bool                           `json:"official"`
 	Versions    []ArtifactHubCachedVersionInfo `json:"versions"`
