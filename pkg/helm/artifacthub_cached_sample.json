@@ -1,22 +1,54 @@
 [{
-    "name": "vault-secrets-operator",
-    "description": "Official Vault Secrets Operator Chart",
+    "name": "secrets-store-csi-driver-provider-gcp",
+    "description": "A Helm chart for Google Secret Manager Provider for Secret Store CSI Driver",
     "links": [
         {
-            "url": "https://github.com/hashicorp/vault-secrets-operator",
+            "url": "https://github.com/portefaix/portefaix-hub/tree/master/charts/secrets-store-csi-driver-provider-gcp",
             "name": "source"
+        },
+        {
+            "url": "https://github.com/kubernetes-sigs/secrets-store-csi-driver",
+            "name": "secrets-store-csi-driver"
+        },
+        {
+            "url": "https://github.com/GoogleCloudPlatform/secrets-store-csi-driver-provider-gcp",
+            "name": "secrets-store-csi-driver-provider-gcp"
+        },
+        {
+            "url": "https://portefaix.xyz",
+            "name": "Portefaix"
+        }
+    ],
+    "home_url": "https://charts.portefaix.xyz",
+    "maintainers": [
+        {
+            "name": "nlamirault"
         }
     ],
     "repository": {
-        "name": "hashicorp",
-        "url": "https://helm.releases.hashicorp.com",
-        "official": true,
-        "verified": true
+        "name": "portefaix-hub",
+        "url": "https://charts.portefaix.xyz/"
     },
-    "version": {
-        "latest": "0.1.0-beta",
-        "all": [
-            "0.1.0-beta"
-        ]
-    }
+    "versions": [
+        {
+            "pkg": "0.1.0",
+            "app": "1.3.5"
+        },
+        {
+            "pkg": "0.2.0",
+            "app": "1.3.5"
+        },
+        {
+            "pkg": "0.3.0",
+            "app": "1.3.5"
+        },
+        {
+            "pkg": "0.4.0",
+            "app": "1.0.0"
+        },
+        {
+            "pkg": "0.5.0",
+            "app": "1.0.0"
+        }
+    ]
 }]

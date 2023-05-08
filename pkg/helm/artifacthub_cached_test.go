@@ -34,5 +34,5 @@ func Test_ingestSample(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, 1, len(resp))
-	assert.Equal(t, "vault-secrets-operator", resp[0].Name)
+	assert.Equal(t, "secrets-store-csi-driver-provider-gc", resp[0].Name)
 }
