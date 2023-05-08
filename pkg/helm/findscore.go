@@ -90,11 +90,11 @@ func scoreChartSimilarity(release *release.Release, pkg ArtifactHubHelmPackage) 
 	}
 	pkgMaintainers := map[string]bool{}
 	for _, m := range pkg.Maintainers {
-		pkgMaintainers[m.Email+";"+m.Name+";"] = true
+		pkgMaintainers[m.Name] = true
 	}
 	matchedMaintainers := 0
 	for _, m := range release.Chart.Metadata.Maintainers {
-		if pkgMaintainers[m.Email+";"+m.Name+";"] {
+		if pkgMaintainers[m.Name] {
 			matchedMaintainers++
 		}
 	}
