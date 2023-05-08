@@ -1,0 +1,22 @@
+[{
+    "name": "vault-secrets-operator",
+    "description": "Official Vault Secrets Operator Chart",
+    "links": [
+        {
+            "url": "https://github.com/hashicorp/vault-secrets-operator",
+            "name": "source"
+        }
+    ],
+    "repository": {
+        "name": "hashicorp",
+        "url": "https://helm.releases.hashicorp.com",
+        "official": true,
+        "verified": true
+    },
+    "version": {
+        "latest": "0.1.0-beta",
+        "all": [
+            "0.1.0-beta"
+        ]
+    }
+}]
