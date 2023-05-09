@@ -15,8 +15,6 @@
 package helm
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -25,18 +23,29 @@ import (
 const sampleFile = "artifacthub_cached_sample.json"
 
 func Test_ingestSample(t *testing.T) {
-	sample, err := ioutil.ReadFile(sampleFile)
-	if err != nil {
-		panic(err)
-	}
-	resp := ArtifactHubCachedPackagesList{}
-	err = json.Unmarshal(sample, &resp)
+	cacheFile = sampleFile
+	client, err := NewArtifactHubCachedPackageClient("")
+	assert.NoError(t, err)
+	resp, err := client.List()
 	assert.NoError(t, err)
 
-	assert.Equal(t, 1, len(resp))
-	assert.Equal(t, "secrets-store-csi-driver-provider-gcp", resp[0].Name)
-	assert.Equal(t, "A Helm chart for Google Secret Manager Provider for Secret Store CSI Driver", resp[0].Description)
-	assert.Equal(t, 4, len(resp[0].Links))
-	assert.Equal(t, "https://github.com/portefaix/portefaix-hub/tree/master/charts/secrets-store-csi-driver-provider-gcp", resp[0].Links[0].URL)
-	assert.Equal(t, "source", resp[0].Links[0].Name)
+	assert.Equal(t, 11233, len(resp))
+	toCheck := resp[1]
+	assert.Equal(t, "open5gs-webui", toCheck.Name)
+	assert.Equal(t, "Helm chart to deploy Open5gs WebUI service on Kubernetes. ", toCheck.Description)
+
+	assert.Equal(t, 1, len(toCheck.Links))
+	assert.Equal(t, "http://open5gs.org", toCheck.Links[0].URL)
+	assert.Equal(t, "source", toCheck.Links[0].Name)
+
+	assert.Equal(t, 2, len(toCheck.Maintainers))
+	assert.Equal(t, "cgiraldo", toCheck.Maintainers[0].Name)
+
+	assert.Equal(t, "gradiant-openverso", toCheck.Repository.Name)
+	assert.Equal(t, "https://gradiant.github.io/openverso-charts/", toCheck.Repository.URL)
+
+	assert.Equal(t, "2.0.3", toCheck.Version)
+	assert.Equal(t, "2.4.11", toCheck.AppVersion)
+	assert.Equal(t, 4, len(toCheck.AvailableVersions))
+	assert.Equal(t, "2.0.0", toCheck.AvailableVersions[0].Version)
 }

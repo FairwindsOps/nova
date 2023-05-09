@@ -31,6 +31,13 @@ const (
 	artifactHubCachedHelmKind        = "0"
 )
 
+var cacheFile = ""
+func init() {
+	if os.Getenv("ARTIFACT_HUB_CACHE_FILE") != "" {
+		cacheFile = os.Getenv("ARTIFACT_HUB_CACHE_FILE")
+	}
+}
+
 // ArtifactHubCachedPackageClient provides the various pieces to interact with the ArtifactHubCached API.
 type ArtifactHubCachedPackageClient struct {
 	APIRoot   string
@@ -90,7 +97,7 @@ func NewArtifactHubCachedPackageClient(version string) (*ArtifactHubCachedPackag
 // List returns all packages from ArtifactHub
 func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, error) {
 	list := ArtifactHubCachedPackagesList{}
-	if os.Getenv("ARTIFACT_HUB_CACHE_FILE") == "" {
+	if cacheFile == "" {
 		resp, err := ac.get("", url.Values{})
 		if err != nil {
 			return nil, err
@@ -100,7 +107,7 @@ func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, erro
 			return nil, err
 		}
 	} else {
-		cache, err := ioutil.ReadFile(os.Getenv("ARTIFACT_HUB_CACHE_FILE"))
+		cache, err := ioutil.ReadFile(cacheFile)
 		if err != nil {
 			return nil, err
 		}
