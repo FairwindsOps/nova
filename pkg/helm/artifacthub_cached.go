@@ -98,7 +98,7 @@ func NewArtifactHubCachedPackageClient(version string) (*ArtifactHubCachedPackag
 func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, error) {
 	list := ArtifactHubCachedPackagesList{}
 	if cacheFile == "" {
-		resp, err := ac.get("", url.Values{})
+		resp, err := ac.get()
 		if err != nil {
 			return nil, err
 		}
@@ -147,25 +147,15 @@ func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, erro
 	return packages, nil
 }
 
-// get is the basic getter for the artifacthub package client
-// The path argument should be formatted like so: "api/v1/packages/search", any unauthenticated paths
-// will work and are documented here: https://artifacthub.io/docs/api/#/
-// urlValues are the search parameters for the query if necessary.
-// offset is to be used for pagination. The first page would be offset 0.
-func (ac *ArtifactHubCachedPackageClient) get(path string, urlValues url.Values) (*http.Response, error) {
+// get is the basic getter for the artifacthub cached package client
+func (ac *ArtifactHubCachedPackageClient) get() (*http.Response, error) {
 	requestURL := *ac.URL
-	requestURL.Path = path
 	urlString := requestURL.String()
 	r, err := http.NewRequest("GET", urlString, nil)
 	if err != nil {
 		return nil, err
 	}
 	q := r.URL.Query()
-	for k, v := range urlValues {
-		for _, vv := range v {
-			q.Add(k, vv)
-		}
-	}
 	r.URL.RawQuery = q.Encode()
 	r.Header.Add("accept", "application/json")
 	r.Header.Set("User-Agent", ac.UserAgent)
