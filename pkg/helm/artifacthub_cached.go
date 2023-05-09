@@ -160,23 +160,13 @@ func (ac *ArtifactHubCachedPackageClient) get() (*http.Response, error) {
 	r.URL.RawQuery = q.Encode()
 	r.Header.Add("accept", "application/json")
 	r.Header.Set("User-Agent", ac.UserAgent)
-	var response *http.Response
-	for attempt := 1; attempt <= 5; attempt++ {
-		resp, innerErr := ac.Client.Do(r)
-		if innerErr != nil {
-			response = nil
-			err = innerErr
-			klog.V(3).Infof("attempt %d failed to GET %s: %v", attempt, urlString, err)
-			continue
-		}
-		if resp.StatusCode != http.StatusOK {
-			response = resp
-			klog.V(3).Infof("attempt %d failed to GET %s with status code: %v", attempt, urlString, resp.StatusCode)
-			err = fmt.Errorf("error code: %d", resp.StatusCode)
-			continue
-		}
-		response = resp
-		break
+	resp, err := ac.Client.Do(r)
+	if err != nil {
+		return nil, err
 	}
-	return response, err
+	if resp.StatusCode != http.StatusOK {
+		klog.V(3).Infof("failed to GET %s with status code: %v", urlString, resp.StatusCode)
+		err = fmt.Errorf("error code: %d", resp.StatusCode)
+	}
+	return resp, err
 }
