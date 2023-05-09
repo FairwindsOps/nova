@@ -15,12 +15,12 @@
 package helm
 
 import (
-	"os"
-	"io/ioutil"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 
 	"k8s.io/klog/v2"
 )
@@ -32,6 +32,7 @@ const (
 )
 
 var cacheFile = ""
+
 func init() {
 	if os.Getenv("ARTIFACT_HUB_CACHE_FILE") != "" {
 		cacheFile = os.Getenv("ARTIFACT_HUB_CACHE_FILE")
