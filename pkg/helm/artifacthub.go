@@ -89,52 +89,31 @@ type ArtifactHubSecurityReportSummary struct {
 
 // ArtifactHubRepository is a child struct of ArtifactHubPackageSearch represents a helm chart repository as provided by the ArtifactHub API.
 type ArtifactHubRepository struct {
-	URL                     string `json:"url"`
-	Kind                    int    `json:"kind"`
-	Name                    string `json:"name"`
-	Official                bool   `json:"official"`
-	DisplayName             string `json:"display_name"`
-	RepositoryID            string `json:"repository_id"`
-	ScannerDisabled         bool   `json:"scanner_disabled"`
-	OrganizationName        string `json:"organization_name"`
-	VerifiedPublisher       bool   `json:"verified_publisher"`
-	OrganizationDisplayName string `json:"organization_display_name"`
+	URL               string `json:"url"`
+	Name              string `json:"name"`
+	VerifiedPublisher bool   `json:"verified_publisher"`
+	Official          bool   `json:"official"`
 }
 
 // ArtifactHubHelmPackage represents a helm package (chart) as provided by the ArtifactHub API.
 type ArtifactHubHelmPackage struct {
-	PackageID                      string                           `json:"package_id"`
-	Name                           string                           `json:"name"`
-	NormalizedName                 string                           `json:"normalized_name"`
-	DisplayName                    string                           `json:"display_name"`
-	LogoImageID                    string                           `json:"logo_image_id"`
-	Stars                          int                              `json:"stars"`
-	Description                    string                           `json:"description"`
-	Version                        string                           `json:"version"`
-	AppVersion                     string                           `json:"app_version"`
-	Deprecated                     bool                             `json:"deprecated"`
-	Signed                         bool                             `json:"signed"`
-	Official                       bool                             `json:"official"`
-	ProductionOrganizationsCount   int                              `json:"production_organizations_count"`
-	Ts                             int                              `json:"ts"`
-	Repository                     ArtifactHubRepository            `json:"repository"`
-	SecurityReportSummary          ArtifactHubSecurityReportSummary `json:"security_report_summary"`
-	AllContainersImagesWhitelisted bool                             `json:"all_containers_images_whitelisted"`
-	LatestVersion                  string                           `json:"latest_version"`
-	HomeURL                        string                           `json:"home_url"`
-	AvailableVersions              []AvailableVersion               `json:"available_versions"`
-	Maintainers                    []Maintainer                     `json:"maintainers"`
-	PreRelease                     bool                             `json:"prerelease"`
-	Data                           PackageData                      `json:"data"`
-	Links                          []Link                           `json:"links"`
+	Name              string                `json:"name"`
+	DisplayName       string                `json:"display_name"`
+	Description       string                `json:"description"`
+	AppVersion        string                `json:"app_version"`
+	Official          bool                  `json:"official"`
+	Deprecated        bool                  `json:"deprecated"`
+	Repository        ArtifactHubRepository `json:"repository"`
+	Version           string                `json:"version"`
+	HomeURL           string                `json:"home_url"`
+	AvailableVersions []AvailableVersion    `json:"available_versions"`
+	Maintainers       []Maintainer          `json:"maintainers"`
+	Links             []Link                `json:"links"`
 }
 
 // AvailableVersion is a sub struct of ArtifactHubHelmPackage and provides a version that is available for a given helm chart.
 type AvailableVersion struct {
-	Version                 string `json:"version"`
-	ContainsSecurityUpdates bool   `json:"contains_security_updates"`
-	PreRelease              bool   `json:"prerelease"`
-	Ts                      int    `json:"ts"`
+	Version string `json:"version"`
 }
 
 // Maintainer is a child struct of ArtifactHubHelmPackage and provides information about maintainers of a helm chart.
