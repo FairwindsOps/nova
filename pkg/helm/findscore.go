@@ -90,11 +90,11 @@ func scoreChartSimilarity(release *release.Release, pkg ArtifactHubHelmPackage) 
 	}
 	pkgMaintainers := map[string]bool{}
 	for _, m := range pkg.Maintainers {
-		pkgMaintainers[m.Email+";"+m.Name+";"] = true
+		pkgMaintainers[m.Name] = true
 	}
 	matchedMaintainers := 0
 	for _, m := range release.Chart.Metadata.Maintainers {
-		if pkgMaintainers[m.Email+";"+m.Name+";"] {
+		if pkgMaintainers[m.Name] {
 			matchedMaintainers++
 		}
 	}
@@ -103,6 +103,14 @@ func scoreChartSimilarity(release *release.Release, pkg ArtifactHubHelmPackage) 
 		ret++
 	}
 	if pkg.Repository.VerifiedPublisher {
+		klog.V(10).Infof("+1 score for %s verified publisher (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		ret++
+	}
+	if pkg.Official {
+		klog.V(10).Infof("+1 score for %s verified publisher (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		ret++
+	}
+	if pkg.Repository.Official {
 		klog.V(10).Infof("+1 score for %s verified publisher (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
 		ret++
 	}

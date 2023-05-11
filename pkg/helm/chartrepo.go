@@ -246,10 +246,10 @@ func checkChartsSimilarity(currentChartMeta *chart.Metadata, chartFromRepo *Char
 
 	chartFromRepoMaintainers := map[string]bool{}
 	for _, m := range chartFromRepo.Maintainers {
-		chartFromRepoMaintainers[m.Email+";"+m.Name+";"+m.URL] = true
+		chartFromRepoMaintainers[m.Name] = true
 	}
 	for _, m := range currentChartMeta.Maintainers {
-		if !chartFromRepoMaintainers[m.Email+";"+m.Name+";"+m.URL] {
+		if !chartFromRepoMaintainers[m.Name] {
 			return false
 		}
 	}
