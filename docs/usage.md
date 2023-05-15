@@ -33,6 +33,10 @@ Global Flags:
       --wide                              Output chart name and namespace
 ```
 
+## Referencing Private Registries
+
+If you would like to use nova to find outdated releases from charts in private helm repositories, please use the `--url` flag to point to that registry. Any authentication should be already configured in your local `helm repo` settings. Additionally, you may want to set `--poll-artifacthub=false` if there are no releases from public repositories that you wish to find.
+
 ## Generate Config
 
 If you would like to generate a config file with all of the defaults for Nova, you can do that:
@@ -146,17 +150,17 @@ Below is sample output for Nova when using the `--helm --containers` flag
 $ nova --format=table find --helm --containers
 Release Name      Installed    Latest    Old      Deprecated
 ============      =========    ======    ===      ==========
-cert-manager      v1.9.1       1.9.1     false    false    
-insights-agent    2.0.7        2.6.8     true     false    
+cert-manager      v1.9.1       1.9.1     false    false
+insights-agent    2.0.7        2.6.8     true     false
 
 Container Name                        Current Version    Old     Latest     Latest Minor     Latest Patch
 ==============                        ===============    ===     ======     =============    =============
-k8s.gcr.io/coredns/coredns            v1.8.4             true    v1.9.3     v1.9.3           v1.8.6      
-k8s.gcr.io/etcd                       3.5.0-0            true    3.5.4-0    3.5.0-0          3.5.0-0     
-k8s.gcr.io/kube-apiserver             v1.22.9            true    v1.25.0    v1.25.0          v1.22.13    
-k8s.gcr.io/kube-controller-manager    v1.22.9            true    v1.25.0    v1.25.0          v1.22.13    
-k8s.gcr.io/kube-proxy                 v1.22.9            true    v1.25.0    v1.25.0          v1.22.13    
-k8s.gcr.io/kube-scheduler             v1.22.9            true    v1.25.0    v1.25.0          v1.22.13  
+k8s.gcr.io/coredns/coredns            v1.8.4             true    v1.9.3     v1.9.3           v1.8.6
+k8s.gcr.io/etcd                       3.5.0-0            true    3.5.4-0    3.5.0-0          3.5.0-0
+k8s.gcr.io/kube-apiserver             v1.22.9            true    v1.25.0    v1.25.0          v1.22.13
+k8s.gcr.io/kube-controller-manager    v1.22.9            true    v1.25.0    v1.25.0          v1.22.13
+k8s.gcr.io/kube-proxy                 v1.22.9            true    v1.25.0    v1.25.0          v1.22.13
+k8s.gcr.io/kube-scheduler             v1.22.9            true    v1.25.0    v1.25.0          v1.22.13
 ```
 
 You can print the output in `json` format
