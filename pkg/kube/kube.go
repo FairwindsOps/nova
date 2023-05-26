@@ -15,6 +15,7 @@
 package kube
 
 import (
+	"net/http"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -86,7 +87,7 @@ func getRESTMapper(context string) meta.RESTMapper {
 		klog.Fatalf("error getting config with context %s: %v", context, err)
 	}
 
-	restMapper, err := apiutil.NewDynamicRESTMapper(kubeConf)
+	restMapper, err := apiutil.NewDynamicRESTMapper(kubeConf, &http.Client{})
 	if err != nil {
 		klog.Fatalf("Error creating REST Mapper: %v", err)
 	}
