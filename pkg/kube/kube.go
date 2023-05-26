@@ -15,7 +15,6 @@
 package kube
 
 import (
-	"net/http"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -24,6 +23,7 @@ import (
 	dfake "k8s.io/client-go/dynamic/fake"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/rest"
 	"k8s.io/klog/v2"
 
 	// add all known auth providers
@@ -87,7 +87,12 @@ func getRESTMapper(context string) meta.RESTMapper {
 		klog.Fatalf("error getting config with context %s: %v", context, err)
 	}
 
-	restMapper, err := apiutil.NewDynamicRESTMapper(kubeConf, &http.Client{})
+	httpClient, err := rest.HTTPClientFor(kubeConf)
+	if err != nil {
+		klog.Fatal("error creating httpClient using kubeconfig: %s", err.Error())
+	}
+
+	restMapper, err := apiutil.NewDynamicRESTMapper(kubeConf, httpClient)
 	if err != nil {
 		klog.Fatalf("Error creating REST Mapper: %v", err)
 	}
