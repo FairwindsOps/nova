@@ -11,14 +11,14 @@ references:
       command: |
         apk --update add curl yq
         cd /tmp
-        curl -LO https://releases.hashicorp.com/vault/1.9.2/vault_1.9.2_linux_amd64.zip
-        unzip vault_1.9.2_linux_amd64.zip
+        curl -LO https://releases.hashicorp.com/vault/1.13.2/vault_1.13.2_linux_amd64.zip
+        sha256sum vault_1.13.2_linux_amd64.zip | grep f7930279de8381de7c532164b4a4408895d9606c0d24e2e9d2f9acb5dfe99b3c
+        unzip vault_1.13.2_linux_amd64.zip
         mv vault /usr/bin/vault
-
 jobs:
   test:
     docker:
-      - image: cimg/go:1.19
+      - image: cimg/go:1.20
     steps:
       - checkout
       - run:
@@ -43,7 +43,7 @@ jobs:
     working_directory: /go/src/github.com/fairwindsops/nova
     resource_class: large
     docker:
-      - image: goreleaser/goreleaser:v1.12.3
+      - image: goreleaser/goreleaser:v1.18.2
     steps:
       - checkout
       - setup_remote_docker
@@ -56,7 +56,7 @@ jobs:
     resource_class: large
     shell: /bin/bash
     docker:
-      - image: goreleaser/goreleaser:v1.12.3
+      - image: goreleaser/goreleaser:v1.18.2
     steps:
       - checkout
       - setup_remote_docker
