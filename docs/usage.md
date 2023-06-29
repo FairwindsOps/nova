@@ -15,7 +15,9 @@ Flags:
       --containers        Show old container image versions. There will be no helm output unless the --helm flag is set as well
       --helm              Show old helm releases. You can combine this flag with `--containers` to have both output in a single run.
   -h, --help              help for find
-      --show-non-semver   When finding container images, show all containers even if they don't follow semver.
+      --show-errored-containers   When finding container images, show errors encountered when scanning.
+      --show-non-semver           When finding container images, show all containers even if they don't follow semver.
+  -t, --timeout uint16            When finding container images, the time in seconds before canceling the operation. (default 10)
 
 Global Flags:
       --alsologtostderr                   log to standard error as well as files (default true)
@@ -105,6 +107,7 @@ redis             redis             redis             3              15.4.1     
 There are a couple flags that are unique to the container image output.
 - `--show-non-semver` will also show any container tags running in the cluster that do not have valid semver versions. By default these are not shown.
 - `--show-errored-containers` will show any containers that returned some sort of error when reaching out to the registry and/or when processing the tags.
+- `--timeout` will set the time (in seconds) before remote queries to the registry are cancelled. Useful when an image has many tags. Defaults to 10 seconds.
 
 Below is sample output for Nova when using the `--containers` flag
 

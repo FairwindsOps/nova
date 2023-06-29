@@ -131,6 +131,12 @@ func init() {
 		klog.Exitf("Failed to bind show-errored-containers flag: %v", err)
 	}
 
+	findCmd.Flags().Uint16P("timeout", "t", 10, "When finding container images, the time in seconds before canceling the operation.")
+	err = viper.BindPFlag("timeout", findCmd.Flags().Lookup("timeout"))
+	if err != nil {
+		klog.Exitf("Failed to bind timeout flag: %v", err)
+	}
+
 	rootCmd.PersistentFlags().Bool("show-old", false, "Only show charts that are not on the latest version")
 	err = viper.BindPFlag("show-old", rootCmd.PersistentFlags().Lookup("show-old"))
 	if err != nil {
@@ -306,7 +312,8 @@ func Execute(VERSION, COMMIT string) {
 
 func handleContainers(kubeContext string) (*output.ContainersOutput, error) {
 	// Set up a context we can use to cancel all operations to external container registries if we need to
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	timeout := time.Duration(viper.GetUint16("timeout")) * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
 	defer func() {
