@@ -58,6 +58,7 @@ type ChartRelease struct {
 	Keywords    []string           `json:"keywords"`
 	Icon        string             `json:"icon"`
 	Deprecated  bool               `json:"deprecated"`
+	KubeVersion string             `json:"kubeVersion,omitempty"`
 }
 
 // NewRepos returns data about a helm chart repository, given its url
@@ -205,6 +206,7 @@ func (h *Helm) GetHelmReleasesVersion(helmRepos []*Repo, helmReleases []*release
 					AppVersion: newest.AppVersion,
 				},
 				HelmVersion: "v3",
+				KubeVersion: chart.Chart.Metadata.KubeVersion,
 				Deprecated:  chart.Chart.Metadata.Deprecated,
 			}
 			h.overrideDesiredVersion(&rls)

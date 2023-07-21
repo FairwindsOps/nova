@@ -69,38 +69,36 @@ redis             15.4.1       15.5.5     true    false
 ### CLI (with --wide)
 
 ```
-Release Name      Chart Name        Namespace         HelmVersion    Installed    Latest     Old     Deprecated
-============      ==========        =========         ===========    =========    ======     ===     ==========
-goldilocks        goldilocks        goldilocks        3              3.3.1        4.0.1      true    false
-metrics-server    metrics-server    metrics-server    3              5.6.0        5.10.10    true    false
-redis             redis             redis             3              15.4.1       15.5.5     true    false
+Release Name      Chart Name        Namespace         HelmVersion   KubeVersion    Installed    Latest   Old  Deprecated
+============      ==========        =========         ===========   ===========    ===========  ======   ===  ==========
+cert-manager2     cert-manager      cert-manager          3         >= 1.22.0-0      v.1.12.0   v.1.12.2 true    false
+vault             vault             default               3         >= 1.20.0-0      0.25.0     0.25.0   false   false
+goldilocks        goldilocks        goldilocks            3                          7.0.0      7.0.0    false   false
 ```
 
 ### JSON
 ```json
-{
-    "helm": [
-        {
-          "release": "goldilocks",
-          "chartName": "goldilocks",
-          "namespace": "goldilocks",
-          "description": "A Helm chart for running Fairwinds Goldilocks. See https://github.com/FairwindsOps/goldilocks\n",
-          "icon": "https://raw.githubusercontent.com/FairwindsOps/charts/master/stable/goldilocks/icon.png",
-          "Installed": {
-            "version": "3.3.1",
-            "appVersion": "v3.1.4"
-          },
-          "Latest": {
-            "version": "4.0.1",
-            "appVersion": "v4.0.0"
-          },
-          "outdated": true,
-          "deprecated": false,
-          "helmVersion": "3",
-          "overridden": false
-        }
-    ]
-}
+  {
+    "release": "cert-manager2",
+    "chartName": "cert-manager",
+    "namespace": "cert-manager",
+    "description": "A Helm chart for cert-manager",
+    "home": "https://github.com/cert-manager/cert-manager",
+    "icon": "https://raw.githubusercontent.com/cert-manager/cert-manager/d53c0b9270f8cd90d908460d69502694e1838f5f/logo/logo-small.png",
+    "Installed": {
+      "version": "v1.12.0",
+      "appVersion": "v1.12.0"
+    },
+    "Latest": {
+      "version": "1.12.2",
+      "appVersion": "v1.12.2"
+    },
+    "outdated": true,
+    "deprecated": false,
+    "helmVersion": "3",
+    "kubeVersion": ">= 1.22.0-0",
+    "overridden": false
+  }
 ```
 
 ## Container Image Output
@@ -184,6 +182,7 @@ $ nova --format=json find --helm --containers | jq
       "outdated": false,
       "deprecated": false,
       "helmVersion": "3",
+      "kubeVersion": "",
       "overridden": false
     }
   ],

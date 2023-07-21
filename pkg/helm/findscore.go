@@ -61,6 +61,7 @@ func prepareOutput(release *release.Release, pkg ArtifactHubHelmPackage) *output
 		IsOld:       version.Compare(release.Chart.Metadata.Version, pkg.Version, "<"),
 		Deprecated:  pkg.Deprecated,
 		HelmVersion: "3",
+		KubeVersion: release.Chart.Metadata.KubeVersion,
 	}
 }
 

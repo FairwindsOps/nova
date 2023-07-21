@@ -71,6 +71,7 @@ type ReleaseOutput struct {
 	IsOld       bool   `json:"outdated"`
 	Deprecated  bool   `json:"deprecated"`
 	HelmVersion string `json:"helmVersion"`
+	KubeVersion string `json:"kubeVersion"`
 	Overridden  bool   `json:"overridden"`
 }
 
@@ -112,6 +113,7 @@ func NewOutputWithHelmReleases(helmReleases []*release.Release) Output {
 		release.Icon = helmRelease.Chart.Metadata.Icon
 		release.Installed = VersionInfo{helmRelease.Chart.Metadata.Version, helmRelease.Chart.Metadata.AppVersion}
 		release.HelmVersion = "3"
+		release.KubeVersion = helmRelease.Chart.Metadata.KubeVersion
 		output.HelmReleases = append(output.HelmReleases, release)
 	}
 	return output
@@ -141,11 +143,11 @@ func (output Output) ToFile(filename string) error {
 		}
 		w := csv.NewWriter(file)
 		defer w.Flush()
-		header := []string{"Release Name", "Chart Name", "Namespace", "HelmVersion", "Installed", "Latest", "Old", "Deprecated"}
+		header := []string{"Release Name", "Chart Name", "Namespace", "HelmVersion", "KubeVersion", "Installed", "Latest", "Old", "Deprecated"}
 		var data [][]string
 		data = append(data, header)
 		for _, rl := range output.HelmReleases {
-			row := []string{rl.ReleaseName, rl.ChartName, rl.Namespace, rl.HelmVersion, rl.Installed.Version, rl.Latest.Version, strconv.FormatBool(rl.IsOld), strconv.FormatBool(rl.Deprecated)}
+			row := []string{rl.ReleaseName, rl.ChartName, rl.Namespace, rl.HelmVersion, rl.KubeVersion, rl.Installed.Version, rl.Latest.Version, strconv.FormatBool(rl.IsOld), strconv.FormatBool(rl.Deprecated)}
 			data = append(data, row)
 		}
 		w.WriteAll(data)
@@ -170,7 +172,7 @@ func (output Output) Print(format string, wide, showOld bool) {
 		w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 		header := "Release Name\t"
 		if wide {
-			header += "Chart Name\tNamespace\tHelmVersion\t"
+			header += "Chart Name\tNamespace\tHelmVersion\tKubeVersion\t"
 		}
 		header += "Installed\tLatest\tOld\tDeprecated"
 		fmt.Fprintln(w, header)
@@ -190,6 +192,7 @@ func (output Output) Print(format string, wide, showOld bool) {
 				line += release.ChartName + "\t"
 				line += release.Namespace + "\t"
 				line += release.HelmVersion + "\t"
+				line += release.KubeVersion + "\t"
 			}
 			line += release.Installed.Version + "\t"
 			line += release.Latest.Version + "\t"
