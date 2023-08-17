@@ -16,7 +16,7 @@ package helm
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -99,7 +99,7 @@ func (r *Repo) loadReleases() error {
 		return err
 	}
 
-	data, err := ioutil.ReadAll(response.Body)
+	data, err := io.ReadAll(response.Body)
 	if err != nil {
 		return err
 	}
