@@ -71,7 +71,7 @@ redis             15.4.1       15.5.5     true    false
 ```
 Release Name      Chart Name        Namespace         HelmVersion   KubeVersion    Installed    Latest   Old  Deprecated
 ============      ==========        =========         ===========   ===========    ===========  ======   ===  ==========
-cert-manager2     cert-manager      cert-manager          3         >= 1.22.0-0      v.1.12.0   v.1.12.2 true    false
+cert-manager     cert-manager      cert-manager          3         >= 1.22.0-0      v.1.12.0   v.1.12.2 true    false
 vault             vault             default               3         >= 1.20.0-0      0.25.0     0.25.0   false   false
 goldilocks        goldilocks        goldilocks            3                          7.0.0      7.0.0    false   false
 ```
@@ -79,7 +79,7 @@ goldilocks        goldilocks        goldilocks            3                     
 ### JSON
 ```json
   {
-    "release": "cert-manager2",
+    "release": "cert-manager",
     "chartName": "cert-manager",
     "namespace": "cert-manager",
     "description": "A Helm chart for cert-manager",
