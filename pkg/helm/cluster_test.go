@@ -19,6 +19,7 @@ import (
 
 	"github.com/fairwindsops/nova/pkg/output"
 	"github.com/stretchr/testify/assert"
+	"helm.sh/helm/v3/pkg/release"
 )
 
 func TestHelm_OverrideDesiredVersion(t *testing.T) {
@@ -79,6 +80,78 @@ func TestHelm_OverrideDesiredVersion(t *testing.T) {
 			}
 			h.OverrideDesiredVersion(tt.input)
 			assert.EqualValues(t, tt.want, tt.input)
+		})
+	}
+}
+
+func TestHelm_filterIgnoredReleases(t *testing.T) {
+	tests := []struct {
+		name              string             // Name of test case
+		releaseIgnoreList []string           // List of release names to be ignored
+		chartIgnoreList   []string           // List of charts to be ignored
+		input             []*release.Release // Input to filtering function
+		want              []*release.Release // Output from filtering function
+	}{
+		{
+			name:              "EmptyInput",
+			releaseIgnoreList: []string{},
+			chartIgnoreList:   []string{},
+			input:             []*release.Release{},
+			want:              []*release.Release{},
+		},
+		{
+			name:              "NoIgnoredReleasesOrCharts",
+			releaseIgnoreList: []string{},
+			chartIgnoreList:   []string{},
+			input: []*release.Release{
+				{
+					Name: "foo",
+				},
+			},
+			want: []*release.Release{
+				{
+					Name: "foo",
+				},
+			},
+		},
+		{
+			name: "AllIgnoredReleases",
+			releaseIgnoreList: []string{
+				"foo",
+			},
+			chartIgnoreList: []string{},
+			input: []*release.Release{
+				{
+					Name: "foo",
+				},
+			},
+			want: []*release.Release{},
+		},
+		{
+			name: "SomeIgnoredReleases",
+			releaseIgnoreList: []string{
+				"foo",
+			},
+			chartIgnoreList: []string{},
+			input: []*release.Release{
+				{
+					Name: "foo",
+				},
+				{
+					Name: "bar",
+				},
+			},
+			want: []*release.Release{{
+				Name: "bar",
+			}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			output := filterIgnoredReleases(tt.input, tt.releaseIgnoreList, tt.chartIgnoreList)
+			if len(output) != len(tt.want) {
+				t.Fatalf("filtering did not catch all cases, expected %d releases, instead got %d", len(tt.want), len(output))
+			}
 		})
 	}
 }
