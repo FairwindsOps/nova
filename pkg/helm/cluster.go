@@ -112,7 +112,7 @@ func filterIgnoredReleases(deployed []*release.Release, releaseIgnoreList []stri
 		}
 		if !isIgnoredChart && !isIgnoredRelease {
 			filteredDeployed[filteredCount] = release
-			filteredCount += 1
+			filteredCount++
 		}
 	}
 
