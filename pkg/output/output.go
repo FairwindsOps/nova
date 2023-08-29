@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strconv"
@@ -131,7 +130,7 @@ func (output Output) ToFile(filename string) error {
 			return err
 		}
 
-		err = ioutil.WriteFile(filename, data, 0644)
+		err = os.WriteFile(filename, data, 0644)
 		if err != nil {
 			klog.Errorf("Error writing to file %s: %v", filename, err)
 		}
@@ -400,7 +399,7 @@ func (output HelmAndContainersOutput) ToFile(filename string) error {
 			klog.Errorf("Error marshaling json: %v", err)
 			return err
 		}
-		err = ioutil.WriteFile(filename, data, 0644)
+		err = os.WriteFile(filename, data, 0644)
 		if err != nil {
 			klog.Errorf("Error writing to file %s: %v", filename, err)
 		}
