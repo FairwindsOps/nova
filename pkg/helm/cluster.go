@@ -106,8 +106,11 @@ func filterIgnoredReleases(deployed []*release.Release, releaseIgnoreList []stri
 			}
 		}
 		for _, ignoreListedChart := range chartIgnoreList {
-			if release.Chart.Name() == ignoreListedChart {
-				isIgnoredChart = true
+			// Check for nil to avoid a potential nil pointer exception
+			if release.Chart != nil {
+				if release.Chart.Name() == ignoreListedChart {
+					isIgnoredChart = true
+				}
 			}
 		}
 		if !isIgnoredChart && !isIgnoredRelease {
