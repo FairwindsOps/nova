@@ -50,13 +50,7 @@ Each new pull request should:
 - Be up to date and/or rebased on the master branch
 
 ## Creating a new release
-* Update version in README.md
-* Update version in main.go
-* Open and merge a PR
-* Tag your merged commit
 
 Tagging a commit will build and push a new Docker image, add a binary to the
 [releases page](https://github.com/FairwindsOps/nova/releases), and publish a new Homebrew binary.
-
-Be sure to add any notes to CHANGELOG.md
 
