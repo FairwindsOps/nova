@@ -17,7 +17,6 @@ package helm
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -108,7 +107,7 @@ func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, erro
 			return nil, err
 		}
 	} else {
-		cache, err := ioutil.ReadFile(cacheFile)
+		cache, err := os.ReadFile(cacheFile)
 		if err != nil {
 			return nil, err
 		}
