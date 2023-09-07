@@ -19,6 +19,7 @@ import (
 
 	"github.com/fairwindsops/nova/pkg/output"
 	"github.com/stretchr/testify/assert"
+	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/release"
 )
 
@@ -144,6 +145,115 @@ func TestHelm_filterIgnoredReleases(t *testing.T) {
 			want: []*release.Release{{
 				Name: "bar",
 			}},
+		},
+		{
+			name:              "AllIgnoredCharts",
+			releaseIgnoreList: []string{},
+			chartIgnoreList:   []string{"foo"},
+			input: []*release.Release{
+				{
+					Name: "bar",
+					Chart: &chart.Chart{
+						Metadata: &chart.Metadata{
+							Name: "foo",
+						},
+					},
+				},
+			},
+			want: []*release.Release{},
+		},
+		{
+			name:              "SomeIgnoredCharts",
+			releaseIgnoreList: []string{},
+			chartIgnoreList: []string{
+				"foo",
+			},
+			input: []*release.Release{
+				{
+					Name: "foo1",
+					Chart: &chart.Chart{
+						Metadata: &chart.Metadata{
+							Name: "foo",
+						},
+					},
+				},
+				{
+					Name: "foo2",
+					Chart: &chart.Chart{
+						Metadata: &chart.Metadata{
+							Name: "bar",
+						},
+					},
+				},
+			},
+			want: []*release.Release{{
+				Name: "foo2",
+				Chart: &chart.Chart{
+					Metadata: &chart.Metadata{
+						Name: "bar",
+					},
+				},
+			}},
+		},
+		{
+			name: "SomeIgnoredReleasesAndCharts",
+			releaseIgnoreList: []string{
+				"bar",
+			},
+			chartIgnoreList: []string{
+				"foo",
+			},
+			input: []*release.Release{
+				{
+					Name: "foo1",
+					Chart: &chart.Chart{
+						Metadata: &chart.Metadata{
+							Name: "foo",
+						},
+					},
+				},
+				{
+					Name: "foo2",
+					Chart: &chart.Chart{
+						Metadata: &chart.Metadata{
+							Name: "bar",
+						},
+					},
+				},
+				{
+					Name: "bar",
+					Chart: &chart.Chart{
+						Metadata: &chart.Metadata{
+							Name: "foo",
+						},
+					},
+				},
+				{
+					Name: "foo3",
+					Chart: &chart.Chart{
+						Metadata: &chart.Metadata{
+							Name: "bar",
+						},
+					},
+				},
+			},
+			want: []*release.Release{{
+				Name: "foo2",
+				Chart: &chart.Chart{
+					Metadata: &chart.Metadata{
+						Name: "bar",
+					},
+				},
+			},
+				{
+					Name: "foo3",
+					Chart: &chart.Chart{
+						Metadata: &chart.Metadata{
+							Name: "bar",
+						},
+					},
+				},
+			},
 		},
 	}
 	for _, tt := range tests {
