@@ -19,7 +19,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -196,7 +195,7 @@ func downloadConfig(cfgURL string) (string, error) {
 	segments := strings.Split(path, "/")
 	fileName := segments[len(segments)-1]
 
-	file, err := ioutil.TempFile("", fmt.Sprintf("*-%s", fileName))
+	file, err := os.CreateTemp("", fmt.Sprintf("*-%s", fileName))
 	if err != nil {
 		return "", err
 	}
@@ -392,7 +391,7 @@ func handleHelm(kubeContext string) (*output.Output, error) {
 		}
 		packages, err := ahClient.List()
 		if err != nil {
-			return nil, fmt.Errorf("Error getting artifacthub package repos: %v", err)
+			return nil, fmt.Errorf("error getting artifacthub package repos: %v", err)
 		}
 		klog.V(2).Infof("found %d possible package matches", len(packages))
 		for _, release := range releases {

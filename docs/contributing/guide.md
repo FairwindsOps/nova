@@ -21,7 +21,6 @@ Before you can contribute, you will need to sign the [Contributor License Agreem
 If you've encountered an issue that is not already reported, please create a [new issue](https://github.com/FairwindsOps/nova/issues), choose `Bug Report`, `Feature Request` or `Misc.` and follow the instructions in the template. 
 
 ## Getting Started
-
 We label issues with the ["good first issue" tag](https://github.com/FairwindsOps/nova/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22)
 if we believe they'll be a good starting point for new contributors. If you're interested in working on an issue,
 please start a conversation on that issue, and we can help answer any questions as they come up.
@@ -31,13 +30,7 @@ please start a conversation on that issue, and we can help answer any questions 
 * A properly configured Golang environment with Go 1.11 or higher
 * A Kubernetes cluster defined in `~/.kube/config` (or in a file specified by the `KUBECONFIG` env variable)
 
-### Installation
-* Install the project with `go get github.com/fairwindsops/nova`
-* Change into the Nova directory which is installed at `$GOPATH/src/github.com/fairwindsops/nova`
-* See the results with `go run main.go find`
-
 ## Running Tests
-
 The following commands are all required to pass as part of testing:
 
 ```
@@ -57,13 +50,7 @@ Each new pull request should:
 - Be up to date and/or rebased on the master branch
 
 ## Creating a new release
-* Update version in README.md
-* Update version in main.go
-* Open and merge a PR
-* Tag your merged commit
 
 Tagging a commit will build and push a new Docker image, add a binary to the
 [releases page](https://github.com/FairwindsOps/nova/releases), and publish a new Homebrew binary.
-
-Be sure to add any notes to CHANGELOG.md
 
