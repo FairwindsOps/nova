@@ -94,8 +94,7 @@ func (h *Helm) OverrideDesiredVersion(rls *output.ReleaseOutput) {
 // provided by the user at runtime from the list of found charts in the cluster
 func filterIgnoredReleases(deployed []*release.Release, releaseIgnoreList []string, chartIgnoreList []string) []*release.Release {
 	// Filter out any ignored releases
-	filteredDeployed := make([]*release.Release, len(deployed))
-	filteredCount := 0
+	filteredDeployed := []*release.Release{}
 
 	for _, release := range deployed {
 		isIgnoredRelease := false
@@ -103,6 +102,7 @@ func filterIgnoredReleases(deployed []*release.Release, releaseIgnoreList []stri
 		for _, ignoreListedRelease := range releaseIgnoreList {
 			if release.Name == ignoreListedRelease {
 				isIgnoredRelease = true
+				break
 			}
 		}
 		for _, ignoreListedChart := range chartIgnoreList {
@@ -110,14 +110,14 @@ func filterIgnoredReleases(deployed []*release.Release, releaseIgnoreList []stri
 			if release.Chart != nil {
 				if release.Chart.Name() == ignoreListedChart {
 					isIgnoredChart = true
+					break
 				}
 			}
 		}
 		if !isIgnoredChart && !isIgnoredRelease {
-			filteredDeployed[filteredCount] = release
-			filteredCount++
+			filteredDeployed = append(filteredDeployed, release)
 		}
 	}
 
-	return filteredDeployed[0:filteredCount]
+	return filteredDeployed
 }
