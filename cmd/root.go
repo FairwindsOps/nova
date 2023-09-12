@@ -142,6 +142,18 @@ func init() {
 		klog.Exitf("Failed to bind show-old flag: %v", err)
 	}
 
+	findCmd.Flags().StringSlice("release-ignore-list", []string{}, "List of Helm release names to ignore")
+	err = viper.BindPFlag("release-ignore-list", findCmd.Flags().Lookup("release-ignore-list"))
+	if err != nil {
+		klog.Exitf("Failed to bind release-ignore-list flag: %v", err)
+	}
+
+	findCmd.Flags().StringSlice("chart-ignore-list", []string{}, "List of Helm chart names to ignore")
+	err = viper.BindPFlag("chart-ignore-list", findCmd.Flags().Lookup("chart-ignore-list"))
+	if err != nil {
+		klog.Exitf("Failed to bind chart-ignore-list flag: %v", err)
+	}
+
 	klog.InitFlags(nil)
 	_ = flag.Set("alsologtostderr", "true")
 	_ = flag.Set("logtostderr", "true")
@@ -365,7 +377,7 @@ func handleHelm(kubeContext string) (*output.Output, error) {
 	} else {
 		klog.V(3).Infof("Scanning whole cluster")
 	}
-	releases, _, err := h.GetReleaseOutput(namespace)
+	releases, _, err := h.GetReleaseOutput(namespace, viper.GetStringSlice("release-ignore-list"), viper.GetStringSlice("chart-ignore-list"))
 	if err != nil {
 		return nil, fmt.Errorf("error getting helm releases: %s", err)
 	}
