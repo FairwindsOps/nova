@@ -12,24 +12,27 @@ nova find --wide
 ## Options
 ```
 Flags:
-      --containers        Show old container image versions. There will be no helm output unless the --helm flag is set as well
-      --helm              Show old helm releases. You can combine this flag with `--containers` to have both output in a single run.
-  -h, --help              help for find
-      --show-errored-containers   When finding container images, show errors encountered when scanning.
-      --show-non-semver           When finding container images, show all containers even if they don't follow semver.
-  -t, --timeout uint16            When finding container images, the time in seconds before canceling the operation. (default 10)
+      --chart-ignore-list strings     List of Helm chart names to ignore
+      --containers                    Show old container image versions instead of helm chart versions. There will be no helm output if this flag is set.
+      --helm                          Show old helm chart versions. You can combine this flag with --containers to have both output in a single run.
+  -h, --help                          help for find
+      --release-ignore-list strings   List of Helm release names to ignore
+      --show-errored-containers       When finding container images, show errors encountered when scanning.
+      --show-non-semver               When finding container images, show all containers even if they don't follow semver.
+  -t, --timeout uint16                When finding container images, the time in seconds before canceling the operation. (default 10)
 
 Global Flags:
-      --alsologtostderr                   log to standard error as well as files (default true)
+      --alsologtostderr                   log to standard error as well as files (no effect when -logtostderr=true) (default true)
       --config string                     Config file to use. If empty, flags will be used instead
       --context string                    A context to use in the kubeconfig.
   -d, --desired-versions stringToString   A map of chart=override_version to override the helm repository when checking. (default [])
+      --format string                     An output format (table, json) (default "json")
   -a, --include-all                       Show all charts even if no latest version is found.
       --logtostderr                       log to standard error instead of files (default true)
   -n, --namespace string                  Namespace to look in. If empty, scan will be cluster-wide
       --output-file string                Path on local filesystem to write file output to
       --poll-artifacthub                  When true, polls artifacthub to match against helm releases in the cluster. If false, you must provide a url list via --url/-u. Default is true. (default true)
-      --show-old                          Only output charts that are not on the latest version
+      --show-old                          Only show charts that are not on the latest version
   -u, --url strings                       URL for a helm chart repo
   -v, --v Level                           number for the log level verbosity
       --wide                              Output chart name and namespace
