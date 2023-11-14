@@ -29,5 +29,5 @@ brew install fairwindsops/tap/nova
 
 ### From source
 ```
-go get github.com/fairwindsops/nova
+go install github.com/fairwindsops/nova@latest
 ```
