@@ -248,7 +248,7 @@ var findCmd = &cobra.Command{
 		}
 
 		sort_order := viper.GetString("sort-order")
-		if !(sort_order == "ascending" || sort_order == "descending") {
+		if !(sort_order == output.Ascending || sort_order == output.Descending) {
 			klog.Exitf("--sort-order flag value is not valid. Run `nova find --help` to see flag options")
 		}
 
@@ -289,9 +289,7 @@ var findCmd = &cobra.Command{
 				klog.Exitf("error outputting to file: %s", err)
 			}
 		} else {
-			if !(sort_order == "") {
-				fmt.Printf("The sort order is set to %s", sort_order)
-			}
+			output.SortOutput(sort_order, "test")
 			output.Print(format, viper.GetBool("wide"), viper.GetBool("show-old"))
 		}
 	},

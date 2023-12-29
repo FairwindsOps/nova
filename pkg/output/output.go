@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sort"
 	"strconv"
 	"text/tabwriter"
 
@@ -36,6 +37,10 @@ const (
 	JSONFormat = "json"
 	// TableFormat table/csv output format
 	TableFormat = "table"
+	// Ascending table sort order
+	Ascending = "ascending"
+	// Descending table sort order
+	Descending = "descending"
 )
 
 // Output is the object that Nova outputs
@@ -167,6 +172,7 @@ func (output Output) Print(format string, wide, showOld bool) {
 		data, _ := json.Marshal(output.HelmReleases)
 		fmt.Fprintln(os.Stdout, string(data))
 	case TableFormat:
+
 		w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
 		header := "Release Name\t"
 		if wide {
@@ -180,10 +186,6 @@ func (output Output) Print(format string, wide, showOld bool) {
 		}
 		separator += "=========\t======\t===\t=========="
 		fmt.Fprintln(w, separator)
-
-		// sort.Slice(output.HelmReleases, func(i, j int) bool {
-		// 	return output.HelmReleases[i].IsOld < output.HelmReleases[i].IsOld
-		// })
 
 		for _, release := range output.HelmReleases {
 			if (!output.IncludeAll && release.Latest.Version == "") || (showOld && !release.IsOld) {
@@ -409,4 +411,18 @@ func (output HelmAndContainersOutput) ToFile(filename string) error {
 		return errors.New("File format is not supported. The supported file format is json only")
 	}
 	return nil
+}
+
+// SortOutput sorts releases or containers when the output is a table format.
+// it can sort by headers and in ascending or descending order
+func (output *Output) SortOutput(sort_order string, sort_header string) {
+	fmt.Println(output.HelmReleases)
+	sort.Slice(output.HelmReleases, func(i, j int) bool {
+		if sort_order == Ascending {
+			return strconv.FormatBool(output.HelmReleases[i].IsOld) > strconv.FormatBool(output.HelmReleases[j].IsOld)
+		} else {
+			return strconv.FormatBool(output.HelmReleases[i].IsOld) < strconv.FormatBool(output.HelmReleases[j].IsOld)
+		}
+	})
+	fmt.Println(output.HelmReleases)
 }
