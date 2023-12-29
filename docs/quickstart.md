@@ -8,7 +8,7 @@ meta:
 Install the golang binary and run it against your cluster.
 
 ```
-$ go get github.com/fairwindsops/nova
+$ go install github.com/fairwindsops/nova@latest
 $ nova find
 
 Release Name      Installed    Latest     Old       Deprecated

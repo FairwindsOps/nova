@@ -46,9 +46,9 @@ func NewHelm(kubeContext string) *Helm {
 }
 
 // GetReleaseOutput returns releases and chart names
-func (h *Helm) GetReleaseOutput(namespace string) ([]*release.Release, []string, error) {
+func (h *Helm) GetReleaseOutput(namespace string, releaseIgnoreList []string, chartIgnoreList []string) ([]*release.Release, []string, error) {
 	var chartNames = []string{}
-	outputObjects, err := h.GetHelmReleases(namespace)
+	outputObjects, err := h.GetHelmReleases(namespace, releaseIgnoreList, chartIgnoreList)
 	if err != nil {
 		err = fmt.Errorf("could not detect helm 3 charts: %v", err)
 	}
@@ -62,15 +62,17 @@ func (h *Helm) GetReleaseOutput(namespace string) ([]*release.Release, []string,
 }
 
 // GetHelmReleases returns a list of helm releases from the cluster
-func (h *Helm) GetHelmReleases(namespace string) ([]*release.Release, error) {
+func (h *Helm) GetHelmReleases(namespace string, releaseIgnoreList []string, chartIgnoreList []string) ([]*release.Release, error) {
 	hs := helmdriver.NewSecrets(h.Kube.Client.CoreV1().Secrets(namespace))
 	helmClient := helmstorage.Init(hs)
 	deployed, err := helmClient.ListDeployed()
 
+	filteredDeployed := filterIgnoredReleases(deployed, releaseIgnoreList, chartIgnoreList)
+
 	if err != nil {
 		return nil, err
 	}
-	return deployed, nil
+	return filteredDeployed, nil
 }
 
 // OverrideDesiredVersion accepts a list of releases and overrides the version stored in the helm struct where required
@@ -86,4 +88,36 @@ func (h *Helm) OverrideDesiredVersion(rls *output.ReleaseOutput) {
 			rls.Overridden = true
 		}
 	}
+}
+
+// filterIgnoredReleases is a helper function that removes charts that match a release name or chart name
+// provided by the user at runtime from the list of found charts in the cluster
+func filterIgnoredReleases(deployed []*release.Release, releaseIgnoreList []string, chartIgnoreList []string) []*release.Release {
+	// Filter out any ignored releases
+	filteredDeployed := []*release.Release{}
+
+	for _, release := range deployed {
+		isIgnoredRelease := false
+		isIgnoredChart := false
+		for _, ignoreListedRelease := range releaseIgnoreList {
+			if release.Name == ignoreListedRelease {
+				isIgnoredRelease = true
+				break
+			}
+		}
+		for _, ignoreListedChart := range chartIgnoreList {
+			// Check for nil to avoid a potential nil pointer exception
+			if release.Chart != nil {
+				if release.Chart.Name() == ignoreListedChart {
+					isIgnoredChart = true
+					break
+				}
+			}
+		}
+		if !isIgnoredChart && !isIgnoredRelease {
+			filteredDeployed = append(filteredDeployed, release)
+		}
+	}
+
+	return filteredDeployed
 }

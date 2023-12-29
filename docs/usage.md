@@ -12,26 +12,35 @@ nova find --wide
 ## Options
 ```
 Flags:
-      --containers        Show old container image versions. There will be no helm output unless the --helm flag is set as well
-      --helm              Show old helm releases. You can combine this flag with `--containers` to have both output in a single run.
-  -h, --help              help for find
-      --show-non-semver   When finding container images, show all containers even if they don't follow semver.
+      --chart-ignore-list strings     List of Helm chart names to ignore
+      --containers                    Show old container image versions instead of helm chart versions. There will be no helm output if this flag is set.
+      --helm                          Show old helm chart versions. You can combine this flag with --containers to have both output in a single run.
+  -h, --help                          help for find
+      --release-ignore-list strings   List of Helm release names to ignore
+      --show-errored-containers       When finding container images, show errors encountered when scanning.
+      --show-non-semver               When finding container images, show all containers even if they don't follow semver.
+  -t, --timeout uint16                When finding container images, the time in seconds before canceling the operation. (default 10)
 
 Global Flags:
-      --alsologtostderr                   log to standard error as well as files (default true)
+      --alsologtostderr                   log to standard error as well as files (no effect when -logtostderr=true) (default true)
       --config string                     Config file to use. If empty, flags will be used instead
       --context string                    A context to use in the kubeconfig.
   -d, --desired-versions stringToString   A map of chart=override_version to override the helm repository when checking. (default [])
+      --format string                     An output format (table, json) (default "json")
   -a, --include-all                       Show all charts even if no latest version is found.
       --logtostderr                       log to standard error instead of files (default true)
   -n, --namespace string                  Namespace to look in. If empty, scan will be cluster-wide
       --output-file string                Path on local filesystem to write file output to
       --poll-artifacthub                  When true, polls artifacthub to match against helm releases in the cluster. If false, you must provide a url list via --url/-u. Default is true. (default true)
-      --show-old                          Only output charts that are not on the latest version
+      --show-old                          Only show charts that are not on the latest version
   -u, --url strings                       URL for a helm chart repo
   -v, --v Level                           number for the log level verbosity
       --wide                              Output chart name and namespace
 ```
+
+## Referencing Private Registries
+
+If you would like to use nova to find outdated releases from charts in private helm repositories, please use the `--url` flag to point to that registry. Any authentication should be already configured in your local `helm repo` settings. Additionally, you may want to set `--poll-artifacthub=false` if there are no releases from public repositories that you wish to find.
 
 ## Generate Config
 
@@ -101,6 +110,7 @@ redis             redis             redis             3              15.4.1     
 There are a couple flags that are unique to the container image output.
 - `--show-non-semver` will also show any container tags running in the cluster that do not have valid semver versions. By default these are not shown.
 - `--show-errored-containers` will show any containers that returned some sort of error when reaching out to the registry and/or when processing the tags.
+- `--timeout` will set the time (in seconds) before remote queries to the registry are cancelled. Useful when an image has many tags. Defaults to 10 seconds.
 
 Below is sample output for Nova when using the `--containers` flag
 
@@ -146,17 +156,17 @@ Below is sample output for Nova when using the `--helm --containers` flag
 $ nova --format=table find --helm --containers
 Release Name      Installed    Latest    Old      Deprecated
 ============      =========    ======    ===      ==========
-cert-manager      v1.9.1       1.9.1     false    false    
-insights-agent    2.0.7        2.6.8     true     false    
+cert-manager      v1.9.1       1.9.1     false    false
+insights-agent    2.0.7        2.6.8     true     false
 
 Container Name                        Current Version    Old     Latest     Latest Minor     Latest Patch
 ==============                        ===============    ===     ======     =============    =============
-k8s.gcr.io/coredns/coredns            v1.8.4             true    v1.9.3     v1.9.3           v1.8.6      
-k8s.gcr.io/etcd                       3.5.0-0            true    3.5.4-0    3.5.0-0          3.5.0-0     
-k8s.gcr.io/kube-apiserver             v1.22.9            true    v1.25.0    v1.25.0          v1.22.13    
-k8s.gcr.io/kube-controller-manager    v1.22.9            true    v1.25.0    v1.25.0          v1.22.13    
-k8s.gcr.io/kube-proxy                 v1.22.9            true    v1.25.0    v1.25.0          v1.22.13    
-k8s.gcr.io/kube-scheduler             v1.22.9            true    v1.25.0    v1.25.0          v1.22.13  
+k8s.gcr.io/coredns/coredns            v1.8.4             true    v1.9.3     v1.9.3           v1.8.6
+k8s.gcr.io/etcd                       3.5.0-0            true    3.5.4-0    3.5.0-0          3.5.0-0
+k8s.gcr.io/kube-apiserver             v1.22.9            true    v1.25.0    v1.25.0          v1.22.13
+k8s.gcr.io/kube-controller-manager    v1.22.9            true    v1.25.0    v1.25.0          v1.22.13
+k8s.gcr.io/kube-proxy                 v1.22.9            true    v1.25.0    v1.25.0          v1.22.13
+k8s.gcr.io/kube-scheduler             v1.22.9            true    v1.25.0    v1.25.0          v1.22.13
 ```
 
 You can print the output in `json` format

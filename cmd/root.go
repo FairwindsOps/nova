@@ -19,7 +19,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -131,6 +130,12 @@ func init() {
 		klog.Exitf("Failed to bind show-errored-containers flag: %v", err)
 	}
 
+	findCmd.Flags().Uint16P("timeout", "t", 10, "When finding container images, the time in seconds before canceling the operation.")
+	err = viper.BindPFlag("timeout", findCmd.Flags().Lookup("timeout"))
+	if err != nil {
+		klog.Exitf("Failed to bind timeout flag: %v", err)
+	}
+
 	rootCmd.PersistentFlags().Bool("show-old", false, "Only show charts that are not on the latest version")
 	err = viper.BindPFlag("show-old", rootCmd.PersistentFlags().Lookup("show-old"))
 	if err != nil {
@@ -141,6 +146,16 @@ func init() {
 	err = viper.BindPFlag("sort-order", rootCmd.PersistentFlags().Lookup("sort-order"))
 	if err != nil {
 		klog.Exitf("Failed to bind sort-order flag: %v", err)
+	findCmd.Flags().StringSlice("release-ignore-list", []string{}, "List of Helm release names to ignore")
+	err = viper.BindPFlag("release-ignore-list", findCmd.Flags().Lookup("release-ignore-list"))
+	if err != nil {
+		klog.Exitf("Failed to bind release-ignore-list flag: %v", err)
+	}
+
+	findCmd.Flags().StringSlice("chart-ignore-list", []string{}, "List of Helm chart names to ignore")
+	err = viper.BindPFlag("chart-ignore-list", findCmd.Flags().Lookup("chart-ignore-list"))
+	if err != nil {
+		klog.Exitf("Failed to bind chart-ignore-list flag: %v", err)
 	}
 
 	klog.InitFlags(nil)
@@ -184,7 +199,7 @@ func downloadConfig(cfgURL string) (string, error) {
 	segments := strings.Split(path, "/")
 	fileName := segments[len(segments)-1]
 
-	file, err := ioutil.TempFile("", fmt.Sprintf("*-%s", fileName))
+	file, err := os.CreateTemp("", fmt.Sprintf("*-%s", fileName))
 	if err != nil {
 		return "", err
 	}
@@ -318,7 +333,8 @@ func Execute(VERSION, COMMIT string) {
 
 func handleContainers(kubeContext string) (*output.ContainersOutput, error) {
 	// Set up a context we can use to cancel all operations to external container registries if we need to
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	timeout := time.Duration(viper.GetUint16("timeout")) * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	signals := make(chan os.Signal, 1)
 	signal.Notify(signals, os.Interrupt, syscall.SIGTERM)
 	defer func() {
@@ -371,7 +387,7 @@ func handleHelm(kubeContext string) (*output.Output, error) {
 	} else {
 		klog.V(3).Infof("Scanning whole cluster")
 	}
-	releases, _, err := h.GetReleaseOutput(namespace)
+	releases, _, err := h.GetReleaseOutput(namespace, viper.GetStringSlice("release-ignore-list"), viper.GetStringSlice("chart-ignore-list"))
 	if err != nil {
 		return nil, fmt.Errorf("error getting helm releases: %s", err)
 	}
@@ -385,7 +401,7 @@ func handleHelm(kubeContext string) (*output.Output, error) {
 		}
 		packages, err := ahClient.List()
 		if err != nil {
-			return nil, fmt.Errorf("Error getting artifacthub package repos: %v", err)
+			return nil, fmt.Errorf("error getting artifacthub package repos: %v", err)
 		}
 		klog.V(2).Infof("found %d possible package matches", len(packages))
 		for _, release := range releases {
