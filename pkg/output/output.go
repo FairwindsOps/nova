@@ -217,7 +217,7 @@ func (output *Output) dedupe() {
 	for _, release := range output.HelmReleases {
 		k := key{release.ReleaseName, release.ChartName, release.Namespace}
 		if i, ok := tracker[k]; ok {
-			klog.V(1).Infof("found duplicate release output, deduping: '%s', chart: '%s', namespace: '%s'", release.ReleaseName, release.ChartName, release.Namespace)
+			klog.V(8).Infof("found duplicate release output, deduping: '%s', chart: '%s', namespace: '%s'", release.ReleaseName, release.ChartName, release.Namespace)
 			unique[i] = release
 		} else {
 			tracker[k] = len(unique)
