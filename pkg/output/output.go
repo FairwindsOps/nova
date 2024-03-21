@@ -206,7 +206,7 @@ func (output Output) Print(format string, wide, showOld bool) {
 	}
 }
 
-// dedupe will remove duplicate releases from the output if both artifacthub and a custom URL to a helm repository find matches.
+// Dedupe will remove duplicate releases from the output if both artifacthub and a custom URL to a helm repository find matches.
 // this will always override any found by artifacthub with the version from a custom helm repo url because those are found last and
 // will therefore always be at the end of the output.HelmReleases array.
 func (output *Output) Dedupe() {
