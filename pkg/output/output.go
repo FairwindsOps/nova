@@ -123,7 +123,6 @@ func NewOutputWithHelmReleases(helmReleases []*release.Release) Output {
 
 // ToFile dispatches a message to file
 func (output Output) ToFile(filename string) error {
-	output.dedupe()
 	extension := path.Ext(filename)
 	switch extension {
 	case ".json":
@@ -165,7 +164,6 @@ func (output Output) Print(format string, wide, showOld bool) {
 		fmt.Println("No releases found")
 		return
 	}
-	output.dedupe()
 	switch format {
 	case JSONFormat:
 		data, _ := json.Marshal(output.HelmReleases)
@@ -210,7 +208,7 @@ func (output Output) Print(format string, wide, showOld bool) {
 // dedupe will remove duplicate releases from the output if both artifacthub and a custom URL to a helm repository find matches.
 // this will always override any found by artifacthub with the version from a custom helm repo url because those are found last and
 // will therefore always be at the end of the output.HelmReleases array.
-func (output *Output) dedupe() {
+func (output *Output) Dedupe() {
 	var unique []ReleaseOutput
 	type key struct{ releaseName, chartName, namespace string }
 	tracker := make(map[key]int)
@@ -379,7 +377,6 @@ func (output HelmAndContainersOutput) Print(format string, wide, showOld bool) {
 
 // ToFile writes the output to a file
 func (output HelmAndContainersOutput) ToFile(filename string) error {
-	output.Helm.dedupe()
 	extension := path.Ext(filename)
 	switch extension {
 	case ".json":
