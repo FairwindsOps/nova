@@ -29,8 +29,8 @@ func Test_ingestSample(t *testing.T) {
 	resp, err := client.List()
 	assert.NoError(t, err)
 
-	assert.Equal(t, 11233, len(resp))
-	toCheck := resp[1]
+	assert.Equal(t, 12600, len(resp))
+	toCheck := resp[6467]
 	assert.Equal(t, "open5gs-webui", toCheck.Name)
 	assert.Equal(t, "Helm chart to deploy Open5gs WebUI service on Kubernetes. ", toCheck.Description)
 
@@ -41,11 +41,18 @@ func Test_ingestSample(t *testing.T) {
 	assert.Equal(t, 2, len(toCheck.Maintainers))
 	assert.Equal(t, "cgiraldo", toCheck.Maintainers[0].Name)
 
-	assert.Equal(t, "gradiant-openverso", toCheck.Repository.Name)
-	assert.Equal(t, "https://gradiant.github.io/openverso-charts/", toCheck.Repository.URL)
+	assert.Equal(t, "open5gs-webui", toCheck.Repository.Name)
+	assert.Equal(t, "oci://registry-1.docker.io/gradiant/open5gs-webui", toCheck.Repository.URL)
 
-	assert.Equal(t, "2.0.3", toCheck.Version)
-	assert.Equal(t, "2.4.11", toCheck.AppVersion)
-	assert.Equal(t, 4, len(toCheck.AvailableVersions))
+	assert.Equal(t, "2.2.0", toCheck.Version)
+	assert.Equal(t, "2.7.0", toCheck.AppVersion)
+	assert.Equal(t, 7, len(toCheck.AvailableVersions))
 	assert.Equal(t, "2.0.0", toCheck.AvailableVersions[0].Version)
+
+	toCheckWithKubeVersion := resp[10]
+	assert.Equal(t, "ndb-operator", toCheckWithKubeVersion.Name)
+	assert.Equal(t, "1.3.0", toCheckWithKubeVersion.Version)
+	assert.Equal(t, "8.3.0-1.3.0", toCheckWithKubeVersion.AppVersion)
+	assert.Equal(t, ">= 1.23.0-0", toCheckWithKubeVersion.KubeVersion)
+	assert.Len(t, toCheckWithKubeVersion.AvailableVersions, 2)
 }

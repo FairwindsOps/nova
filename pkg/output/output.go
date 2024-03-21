@@ -94,8 +94,9 @@ type ContainerOutput struct {
 
 // VersionInfo contains both a chart version and an app version
 type VersionInfo struct {
-	Version    string `json:"version"`
-	AppVersion string `json:"appVersion"`
+	Version     string `json:"version"`
+	AppVersion  string `json:"appVersion"`
+	KubeVersion string `json:"kubeVersion"`
 }
 
 // NewOutputWithHelmReleases creates a new output object with the given helm releases pre-populated with the installed version
@@ -109,7 +110,11 @@ func NewOutputWithHelmReleases(helmReleases []*release.Release) Output {
 		release.Description = helmRelease.Chart.Metadata.Description
 		release.Home = helmRelease.Chart.Metadata.Home
 		release.Icon = helmRelease.Chart.Metadata.Icon
-		release.Installed = VersionInfo{helmRelease.Chart.Metadata.Version, helmRelease.Chart.Metadata.AppVersion}
+		release.Installed = VersionInfo{
+			Version:     helmRelease.Chart.Metadata.Version,
+			AppVersion:  helmRelease.Chart.Metadata.AppVersion,
+			KubeVersion: helmRelease.Chart.Metadata.KubeVersion,
+		}
 		release.HelmVersion = "3"
 		output.HelmReleases = append(output.HelmReleases, release)
 	}
@@ -212,7 +217,7 @@ func (output *Output) dedupe() {
 	for _, release := range output.HelmReleases {
 		k := key{release.ReleaseName, release.ChartName, release.Namespace}
 		if i, ok := tracker[k]; ok {
-			klog.V(8).Infof("found duplicate release output, deduping: '%s', chart: '%s', namespace: '%s'", release.ReleaseName, release.ChartName, release.Namespace)
+			klog.V(1).Infof("found duplicate release output, deduping: '%s', chart: '%s', namespace: '%s'", release.ReleaseName, release.ChartName, release.Namespace)
 			unique[i] = release
 		} else {
 			tracker[k] = len(unique)
