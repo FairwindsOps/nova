@@ -101,6 +101,7 @@ type ArtifactHubHelmPackage struct {
 	DisplayName       string                `json:"display_name"`
 	Description       string                `json:"description"`
 	AppVersion        string                `json:"app_version"`
+	KubeVersion       string                `json:"kube_version"`
 	Official          bool                  `json:"official"`
 	Deprecated        bool                  `json:"deprecated"`
 	Repository        ArtifactHubRepository `json:"repository"`

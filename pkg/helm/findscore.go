@@ -51,12 +51,14 @@ func prepareOutput(release *release.Release, pkg ArtifactHubHelmPackage) *output
 		Home:        release.Chart.Metadata.Home,
 		Icon:        release.Chart.Metadata.Icon,
 		Installed: output.VersionInfo{
-			Version:    release.Chart.Metadata.Version,
-			AppVersion: release.Chart.Metadata.AppVersion,
+			Version:     release.Chart.Metadata.Version,
+			AppVersion:  release.Chart.Metadata.AppVersion,
+			KubeVersion: release.Chart.Metadata.KubeVersion,
 		},
 		Latest: output.VersionInfo{
-			Version:    pkg.Version,
-			AppVersion: pkg.AppVersion,
+			Version:     pkg.Version,
+			AppVersion:  pkg.AppVersion,
+			KubeVersion: pkg.KubeVersion,
 		},
 		IsOld:       version.Compare(release.Chart.Metadata.Version, pkg.Version, "<"),
 		Deprecated:  pkg.Deprecated,

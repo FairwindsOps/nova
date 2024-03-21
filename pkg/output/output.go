@@ -15,6 +15,7 @@
 package output
 
 import (
+	"bytes"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -94,8 +95,9 @@ type ContainerOutput struct {
 
 // VersionInfo contains both a chart version and an app version
 type VersionInfo struct {
-	Version    string `json:"version"`
-	AppVersion string `json:"appVersion"`
+	Version     string `json:"version"`
+	AppVersion  string `json:"appVersion"`
+	KubeVersion string `json:"kubeVersion"`
 }
 
 // NewOutputWithHelmReleases creates a new output object with the given helm releases pre-populated with the installed version
@@ -109,7 +111,11 @@ func NewOutputWithHelmReleases(helmReleases []*release.Release) Output {
 		release.Description = helmRelease.Chart.Metadata.Description
 		release.Home = helmRelease.Chart.Metadata.Home
 		release.Icon = helmRelease.Chart.Metadata.Icon
-		release.Installed = VersionInfo{helmRelease.Chart.Metadata.Version, helmRelease.Chart.Metadata.AppVersion}
+		release.Installed = VersionInfo{
+			Version:     helmRelease.Chart.Metadata.Version,
+			AppVersion:  helmRelease.Chart.Metadata.AppVersion,
+			KubeVersion: helmRelease.Chart.Metadata.KubeVersion,
+		}
 		release.HelmVersion = "3"
 		output.HelmReleases = append(output.HelmReleases, release)
 	}
@@ -118,11 +124,10 @@ func NewOutputWithHelmReleases(helmReleases []*release.Release) Output {
 
 // ToFile dispatches a message to file
 func (output Output) ToFile(filename string) error {
-	output.dedupe()
 	extension := path.Ext(filename)
 	switch extension {
 	case ".json":
-		data, err := json.Marshal(output)
+		data, err := marshalWithoutHTMLEscaping(output)
 		if err != nil {
 			klog.Errorf("Error marshaling json: %v", err)
 			return err
@@ -160,10 +165,9 @@ func (output Output) Print(format string, wide, showOld bool) {
 		fmt.Println("No releases found")
 		return
 	}
-	output.dedupe()
 	switch format {
 	case JSONFormat:
-		data, _ := json.Marshal(output.HelmReleases)
+		data, _ := marshalWithoutHTMLEscaping(output.HelmReleases)
 		fmt.Fprintln(os.Stdout, string(data))
 	case TableFormat:
 		w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
@@ -202,10 +206,10 @@ func (output Output) Print(format string, wide, showOld bool) {
 	}
 }
 
-// dedupe will remove duplicate releases from the output if both artifacthub and a custom URL to a helm repository find matches.
+// Dedupe will remove duplicate releases from the output if both artifacthub and a custom URL to a helm repository find matches.
 // this will always override any found by artifacthub with the version from a custom helm repo url because those are found last and
 // will therefore always be at the end of the output.HelmReleases array.
-func (output *Output) dedupe() {
+func (output *Output) Dedupe() {
 	var unique []ReleaseOutput
 	type key struct{ releaseName, chartName, namespace string }
 	tracker := make(map[key]int)
@@ -280,7 +284,7 @@ func (output ContainersOutput) Print(format string) {
 	}
 	switch format {
 	case JSONFormat:
-		data, _ := json.Marshal(output)
+		data, _ := marshalWithoutHTMLEscaping(output)
 		fmt.Fprintln(os.Stdout, string(data))
 	case TableFormat:
 		w := tabwriter.NewWriter(os.Stdout, 0, 4, 4, ' ', 0)
@@ -367,14 +371,13 @@ func (output HelmAndContainersOutput) Print(format string, wide, showOld bool) {
 			},
 			IncludeAll: output.Helm.IncludeAll,
 		}
-		data, _ := json.Marshal(outputFormat)
+		data, _ := marshalWithoutHTMLEscaping(outputFormat)
 		fmt.Fprintln(os.Stdout, string(data))
 	}
 }
 
 // ToFile writes the output to a file
 func (output HelmAndContainersOutput) ToFile(filename string) error {
-	output.Helm.dedupe()
 	extension := path.Ext(filename)
 	switch extension {
 	case ".json":
@@ -391,7 +394,7 @@ func (output HelmAndContainersOutput) ToFile(filename string) error {
 			},
 			IncludeAll: output.Helm.IncludeAll,
 		}
-		data, err := json.Marshal(outputFormat)
+		data, err := marshalWithoutHTMLEscaping(outputFormat)
 		if err != nil {
 			klog.Errorf("Error marshaling json: %v", err)
 			return err
@@ -404,4 +407,16 @@ func (output HelmAndContainersOutput) ToFile(filename string) error {
 		return errors.New("File format is not supported. The supported file format is json only")
 	}
 	return nil
+}
+
+// marshalWithoutHTMLEscaping encodes v to JSON without escaping HTML characters.
+func marshalWithoutHTMLEscaping(v any) ([]byte, error) {
+	var buf bytes.Buffer
+	encoder := json.NewEncoder(&buf)
+	encoder.SetEscapeHTML(false)
+	err := encoder.Encode(v)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
 }

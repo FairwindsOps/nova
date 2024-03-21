@@ -304,9 +304,6 @@ func (i *Image) populateNewest() error {
 	// There may be unintended consequenses from this. We do our best by ignoring actual common pre-release tags in the variable preReleaseIgnore.
 	// This means if you are currently running 1.2.3-beta.0 the filter will not limit the upgrade suggestions to other beta releases.
 	filter := i.Current.version.Prerelease()
-	if err != nil {
-		return err
-	}
 	for _, tag := range i.semverTags {
 		if tag.Prerelease() != filter && preReleaseRegex(preReleaseIgnore, tag.Prerelease()) {
 			continue
