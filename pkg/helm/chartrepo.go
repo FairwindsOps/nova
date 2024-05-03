@@ -46,6 +46,7 @@ type ChartReleases struct {
 type ChartRelease struct {
 	APIVersion  string             `yaml:"apiVersion,omitempty"`
 	AppVersion  string             `yaml:"appVersion"`
+	KubeVersion string             `yaml:"kubeVersion"`
 	Created     time.Time          `yaml:"created"`
 	Description string             `yaml:"description"`
 	Digest      string             `yaml:"digest,omitempty"`
@@ -197,12 +198,14 @@ func (h *Helm) GetHelmReleasesVersion(helmRepos []*Repo, helmReleases []*release
 				Icon:        chart.Chart.Metadata.Icon,
 				Home:        chart.Chart.Metadata.Home,
 				Installed: output.VersionInfo{
-					Version:    chart.Chart.Metadata.Version,
-					AppVersion: chart.Chart.Metadata.AppVersion,
+					Version:     chart.Chart.Metadata.Version,
+					AppVersion:  chart.Chart.Metadata.AppVersion,
+					KubeVersion: chart.Chart.Metadata.KubeVersion,
 				},
 				Latest: output.VersionInfo{
-					Version:    newest.Version,
-					AppVersion: newest.AppVersion,
+					Version:     newest.Version,
+					AppVersion:  newest.AppVersion,
+					KubeVersion: newest.KubeVersion,
 				},
 				HelmVersion: "v3",
 				Deprecated:  chart.Chart.Metadata.Deprecated,
@@ -219,10 +222,7 @@ func (h *Helm) overrideDesiredVersion(rls *output.ReleaseOutput) {
 	for _, override := range h.DesiredVersions {
 		if rls.ChartName == override.Name {
 			klog.V(3).Infof("using override: %s=%s", rls.ChartName, override.Version)
-			rls.Latest = output.VersionInfo{
-				Version:    override.Version,
-				AppVersion: "",
-			}
+			rls.Latest = output.VersionInfo{Version: override.Version}
 			rls.Overridden = true
 		}
 	}

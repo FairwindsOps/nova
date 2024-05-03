@@ -36,15 +36,17 @@ func TestHelm_OverrideDesiredVersion(t *testing.T) {
 			input: &output.ReleaseOutput{
 				ChartName: "test-chart",
 				Latest: output.VersionInfo{
-					Version:    "0.0.0",
-					AppVersion: "0.0.0",
+					Version:     "0.0.0",
+					AppVersion:  "0.0.0",
+					KubeVersion: ">= 0.0.0",
 				},
 			},
 			want: &output.ReleaseOutput{
 				ChartName: "test-chart",
 				Latest: output.VersionInfo{
-					Version:    "0.0.0",
-					AppVersion: "0.0.0",
+					Version:     "0.0.0",
+					AppVersion:  "0.0.0",
+					KubeVersion: ">= 0.0.0",
 				},
 			},
 		},
@@ -59,16 +61,14 @@ func TestHelm_OverrideDesiredVersion(t *testing.T) {
 			input: &output.ReleaseOutput{
 				ChartName: "test-chart",
 				Latest: output.VersionInfo{
-					Version:    "0.0.0",
-					AppVersion: "0.0.0",
+					Version:     "0.0.0",
+					AppVersion:  "0.0.0",
+					KubeVersion: ">= 0.0.0",
 				},
 			},
 			want: &output.ReleaseOutput{
-				ChartName: "test-chart",
-				Latest: output.VersionInfo{
-					Version:    "1.1.1",
-					AppVersion: "",
-				},
+				ChartName:  "test-chart",
+				Latest:     output.VersionInfo{Version: "1.1.1"},
 				IsOld:      true,
 				Overridden: true,
 			},

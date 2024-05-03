@@ -408,6 +408,7 @@ func handleHelm(kubeContext string) (*output.Output, error) {
 		outputObjects := h.GetHelmReleasesVersion(helmRepos, releases)
 		out.HelmReleases = append(out.HelmReleases, outputObjects...)
 	}
+	out.Dedupe()
 	return &out, nil
 }
 

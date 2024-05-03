@@ -73,9 +73,10 @@ type ArtifactHubCachedRepository struct {
 
 // ArtifactHubCachedVersionInfo represents the chart and application version of a package
 type ArtifactHubCachedVersionInfo struct {
-	Version    string `json:"pkg"`
-	AppVersion string `json:"app"`
-	Deprecated bool   `json:"deprecated"`
+	Version     string `json:"pkg"`
+	AppVersion  string `json:"app"`
+	KubeVersion string `json:"kube"`
+	Deprecated  bool   `json:"deprecated"`
 }
 
 // NewArtifactHubCachedPackageClient returns a new client for the unauthenticated paths of the ArtifactHubCached API.
@@ -137,11 +138,10 @@ func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, erro
 		for _, version := range cachedPackage.Versions {
 			if version.Version == cachedPackage.LatestVersion {
 				packages[idx].AppVersion = version.AppVersion
+				packages[idx].KubeVersion = version.KubeVersion
 				packages[idx].Deprecated = version.Deprecated
 			}
-			packages[idx].AvailableVersions = append(packages[idx].AvailableVersions, AvailableVersion{
-				Version: version.Version,
-			})
+			packages[idx].AvailableVersions = append(packages[idx].AvailableVersions, AvailableVersion{Version: version.Version})
 		}
 	}
 	return packages, nil

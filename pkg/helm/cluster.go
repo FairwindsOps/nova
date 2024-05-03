@@ -80,10 +80,7 @@ func (h *Helm) OverrideDesiredVersion(rls *output.ReleaseOutput) {
 	for _, override := range h.DesiredVersions {
 		if rls.ChartName == override.Name {
 			klog.V(3).Infof("using override: %s=%s", rls.ChartName, override.Version)
-			rls.Latest = output.VersionInfo{
-				Version:    override.Version,
-				AppVersion: "",
-			}
+			rls.Latest = output.VersionInfo{Version: override.Version}
 			rls.IsOld = version.Compare(rls.Installed.Version, override.Version, "<")
 			rls.Overridden = true
 		}
