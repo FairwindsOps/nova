@@ -4,6 +4,11 @@ orbs:
   rok8s: fairwinds/rok8s-scripts@14
   oss-docs: fairwinds/oss-docs@0
 
+executors:
+  golang-exec:
+    docker:
+      - image: cimg/go:1.21
+
 references:
   e2e_config: &e2e_config
     command_runner_image: quay.io/reactiveops/ci-images:v14-bullseye
