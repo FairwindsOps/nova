@@ -1,0 +1,12 @@
+name: Nova Tests
+description: Collection of e2e tests for Nova.
+testcases:
+- name: Title of First TestCase
+  steps:
+  - script: echo 'foo'
+    assertions:
+    - result.code ShouldEqual 0
+  - script: echo 'bar'
+    assertions:
+    - result.systemout ShouldNotContainSubstring foo
+    - result.timeseconds ShouldBeLessThan 1

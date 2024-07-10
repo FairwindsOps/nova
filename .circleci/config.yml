@@ -1,10 +1,24 @@
 version: 2.1
 
 orbs:
-  rok8s: fairwinds/rok8s-scripts@11
+  rok8s: fairwinds/rok8s-scripts@14
   oss-docs: fairwinds/oss-docs@0
 
 references:
+  e2e_config: &e2e_config
+    command_runner_image: quay.io/reactiveops/ci-images:v14-bullseye
+    kind_node_image: "kindest/node:v1.29.4@sha256:3abb816a5b1061fb15c6e9e60856ec40d56b7b52bcea5f5f1350bc6e2320b6f8"
+    executor: golang-exec
+    pre_script: e2e/pre.sh
+    store-test-results: /tmp/test-results/
+    script: e2e/test.sh
+    requires:
+      - test
+    filters:
+      branches:
+        only: /.*/
+      tags:
+        ignore: /.*/  
   install_vault: &install_vault
     run:
       name: install hashicorp vault
@@ -18,7 +32,7 @@ references:
 jobs:
   test:
     docker:
-      - image: cimg/go:1.21
+      - image: cimg/go:1.22
     steps:
       - checkout
       - run:
@@ -43,7 +57,7 @@ jobs:
     working_directory: /go/src/github.com/fairwindsops/nova
     resource_class: large
     docker:
-      - image: goreleaser/goreleaser:v1.22.1
+      - image: goreleaser/goreleaser:v2.0.1
     steps:
       - checkout
       - setup_remote_docker
@@ -56,7 +70,7 @@ jobs:
     resource_class: large
     shell: /bin/bash
     docker:
-      - image: goreleaser/goreleaser:v1.22.1
+      - image: goreleaser/goreleaser:v2.0.1
     steps:
       - checkout
       - setup_remote_docker
@@ -82,6 +96,16 @@ workflows:
               only: /.*/
             tags:
               ignore: /.*/
+      - rok8s/kubernetes_e2e_tests:
+          requires:
+            - test
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              ignore: /.*/
+          name: functional tests
+          <<: *e2e_config
   release:
     jobs:
       - oss-docs/publish-docs:
