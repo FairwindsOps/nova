@@ -3,4 +3,4 @@
 set -e
 
 make build
-docker cp ./ e2e-command-runner:/pluto
+docker cp ./ e2e-command-runner:/nova
