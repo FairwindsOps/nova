@@ -57,6 +57,7 @@ func GetConfigInstance(context, kubeConfigPath string) *Connection {
 	return kubeClient
 }
 
+// GetConfig returns a *rest.Config based on the current configuration
 func GetConfig(context, kubeConfigPath string) (*rest.Config, error) {
 
 	if context != "" {
