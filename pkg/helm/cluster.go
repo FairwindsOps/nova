@@ -39,9 +39,9 @@ type DesiredVersion struct {
 }
 
 // NewHelm returns a basic helm struct with the version of helm requested
-func NewHelm(kubeContext string) *Helm {
+func NewHelm(kubeContext, kubeConfigPath string) *Helm {
 	return &Helm{
-		Kube: kube.GetConfigInstance(kubeContext),
+		Kube: kube.GetConfigInstance(kubeContext, kubeConfigPath),
 	}
 }
 

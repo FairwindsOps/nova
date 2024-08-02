@@ -93,9 +93,9 @@ type Tag struct {
 }
 
 // NewClient is a constructor to create a new Client
-func NewClient(kubeContext string) *Client {
+func NewClient(kubeContext, kubeConfigPath string) *Client {
 	return &Client{
-		Kube: kube.GetConfigInstance(kubeContext),
+		Kube: kube.GetConfigInstance(kubeContext, kubeConfigPath),
 	}
 }
 
