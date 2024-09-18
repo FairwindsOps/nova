@@ -14,7 +14,9 @@ testcases:
 - name: nova_run
   steps:
   - type: exec
-    script: nova find --output-file output.json
+    script: |
+      nova find --output-file output.json
+      cat ./output.json
 
 - name: validate outdated chart version
   steps:
