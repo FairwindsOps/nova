@@ -18,5 +18,6 @@ cp /nova/nova /usr/local/bin/nova
 cd /nova/e2e
 mkdir -p /tmp/test-results
 helm delete -n kube-system hostpath-provisioner || true
-venom run testsuite.yaml --output-dir=/tmp/test-results
+venom run -v testsuite.yaml --output-dir=/tmp/test-results
+cat /tmp/test-results/venom.log
 exit $?
