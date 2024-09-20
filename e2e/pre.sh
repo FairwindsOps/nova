@@ -2,5 +2,5 @@
 
 set -e
 
-make build
+make build-linux
 docker cp ./ e2e-command-runner:/nova
