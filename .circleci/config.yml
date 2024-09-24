@@ -18,7 +18,7 @@ references:
 jobs:
   test:
     docker:
-      - image: cimg/go:1.21
+      - image: cimg/go:1.22
     steps:
       - checkout
       - run:
