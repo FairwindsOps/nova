@@ -97,6 +97,12 @@ func init() {
 		klog.Exitf("Failed to bind context flag: %v", err)
 	}
 
+	rootCmd.PersistentFlags().String("kubeconfig", "", "A path to a kubeconfig file.")
+	err = viper.BindPFlag("kubeconfig", rootCmd.PersistentFlags().Lookup("kubeconfig"))
+	if err != nil {
+		klog.Exitf("Failed to bind kubeconfig flag: %v", err)
+	}
+
 	rootCmd.PersistentFlags().Bool("wide", false, "Output chart name and namespace")
 	err = viper.BindPFlag("wide", rootCmd.PersistentFlags().Lookup("wide"))
 	if err != nil {
@@ -252,6 +258,7 @@ var findCmd = &cobra.Command{
 		klog.V(5).Infof("All Keys: %v", viper.AllKeys())
 
 		kubeContext := viper.GetString("context")
+		kubeConfigPath := viper.GetString("kubeconfig")
 
 		format := viper.GetString("format")
 		if !(format == output.TableFormat || format == output.JSONFormat) {
@@ -259,7 +266,7 @@ var findCmd = &cobra.Command{
 		}
 
 		if viper.GetBool("helm") && viper.GetBool("containers") {
-			output, err := handleHelmAndContainers(kubeContext)
+			output, err := handleHelmAndContainers(kubeContext, kubeConfigPath)
 			if err != nil {
 				klog.Exit(err)
 			}
@@ -276,7 +283,7 @@ var findCmd = &cobra.Command{
 		}
 
 		if viper.GetBool("containers") {
-			output, err := handleContainers(kubeContext)
+			output, err := handleContainers(kubeContext, kubeConfigPath)
 			if err != nil {
 				klog.Exit(err)
 			}
@@ -284,7 +291,7 @@ var findCmd = &cobra.Command{
 			return
 		}
 
-		output, err := handleHelm(kubeContext)
+		output, err := handleHelm(kubeContext, kubeConfigPath)
 		if err != nil {
 			klog.Exit(err)
 		}
@@ -321,7 +328,7 @@ func Execute(VERSION, COMMIT string) {
 	}
 }
 
-func handleContainers(kubeContext string) (*output.ContainersOutput, error) {
+func handleContainers(kubeContext, kubeConfigPath string) (*output.ContainersOutput, error) {
 	// Set up a context we can use to cancel all operations to external container registries if we need to
 	timeout := time.Duration(viper.GetUint16("timeout")) * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -339,7 +346,7 @@ func handleContainers(kubeContext string) (*output.ContainersOutput, error) {
 		case <-ctx.Done():
 		}
 	}()
-	iClient := containers.NewClient(kubeContext)
+	iClient := containers.NewClient(kubeContext, kubeConfigPath)
 	namespace := viper.GetString("namespace")
 	if viper.IsSet("namespace") {
 		klog.V(3).Infof("Scanning namespace %v", namespace)
@@ -356,8 +363,8 @@ func handleContainers(kubeContext string) (*output.ContainersOutput, error) {
 	return output.NewContainersOutput(containers.Images, containers.ErrImages, showNonSemver, showErrored, includeAll), nil
 }
 
-func handleHelm(kubeContext string) (*output.Output, error) {
-	h := nova_helm.NewHelm(kubeContext)
+func handleHelm(kubeContext, kubeConfigPath string) (*output.Output, error) {
+	h := nova_helm.NewHelm(kubeContext, kubeConfigPath)
 	if viper.IsSet("desired-versions") {
 		klog.V(3).Infof("desired-versions is set - attempting to load them")
 		klog.V(8).Infof("raw desired-versions: %v", viper.Get("desired-versions"))
@@ -412,12 +419,12 @@ func handleHelm(kubeContext string) (*output.Output, error) {
 	return &out, nil
 }
 
-func handleHelmAndContainers(kubeContext string) (*output.HelmAndContainersOutput, error) {
-	helmOutput, err := handleHelm(kubeContext)
+func handleHelmAndContainers(kubeContext, kubeConfigPath string) (*output.HelmAndContainersOutput, error) {
+	helmOutput, err := handleHelm(kubeContext, kubeConfigPath)
 	if err != nil {
 		return nil, err
 	}
-	containersOutput, err := handleContainers(kubeContext)
+	containersOutput, err := handleContainers(kubeContext, kubeConfigPath)
 	if err != nil {
 		return nil, err
 	}

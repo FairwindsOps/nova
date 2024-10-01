@@ -15,6 +15,7 @@
 package kube
 
 import (
+	"flag"
 	"sync"
 
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -45,19 +46,38 @@ var (
 )
 
 // GetConfigInstance returns a Kubernetes interface based on the current configuration
-func GetConfigInstance(context string) *Connection {
+func GetConfigInstance(context, kubeConfigPath string) *Connection {
 	once.Do(func() {
 		kubeClient = &Connection{
-			Client:        getKubeClient(context),
-			DynamicClient: getDynamicKubeClient(context),
-			RESTMapper:    getRESTMapper(context),
+			Client:        getKubeClient(context, kubeConfigPath),
+			DynamicClient: getDynamicKubeClient(context, kubeConfigPath),
+			RESTMapper:    getRESTMapper(context, kubeConfigPath),
 		}
 	})
 	return kubeClient
 }
 
-func getKubeClient(context string) kubernetes.Interface {
-	kubeConf, err := config.GetConfigWithContext(context)
+// GetConfig returns a *rest.Config based on the current configuration
+func GetConfig(context, kubeConfigPath string) (*rest.Config, error) {
+
+	if context != "" {
+		klog.V(3).Infof("using kube context: %s", context)
+	}
+
+	fs := flag.NewFlagSet("fs", flag.ContinueOnError)
+	fs.String("kubeconfig", kubeConfigPath, "")
+	config.RegisterFlags(fs)
+
+	kubeConfig, err := config.GetConfigWithContext(context)
+	if err != nil {
+		return nil, err
+	}
+
+	return kubeConfig, nil
+}
+
+func getKubeClient(context, kubeConfigPath string) kubernetes.Interface {
+	kubeConf, err := GetConfig(context, kubeConfigPath)
 	if err != nil {
 		klog.Fatalf("error getting config with context %s: %v", context, err)
 	}
@@ -69,8 +89,8 @@ func getKubeClient(context string) kubernetes.Interface {
 	return clientset
 }
 
-func getDynamicKubeClient(context string) dynamic.Interface {
-	kubeConf, err := config.GetConfigWithContext(context)
+func getDynamicKubeClient(context, kubeConfigPath string) dynamic.Interface {
+	kubeConf, err := GetConfig(context, kubeConfigPath)
 	if err != nil {
 		klog.Fatalf("error getting config with context %s: %v", context, err)
 	}
@@ -81,8 +101,8 @@ func getDynamicKubeClient(context string) dynamic.Interface {
 	return dynamicClient
 }
 
-func getRESTMapper(context string) meta.RESTMapper {
-	kubeConf, err := config.GetConfigWithContext(context)
+func getRESTMapper(context, kubeConfigPath string) meta.RESTMapper {
+	kubeConf, err := GetConfig(context, kubeConfigPath)
 	if err != nil {
 		klog.Fatalf("error getting config with context %s: %v", context, err)
 	}
