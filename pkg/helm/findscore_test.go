@@ -103,13 +103,13 @@ func Test_scoreChartSimilarity(t *testing.T) {
 		name    string
 		release *release.Release
 		pkg     ArtifactHubHelmPackage
-		want    int
+		want    float32
 	}{
 		{
 			name:    "highest score",
 			release: helmRelease,
 			pkg:     ahubPackage,
-			want:    7,
+			want:    7.5,
 		},
 		{
 			name:    "empty pkg struct",

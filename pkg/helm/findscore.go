@@ -25,10 +25,10 @@ import (
 
 // FindBestArtifactHubMatch takes the helm releases found in the cluster and attempts to match those to a package in artifacthub
 func FindBestArtifactHubMatch(clusterRelease *release.Release, ahubPackages []ArtifactHubHelmPackage) *output.ReleaseOutput {
-	var highScore int
+	var highScore float32
 	var highScorePackage ArtifactHubHelmPackage
 	for _, p := range ahubPackages {
-		score := 0
+		var score float32
 		if p.Name != clusterRelease.Chart.Metadata.Name {
 			continue
 		}
@@ -38,7 +38,7 @@ func FindBestArtifactHubMatch(clusterRelease *release.Release, ahubPackages []Ar
 			highScorePackage = p
 		}
 	}
-	klog.V(10).Infof("highScore for '%s': %d, highScorePackage Repo: %s", clusterRelease.Chart.Metadata.Name, highScore, highScorePackage.Repository.Name)
+	klog.V(10).Infof("highScore for '%s': %f, highScorePackage Repo: %s", clusterRelease.Chart.Metadata.Name, highScore, highScorePackage.Repository.Name)
 	return prepareOutput(clusterRelease, highScorePackage)
 }
 
@@ -66,14 +66,12 @@ func prepareOutput(release *release.Release, pkg ArtifactHubHelmPackage) *output
 	}
 }
 
-func scoreChartSimilarity(release *release.Release, pkg ArtifactHubHelmPackage) int {
-	ret := 0
-	var preferredRepositories = []string{
-		"bitnami",
-		"fairwinds-stable",
-		"ingress-nginx",
-		"cert-manager",
-	}
+var preferredRepositories = []string{"bitnami", "fairwinds-stable", "fairwinds-incubator", "ingress-nginx", "cert-manager", "projectcalico",
+	"grafana", "prometheus-community", "elastic", "hashicorp", "argo", "metrics-server", "gitlab", "jenkins", "harbor", "minio", "cluster-autoscaler",
+	"aws-ebs-csi-driver", "coredns", "datadog", "deliveryhero", "falcosecurity", "kedacore", "kured", "oauth2-proxy", "rimusz"}
+
+func scoreChartSimilarity(release *release.Release, pkg ArtifactHubHelmPackage) float32 {
+	var ret float32
 	if release.Chart.Metadata.Home == pkg.HomeURL {
 		klog.V(10).Infof("+1 score for %s Home URL (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
 		ret++
@@ -121,10 +119,10 @@ func scoreChartSimilarity(release *release.Release, pkg ArtifactHubHelmPackage) 
 		ret++
 	}
 	if containsString(preferredRepositories, pkg.Repository.Name) {
-		klog.V(10).Infof("+1 score for %s, preffered repo (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
-		ret++
+		klog.V(10).Infof("+1.5 score for %s, preferred repo (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
+		ret += 1.5
 	}
-	klog.V(10).Infof("calculated score repo: %s, release: %s, score: %d\n\n", pkg.Repository.Name, release.Name, ret)
+	klog.V(10).Infof("calculated score repo: %s, release: %s, score: %f\n\n", pkg.Repository.Name, release.Name, ret)
 	return ret
 }
 
