@@ -61,6 +61,7 @@ type ArtifactHubCachedPackage struct {
 	Links         []Link                         `json:"links"`
 	Maintainers   []Maintainer                   `json:"maintainers"`
 	Deprecated    bool                           `json:"deprecated"`
+	Stars         int                            `json:"stars"`
 }
 
 // ArtifactHubCachedRepository is a sub-struct of the Package struct, and represents the repository containing the package.
@@ -126,6 +127,7 @@ func (ac *ArtifactHubCachedPackageClient) List() ([]ArtifactHubHelmPackage, erro
 			HomeURL:     cachedPackage.HomeURL,
 			Links:       cachedPackage.Links,
 			Official:    cachedPackage.Official,
+			Stars:       cachedPackage.Stars,
 			Repository: ArtifactHubRepository{
 				Name:              cachedPackage.Repository.Name,
 				URL:               cachedPackage.Repository.URL,

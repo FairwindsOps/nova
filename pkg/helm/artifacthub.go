@@ -110,6 +110,7 @@ type ArtifactHubHelmPackage struct {
 	AvailableVersions []AvailableVersion    `json:"available_versions"`
 	Maintainers       []Maintainer          `json:"maintainers"`
 	Links             []Link                `json:"links"`
+	Stars             int                   `json:"stars"`
 }
 
 // AvailableVersion is a sub struct of ArtifactHubHelmPackage and provides a version that is available for a given helm chart.
