@@ -23,19 +23,53 @@ import (
 	"k8s.io/klog/v2"
 )
 
+const useStarCountThreshold = 10
+
+type packageKey struct {
+	Name       string
+	Repository string
+}
+
 // FindBestArtifactHubMatch takes the helm releases found in the cluster and attempts to match those to a package in artifacthub
 func FindBestArtifactHubMatch(clusterRelease *release.Release, ahubPackages []ArtifactHubHelmPackage) *output.ReleaseOutput {
-	var highScore float32
-	var highScorePackage ArtifactHubHelmPackage
+	packagesByName := map[packageKey]ArtifactHubHelmPackage{}
+	packageScores := map[packageKey]float32{}
+	packageStars := map[packageKey]int{}
+	var useStars bool
 	for _, p := range ahubPackages {
-		var score float32
 		if p.Name != clusterRelease.Chart.Metadata.Name {
 			continue
 		}
-		score = scoreChartSimilarity(clusterRelease, p)
+
+		key := packageKey{Name: p.Name, Repository: p.Repository.Name}
+		packageScores[key] = scoreChartSimilarity(clusterRelease, p)
+		packagesByName[key] = p
+		packageStars[key] = p.Stars
+
+		if p.Stars >= useStarCountThreshold {
+			useStars = true // If any package has more than 10 stars, we add a point to the highest star package
+		}
+	}
+
+	var highestStarPackageName *packageKey
+	var highStars int
+	for p, stars := range packageStars {
+		if stars > highStars {
+			highStars = stars
+			highestStarPackageName = &p
+		}
+	}
+
+	var highScore float32
+	var highScorePackage ArtifactHubHelmPackage
+	for k, score := range packageScores {
+		if useStars && highestStarPackageName != nil && k == *highestStarPackageName {
+			klog.V(10).Infof("adding a point to the highest star package: %s:%s", k.Repository, k.Name)
+			score++ // Add a point to the highest star package
+		}
 		if score > highScore {
 			highScore = score
-			highScorePackage = p
+			highScorePackage = packagesByName[k]
 		}
 	}
 	klog.V(10).Infof("highScore for '%s': %f, highScorePackage Repo: %s", clusterRelease.Chart.Metadata.Name, highScore, highScorePackage.Repository.Name)
@@ -122,7 +156,7 @@ func scoreChartSimilarity(release *release.Release, pkg ArtifactHubHelmPackage) 
 		klog.V(10).Infof("+1.5 score for %s, preferred repo (ahub package repo %s)", release.Chart.Metadata.Name, pkg.Repository.Name)
 		ret += 1.5
 	}
-	klog.V(10).Infof("calculated score repo: %s, release: %s, score: %f\n\n", pkg.Repository.Name, release.Name, ret)
+	klog.V(10).Infof("calculated score repo: %s, release: %s, stars: %d, score: %f\n\n", pkg.Repository.Name, release.Name, pkg.Stars, ret)
 	return ret
 }
 
