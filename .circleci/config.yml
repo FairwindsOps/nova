@@ -18,7 +18,7 @@ references:
 jobs:
   test:
     docker:
-      - image: cimg/go:1.22
+      - image: cimg/go:1.24.4
     steps:
       - checkout
       - run:
@@ -43,7 +43,7 @@ jobs:
     working_directory: /go/src/github.com/fairwindsops/nova
     resource_class: large
     docker:
-      - image: goreleaser/goreleaser:v2.3.2
+      - image: goreleaser/goreleaser:v2.10.2
     steps:
       - checkout
       - setup_remote_docker
@@ -56,7 +56,7 @@ jobs:
     resource_class: large
     shell: /bin/bash
     docker:
-      - image: goreleaser/goreleaser:v2.3.2
+      - image: goreleaser/goreleaser:v2.10.2
     steps:
       - checkout
       - setup_remote_docker
