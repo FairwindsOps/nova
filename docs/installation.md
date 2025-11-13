@@ -16,9 +16,9 @@ sudo mv nova /usr/local/bin/
 
 ### asdf-vm
 ```
-asdf plugin-add nova
+asdf plugin add nova
 asdf install nova latest
-asdf local nova latest
+asdf set nova latest
 ```
 
 ### Homebrew
