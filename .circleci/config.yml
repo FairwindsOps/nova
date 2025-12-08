@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  rok8s: fairwinds/rok8s-scripts@11
+  rok8s: fairwinds/rok8s-scripts@14
   oss-docs: fairwinds/oss-docs@0
 
 references:
@@ -18,7 +18,7 @@ references:
 jobs:
   test:
     docker:
-      - image: cimg/go:1.24.9
+      - image: cimg/go:1.25.5
     steps:
       - checkout
       - run:
@@ -43,7 +43,7 @@ jobs:
     working_directory: /go/src/github.com/fairwindsops/nova
     resource_class: large
     docker:
-      - image: goreleaser/goreleaser:v2.12.7
+      - image: goreleaser/goreleaser:v2.13.1
     steps:
       - checkout
       - setup_remote_docker
@@ -56,7 +56,7 @@ jobs:
     resource_class: large
     shell: /bin/bash
     docker:
-      - image: goreleaser/goreleaser:v2.12.7
+      - image: goreleaser/goreleaser:v2.13.1
     steps:
       - checkout
       - setup_remote_docker
