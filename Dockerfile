@@ -9,7 +9,7 @@ LABEL org.opencontainers.image.authors="FairwindsOps, Inc." \
       org.opencontainers.image.url="https://github.com/FairwindsOps/nova" \
       org.opencontainers.image.licenses="Apache License 2.0"
 
-RUN apk update && apk upgrade
+RUN apk update && apk upgrade --no-cache
 
 USER nobody
 COPY nova /
