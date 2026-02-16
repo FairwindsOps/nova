@@ -67,6 +67,12 @@ func (h *Helm) GetHelmReleases(namespace string, releaseIgnoreList []string, cha
 	helmClient := helmstorage.Init(hs)
 	deployed, err := helmClient.ListDeployed()
 
+	deployedArgo, err := h.GetArgoCDApplicationReleases(namespace)
+	if err != nil {
+		return nil, err
+	}
+	deployed = append(deployed, deployedArgo...)
+
 	filteredDeployed := filterIgnoredReleases(deployed, releaseIgnoreList, chartIgnoreList)
 
 	if err != nil {
