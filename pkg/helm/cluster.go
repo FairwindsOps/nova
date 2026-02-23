@@ -16,6 +16,7 @@ package helm
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/fairwindsops/nova/pkg/kube"
 	"github.com/fairwindsops/nova/pkg/output"
@@ -96,11 +97,8 @@ func filterIgnoredReleases(deployed []*release.Release, releaseIgnoreList []stri
 	for _, release := range deployed {
 		isIgnoredRelease := false
 		isIgnoredChart := false
-		for _, ignoreListedRelease := range releaseIgnoreList {
-			if release.Name == ignoreListedRelease {
-				isIgnoredRelease = true
-				break
-			}
+		if slices.Contains(releaseIgnoreList, release.Name) {
+			isIgnoredRelease = true
 		}
 		for _, ignoreListedChart := range chartIgnoreList {
 			// Check for nil to avoid a potential nil pointer exception

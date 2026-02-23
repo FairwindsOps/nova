@@ -98,7 +98,7 @@ func TestGetContainerImages(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	var obj map[string]interface{}
+	var obj map[string]any
 	err = json.Unmarshal(b, &obj)
 	if err != nil {
 		t.Error(err)
@@ -106,7 +106,7 @@ func TestGetContainerImages(t *testing.T) {
 	fakeTopControllerGetter := func(ns string) ([]controller.Workload, error) {
 		return []controller.Workload{
 			{
-				TopController: unstructured.Unstructured{Object: map[string]interface{}{"kind": "Deployment", "metadata": map[string]interface{}{"name": "name", "namespace": "my-namespace"}}},
+				TopController: unstructured.Unstructured{Object: map[string]any{"kind": "Deployment", "metadata": map[string]any{"name": "name", "namespace": "my-namespace"}}},
 				Pods:          []unstructured.Unstructured{{Object: obj}},
 			},
 		}, nil
