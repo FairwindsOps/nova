@@ -25,6 +25,9 @@ builds:
     ignore:
       - goos: windows
         goarch: arm64
+      # windows/arm port removed in Go 1.26 (unsupported GOOS/GOARCH)
+      - goos: windows
+        goarch: arm
 checksum:
   name_template: 'checksums.txt'
 changelog:

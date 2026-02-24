@@ -15,6 +15,7 @@
 package helm
 
 import (
+	"slices"
 	"strings"
 
 	"github.com/fairwindsops/nova/pkg/output"
@@ -170,12 +171,7 @@ func clusterVersionExistsInPackage(clusterVersion string, pkg ArtifactHubHelmPac
 }
 
 func containsString(arr []string, val string) bool {
-	for _, item := range arr {
-		if item == val {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(arr, val)
 }
 
 // IsValidRelease returns a bool indicating whether a version string is valid or not.
