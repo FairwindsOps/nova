@@ -5,7 +5,7 @@ go 1.26.0
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/fairwindsops/controller-utils v0.3.4
-	github.com/google/go-containerregistry v0.21.0
+	github.com/google/go-containerregistry v0.21.1
 	github.com/mcuadros/go-version v0.0.0-20190830083331-035f6764e8d2
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.10.2
