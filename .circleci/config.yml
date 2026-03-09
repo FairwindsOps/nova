@@ -11,9 +11,9 @@ references:
       command: |
         apk --update add curl yq
         cd /tmp
-        curl -LO https://releases.hashicorp.com/vault/1.13.2/vault_1.13.2_linux_amd64.zip
-        sha256sum vault_1.13.2_linux_amd64.zip | grep f7930279de8381de7c532164b4a4408895d9606c0d24e2e9d2f9acb5dfe99b3c
-        unzip vault_1.13.2_linux_amd64.zip
+        curl -LO https://releases.hashicorp.com/vault/1.21.4/vault_1.21.4_linux_amd64.zip
+        sha256sum vault_1.21.4_linux_amd64.zip | grep 889b681990fe221b884b7932fa9c9dd0ee9811b9349554f1aa287ab63c9f3dae
+        unzip vault_1.21.4_linux_amd64.zip
         mv vault /usr/bin/vault
   install_vault_machine: &install_vault_machine
     run:
@@ -21,9 +21,9 @@ references:
       command: |
         sudo apt-get update -y && sudo apt-get install -y curl unzip
         cd /tmp
-        curl -LO https://releases.hashicorp.com/vault/1.13.2/vault_1.13.2_linux_amd64.zip
-        echo 'f7930279de8381de7c532164b4a4408895d9606c0d24e2e9d2f9acb5dfe99b3c  vault_1.13.2_linux_amd64.zip' | sha256sum -c
-        unzip -o vault_1.13.2_linux_amd64.zip
+        curl -LO https://releases.hashicorp.com/vault/1.21.4/vault_1.21.4_linux_amd64.zip
+        echo '889b681990fe221b884b7932fa9c9dd0ee9811b9349554f1aa287ab63c9f3dae  vault_1.21.4_linux_amd64.zip' | sha256sum -c
+        unzip -o vault_1.21.4_linux_amd64.zip
         sudo mv vault /usr/bin/vault
   setup_qemu_binfmt: &setup_qemu_binfmt
     run:
