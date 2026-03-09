@@ -53,6 +53,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker
+      - install_goreleaser_dependencies
       - run: goreleaser --snapshot
       - store_artifacts:
           path: dist
