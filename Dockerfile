@@ -1,4 +1,5 @@
-FROM alpine:3.23.3
+ARG TARGETPLATFORM
+FROM --platform=$TARGETPLATFORM alpine:3.23.3
 
 RUN apk update && apk -U upgrade --no-cache 
 
