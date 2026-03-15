@@ -106,6 +106,11 @@ redis             redis             redis             3              15.4.1     
 }
 ```
 
+### ArgoCD limitations
+
+Nova also scans for ArgoCD Applications contaning Helm sources and returns them among the other Helm releases.
+However, since ArgoCD [uses helm just to inflate the charts](https://argo-cd.readthedocs.io/en/latest/user-guide/helm/) and doesn't actually store release objects in the chart, some fields like `appVersion`, `kubeVersion` and `description` are assigned empty or default values.
+
 ## Container Image Output
 There are a couple flags that are unique to the container image output.
 - `--show-non-semver` will also show any container tags running in the cluster that do not have valid semver versions. By default these are not shown.
