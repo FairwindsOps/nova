@@ -89,6 +89,10 @@ jobs:
           registry: "quay.io"
           username: $FAIRWINDS_QUAY_USER
           password-variable: FAIRWINDS_QUAY_TOKEN
+      - run:
+          name: docker login Google Artifact Registry
+          command: |
+            docker login -u _json_key -p "$(echo $GCP_ARTIFACTREADWRITE_JSON_KEY | base64 -d)" us-docker.pkg.dev
       - *setup_qemu_binfmt
       - run:
           name: Run GoReleaser release
