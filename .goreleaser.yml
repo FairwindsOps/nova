@@ -35,7 +35,7 @@ brews:
     test: |
       system "#{bin}/nova version"
 release:
-  disable: '{{ eq .Env.GORELEASER_SKIP_RELEASE "true" }}'
+  disable: '{{ eq (envOrDefault "GORELEASER_SKIP_RELEASE" "false") "true" }}'
   prerelease: auto
   github:
     owner: FairwindsOps
