@@ -25,6 +25,45 @@ Nova can also scan your cluster for out of date container images. Find out more 
 
 Check out the [documentation at docs.fairwinds.com](https://nova.docs.fairwinds.com)
 
+## Notice: Registry Migration and Immutable Images (v3.11.15 → v3.12.0)
+
+Starting with **v3.12.0**:
+
+- Images moved to `us-docker.pkg.dev/fairwinds-ops/oss/nova`
+- `quay.io/fairwinds/nova` is deprecated
+
+### Required action
+
+```diff
+- quay.io/fairwinds/nova:<tag>
++ us-docker.pkg.dev/fairwinds-ops/oss/nova:<tag>
+```
+
+---
+
+## Immutable and signed images
+
+* Images are now **signed**
+* Tags are **immutable**
+* No more floating tags:
+
+  * `v3`
+  * `v3.11`
+  * `latest`
+
+Use full version tags:
+
+```
+us-docker.pkg.dev/fairwinds-ops/oss/nova:v<major>.<minor>.<patch>
+```
+
+Or pin by digest:
+
+```
+us-docker.pkg.dev/fairwinds-ops/oss/nova@sha256:<digest>
+```
+
+
 <!-- Begin boilerplate -->
 ## Join the Fairwinds Open Source Community
 
