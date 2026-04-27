@@ -5,16 +5,6 @@ orbs:
   oss-docs: fairwinds/oss-docs@0
 
 references:
-  install_vault: &install_vault
-    run:
-      name: install hashicorp vault
-      command: |
-        apk --update add curl yq
-        cd /tmp
-        curl -LO https://releases.hashicorp.com/vault/1.21.4/vault_1.21.4_linux_amd64.zip
-        sha256sum vault_1.21.4_linux_amd64.zip | grep 889b681990fe221b884b7932fa9c9dd0ee9811b9349554f1aa287ab63c9f3dae
-        unzip vault_1.21.4_linux_amd64.zip
-        mv vault /usr/bin/vault
   install_vault_machine: &install_vault_machine
     run:
       name: install hashicorp vault
