@@ -1,7 +1,8 @@
+## DO NOT EDIT - Managed by Terraform
 version: 2.1
 
 orbs:
-  rok8s: fairwinds/rok8s-scripts@14
+  rok8s: fairwinds/rok8s-scripts@16.0.0
   oss-docs: fairwinds/oss-docs@0
 
 references:
@@ -23,12 +24,16 @@ references:
         sudo apt-get install -y qemu-user-static binfmt-support
         docker buildx create --use || true
         docker buildx inspect --bootstrap
+
 jobs:
   test:
     docker:
-      - image: cimg/go:1.26.2
+      - image: cimg/go:1.26.5
     steps:
       - checkout
+      - run:
+          name: Go Mod Download
+          command: go mod download && go mod verify
       - run:
           name: lint
           command: |
@@ -37,16 +42,15 @@ jobs:
             echo "linting..."
             golint -set_exit_status ./... | tee golint-report.out
             echo "checking go fmt..."
-            if ! test -z $(go fmt ./...); then
+            if ! test -z $$(go fmt ./...); then
               echo "Please run go fmt ./... to format your code"
               exit 1
             fi
       - run:
           name: test
           command: |
-            go test -v --bench --benchmem -coverprofile=coverage.txt -covermode=atomic ./pkg/...
-            go vet 2> govet-report.out
-            go tool cover -html=coverage.txt -o cover-report.html
+            go test -v -coverprofile=coverage.txt -covermode=atomic ./pkg/...
+            go vet ./...
   snapshot:
     machine:
       image: ubuntu-2204:current
@@ -59,11 +63,11 @@ jobs:
           command: |
             docker run --rm \
               -v /var/run/docker.sock:/var/run/docker.sock \
-              -v "$(pwd):/workspace" -w /workspace \
+              -v "$$(pwd):/workspace" -w /workspace \
               -e CIRCLE_SHA1 \
               -e CIRCLE_BRANCH \
               -e CIRCLE_TAG \
-              goreleaser/goreleaser:v2.15.4 release --snapshot --skip=sign
+              goreleaser/goreleaser:v2.17.1 release --snapshot --skip=sign
       - store_artifacts:
           path: dist
           destination: snapshot
@@ -78,9 +82,9 @@ jobs:
       - rok8s/get_vault_env:
           vault_path: repo/global/env
       - run:
-          name: docker login
+          name: docker login Google Artifact Registry
           command: |
-            docker login -u _json_key -p "$(echo $GCP_ARTIFACTREADWRITE_JSON_KEY | base64 -d)" us-docker.pkg.dev
+            docker login -u _json_key -p "$$(echo $$GCP_ARTIFACTREADWRITE_JSON_KEY | base64 -d)" us-docker.pkg.dev
       - *setup_qemu_binfmt
       - run:
           name: Run GoReleaser release
@@ -88,7 +92,7 @@ jobs:
             export GORELEASER_CURRENT_TAG="${CIRCLE_TAG}"
             docker run --rm \
               -v /var/run/docker.sock:/var/run/docker.sock \
-              -v "$(pwd):/workspace" -w /workspace \
+              -v "$$(pwd):/workspace" -w /workspace \
               -v "${HOME}/.docker:/root/.docker" \
               -e GORELEASER_CURRENT_TAG \
               -e CIRCLE_TAG \
@@ -97,33 +101,48 @@ jobs:
               -e GITHUB_TOKEN \
               -e VAULT_ADDR \
               -e VAULT_TOKEN \
-              goreleaser/goreleaser:v2.15.4 release
+              goreleaser/goreleaser:v2.17.1 release
+
 workflows:
   version: 2
   test_and_build:
     jobs:
-      - test
+      - test:
+          filters:
+            tags:
+              ignore: /.*/
       - snapshot:
           requires:
             - test
           filters:
             branches:
               only: /.*/
+              ignore: /pull\/[0-9]+/
             tags:
               ignore: /.*/
   release:
     jobs:
-      - oss-docs/publish-docs:
-          repository: nova
+      - test:
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /^.*/
+              ignore: /^testing-.*/
       - release:
+          requires:
+            - test
           context: org-global
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /.*/
+              ignore: /^testing-.*/
+      - oss-docs/publish-docs:
+          requires:
+            - release
+          repository: nova
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              ignore: /^testing-.*/
