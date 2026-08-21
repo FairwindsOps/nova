@@ -113,7 +113,6 @@ workflows:
           filters:
             branches:
               only: /.*/
-              ignore: /pull\/[0-9]+/
             tags:
               ignore: /.*/
   release:
