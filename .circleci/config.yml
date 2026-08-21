@@ -38,11 +38,11 @@ jobs:
           name: lint
           command: |
             echo "installing golint"
-            go install golang.org/x/lint/golint@latest
+            go install golang.org/x/lint/golint@v0.0.0-20210508222113-6edffad5e616
             echo "linting..."
             golint -set_exit_status ./... | tee golint-report.out
             echo "checking go fmt..."
-            if ! test -z $$(go fmt ./...); then
+            if ! test -z $(go fmt ./...); then
               echo "Please run go fmt ./... to format your code"
               exit 1
             fi
@@ -63,7 +63,7 @@ jobs:
           command: |
             docker run --rm \
               -v /var/run/docker.sock:/var/run/docker.sock \
-              -v "$$(pwd):/workspace" -w /workspace \
+              -v "$(pwd):/workspace" -w /workspace \
               -e CIRCLE_SHA1 \
               -e CIRCLE_BRANCH \
               -e CIRCLE_TAG \
@@ -84,7 +84,7 @@ jobs:
       - run:
           name: docker login Google Artifact Registry
           command: |
-            docker login -u _json_key -p "$$(echo $$GCP_ARTIFACTREADWRITE_JSON_KEY | base64 -d)" us-docker.pkg.dev
+            docker login -u _json_key -p "$(echo $GCP_ARTIFACTREADWRITE_JSON_KEY | base64 -d)" us-docker.pkg.dev
       - *setup_qemu_binfmt
       - run:
           name: Run GoReleaser release
@@ -92,7 +92,7 @@ jobs:
             export GORELEASER_CURRENT_TAG="${CIRCLE_TAG}"
             docker run --rm \
               -v /var/run/docker.sock:/var/run/docker.sock \
-              -v "$$(pwd):/workspace" -w /workspace \
+              -v "$(pwd):/workspace" -w /workspace \
               -v "${HOME}/.docker:/root/.docker" \
               -e GORELEASER_CURRENT_TAG \
               -e CIRCLE_TAG \
