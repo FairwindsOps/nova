@@ -60,14 +60,14 @@ func TestFileOutput_Send(t *testing.T) {
 	assert.Nil(t, existsErr)
 
 	if existsErr == nil {
-		os.Remove(path)
+		_ = os.Remove(path)
 	}
 
 	_, existsCSVErr := os.Stat(pathcsv)
 	assert.Nil(t, existsCSVErr)
 
 	if existsErr == nil {
-		os.Remove(pathcsv)
+		_ = os.Remove(pathcsv)
 	}
 
 }
