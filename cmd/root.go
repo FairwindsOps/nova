@@ -177,7 +177,7 @@ func initConfig() {
 		if err != nil {
 			klog.Exitf("failed to download config: %s", err.Error())
 		}
-		defer os.Remove(cfgFile)
+		defer func() { _ = os.Remove(cfgFile) }()
 	}
 
 	// Read config
@@ -213,14 +213,17 @@ func downloadConfig(cfgURL string) (string, error) {
 	if err != nil {
 		return "", &errors.StatusError{}
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	size, err := io.Copy(file, resp.Body)
 	if err != nil {
+		_ = file.Close()
 		return "", err
 	}
 
-	defer file.Close()
+	if err := file.Close(); err != nil {
+		return "", err
+	}
 
 	tmpConfig := file.Name()
 	klog.V(2).Infof("downloaded config file %s with size %d", tmpConfig, size)
@@ -257,7 +260,7 @@ var findCmd = &cobra.Command{
 		kubeConfigPath := viper.GetString("kubeconfig")
 
 		format := viper.GetString("format")
-		if !(format == output.TableFormat || format == output.JSONFormat) {
+		if format != output.TableFormat && format != output.JSONFormat {
 			klog.Exitf("--format flag value is not valid. Run `nova find --help` to see flag options")
 		}
 

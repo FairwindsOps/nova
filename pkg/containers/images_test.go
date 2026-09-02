@@ -15,7 +15,6 @@
 package containers
 
 import (
-	"context"
 	"encoding/json"
 	"reflect"
 	"testing"
@@ -379,16 +378,3 @@ func TestPreReleaseRegex(t *testing.T) {
 	}
 }
 
-func setupKubeObjects(t *testing.T, c *Client) {
-	_, err := c.Kube.Client.CoreV1().Pods(testNamespace).Create(context.TODO(), testPodSpec, metav1.CreateOptions{})
-	if err != nil {
-		t.Errorf("Error creating pod: %v", err)
-	}
-}
-
-func teardownKubeObjects(t *testing.T, c *Client) {
-	err := c.Kube.Client.CoreV1().Pods(testNamespace).Delete(context.TODO(), testPodName, metav1.DeleteOptions{})
-	if err != nil {
-		t.Errorf("Error deleting pod: %v", err)
-	}
-}

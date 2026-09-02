@@ -181,9 +181,7 @@ func (ac *ArtifactHubPackageClient) SearchPackages(searchTerm string) ([]Artifac
 	klog.V(5).Infof("found %d packages matching '%s'", totalCount, searchTerm)
 
 	ret := make([]ArtifactHubPackageSearch, totalCount)
-	for i, p := range firstSet.Packages {
-		ret[i] = p
-	}
+	copy(ret, firstSet.Packages)
 	if totalCount > maxArtifactHubRequestLimit {
 		wg := sync.WaitGroup{}
 		for i := maxArtifactHubRequestLimit; i < totalCount; i += maxArtifactHubRequestLimit {
@@ -287,7 +285,7 @@ func (ac *ArtifactHubPackageClient) Search(searchTerm string, offset int) (ret A
 		}
 	}
 	if resp.StatusCode == http.StatusOK {
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		err := json.NewDecoder(resp.Body).Decode(&ret)
 		if err != nil {
 			klog.V(3).Infof("error decoding search json with search term '%s': %s", searchTerm, err)
@@ -337,7 +335,7 @@ func (ac *ArtifactHubPackageClient) getSpecific(path string) (ret ArtifactHubPac
 		}
 	}
 	if resp.StatusCode == http.StatusOK {
-		defer resp.Body.Close()
+		defer func() { _ = resp.Body.Close() }()
 		err := json.NewDecoder(resp.Body).Decode(&ret.Package)
 		if err != nil {
 			klog.V(3).Infof("error decoding response for path %s:\n%v", path, err)
