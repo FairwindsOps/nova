@@ -2,7 +2,7 @@
 version: 2.1
 
 orbs:
-  rok8s: fairwinds/rok8s-scripts@16.0.0
+  rok8s: fairwinds/rok8s-scripts@17.0.0
   oss-docs: fairwinds/oss-docs@0
 
 references:
