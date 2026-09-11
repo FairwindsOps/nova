@@ -23,8 +23,8 @@ import (
 
 	"github.com/fairwindsops/nova/pkg/output"
 	version "github.com/mcuadros/go-version"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/release"
+	"helm.sh/helm/v4/pkg/chart"
+	"helm.sh/helm/v4/pkg/release"
 
 	"gopkg.in/yaml.v2"
 	"k8s.io/klog/v2"
