@@ -1,4 +1,4 @@
-FROM alpine:3.23.4
+FROM alpine:3.24.1
 
 LABEL org.opencontainers.image.authors="FairwindsOps, Inc." \
       org.opencontainers.image.vendor="FairwindsOps, Inc." \
@@ -11,6 +11,7 @@ LABEL org.opencontainers.image.authors="FairwindsOps, Inc." \
 
 # Install CA bundle for TLS.
 RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add --upgrade libcrypto3 libssl3
 
 USER nobody
 COPY nova /
