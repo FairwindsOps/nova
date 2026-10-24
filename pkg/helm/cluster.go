@@ -21,9 +21,9 @@ import (
 	"github.com/fairwindsops/nova/pkg/kube"
 	"github.com/fairwindsops/nova/pkg/output"
 	version "github.com/mcuadros/go-version"
-	"helm.sh/helm/v3/pkg/release"
-	helmstorage "helm.sh/helm/v3/pkg/storage"
-	helmdriver "helm.sh/helm/v3/pkg/storage/driver"
+	"helm.sh/helm/v4/pkg/release"
+	helmstorage "helm.sh/helm/v4/pkg/storage"
+	helmdriver "helm.sh/helm/v4/pkg/storage/driver"
 	"k8s.io/klog/v2"
 )
 
