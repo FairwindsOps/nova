@@ -300,12 +300,18 @@ func (i *Image) populateNewest() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to create constraint")
 	}
-	// The goal of the filter below is to find things like "1.2.3-alpine" or "1.2.3-buster" and make sure we only give upgrade suggestions that match.
-	// There may be unintended consequenses from this. We do our best by ignoring actual common pre-release tags in the variable preReleaseIgnore.
-	// This means if you are currently running 1.2.3-beta.0 the filter will not limit the upgrade suggestions to other beta releases.
+	// Suffixes like "alpine" or "distroless" are parsed as semver prereleases, but they
+	// mark an image variant. Semver ranks 1.2.3 above 1.2.3-distroless, so the bare tag
+	// looks newer. Only suggest tags with the same suffix. Real prereleases (alpha, beta,
+	// rc, ...) are not variants: a later stable release is still an upgrade.
 	filter := i.Current.version.Prerelease()
+	compatibilitySuffix := filter != "" && !preReleaseRegex(preReleaseIgnore, filter)
 	for _, tag := range i.semverTags {
-		if tag.Prerelease() != filter && preReleaseRegex(preReleaseIgnore, tag.Prerelease()) {
+		if compatibilitySuffix {
+			if tag.Prerelease() != filter {
+				continue
+			}
+		} else if tag.Prerelease() != filter && preReleaseRegex(preReleaseIgnore, tag.Prerelease()) {
 			continue
 		}
 		if constraint.Check(tag) {
@@ -327,6 +333,8 @@ func (i *Image) populateNewest() error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create minor version constraint")
 		}
+		// Wildcard constraints ignore prereleases unless asked. The suffix is not a prerelease.
+		newerMinorConstraint.IncludePrerelease = compatibilitySuffix
 		for _, tag := range newerTags {
 			if newerMinorConstraint.Check(tag) {
 				i.NewestMinor = &Tag{
@@ -341,6 +349,7 @@ func (i *Image) populateNewest() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to create patch version constraint")
 	}
+	newerPatchConstraint.IncludePrerelease = compatibilitySuffix
 	for _, tag := range newerTags {
 		if newerPatchConstraint.Check(tag) {
 			i.NewestPatch = &Tag{
