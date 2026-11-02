@@ -294,6 +294,67 @@ func TestPopulateNewest(t *testing.T) {
 			newestPatch: "1.0.2",
 			wantErr:     false,
 		},
+		{
+			name: "TestPopulateNewestCompatibilitySuffix",
+			image: &Image{
+				Name:   "prom/node-exporter",
+				Prefix: "v",
+				Current: &Tag{
+					version: version.MustParse("1.12.1-distroless"),
+					Value:   "1.12.1-distroless",
+				},
+				allTags: []string{
+					"v1.12.1",
+					"v1.12.1-distroless",
+					"v1.12.2",
+					"v1.12.2-distroless",
+					"v1.13.0",
+					"v1.13.0-alpine",
+					"v1.13.0-distroless",
+					"v1.14.0-beta.1",
+				},
+			},
+			newestTag:   "1.13.0-distroless",
+			newestMinor: "1.13.0-distroless",
+			newestPatch: "1.12.2-distroless",
+		},
+		{
+			name: "TestPopulateNewestCompatibilitySuffixSameVersion",
+			image: &Image{
+				Name:   "prom/node-exporter",
+				Prefix: "v",
+				Current: &Tag{
+					version: version.MustParse("1.12.1-distroless"),
+					Value:   "1.12.1-distroless",
+				},
+				allTags: []string{
+					"v1.11.0-distroless",
+					"v1.12.1",
+					"v1.12.1-distroless",
+					"v1.13.0",
+				},
+			},
+		},
+		{
+			name: "TestPopulateNewestPrereleaseStillUpgrades",
+			image: &Image{
+				Prefix: "v",
+				Current: &Tag{
+					version: version.MustParse("1.2.3-beta.0"),
+					Value:   "1.2.3-beta.0",
+				},
+				allTags: []string{
+					"v1.2.3-beta.0",
+					"v1.2.3-beta.1",
+					"v1.2.3",
+					"v1.2.4-alpha.1",
+					"v1.2.4",
+				},
+			},
+			newestTag:   "1.2.4",
+			newestMinor: "1.2.4",
+			newestPatch: "1.2.4",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -304,17 +365,24 @@ func TestPopulateNewest(t *testing.T) {
 				t.Errorf("populateNewest() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if got.Newest.Value != tt.newestTag {
-				t.Errorf("populateNewest() Newest.Value got = %v, want %v", got.Newest.Value, tt.newestTag)
+			if tagValue(got.Newest) != tt.newestTag {
+				t.Errorf("populateNewest() Newest.Value got = %v, want %v", tagValue(got.Newest), tt.newestTag)
 			}
-			if got.NewestMinor.Value != tt.newestMinor {
-				t.Errorf("populateNewest() NewestMinor.Value got = %v, want %v", got.NewestMinor.Value, tt.newestMinor)
+			if tagValue(got.NewestMinor) != tt.newestMinor {
+				t.Errorf("populateNewest() NewestMinor.Value got = %v, want %v", tagValue(got.NewestMinor), tt.newestMinor)
 			}
-			if got.NewestPatch.Value != tt.newestPatch {
-				t.Errorf("populateNewest() NewestPatch.Value got = %v, want %v", got.NewestPatch.Value, tt.newestPatch)
+			if tagValue(got.NewestPatch) != tt.newestPatch {
+				t.Errorf("populateNewest() NewestPatch.Value got = %v, want %v", tagValue(got.NewestPatch), tt.newestPatch)
 			}
 		})
 	}
+}
+
+func tagValue(tag *Tag) string {
+	if tag == nil {
+		return ""
+	}
+	return tag.Value
 }
 
 func TestParseTagString(t *testing.T) {
@@ -377,4 +445,3 @@ func TestPreReleaseRegex(t *testing.T) {
 		})
 	}
 }
-
