@@ -16,3 +16,6 @@ node_modules
 
 /nova.yaml
 docs/README.md
+docs/index.md
+docs/.vitepress/cache
+docs/.vitepress/dist
