@@ -21,9 +21,9 @@ import (
 	"github.com/fairwindsops/nova/pkg/kube"
 	"github.com/fairwindsops/nova/pkg/output"
 	version "github.com/mcuadros/go-version"
-	"helm.sh/helm/v3/pkg/release"
-	helmstorage "helm.sh/helm/v3/pkg/storage"
-	helmdriver "helm.sh/helm/v3/pkg/storage/driver"
+	release "helm.sh/helm/v4/pkg/release/v1"
+	helmstorage "helm.sh/helm/v4/pkg/storage"
+	helmdriver "helm.sh/helm/v4/pkg/storage/driver"
 	"k8s.io/klog/v2"
 )
 
@@ -67,13 +67,18 @@ func (h *Helm) GetHelmReleases(namespace string, releaseIgnoreList []string, cha
 	hs := helmdriver.NewSecrets(h.Kube.Client.CoreV1().Secrets(namespace))
 	helmClient := helmstorage.Init(hs)
 	deployed, err := helmClient.ListDeployed()
-
-	filteredDeployed := filterIgnoredReleases(deployed, releaseIgnoreList, chartIgnoreList)
-
 	if err != nil {
 		return nil, err
 	}
-	return filteredDeployed, nil
+	releases := make([]*release.Release, 0, len(deployed))
+	for _, rel := range deployed {
+		r, ok := rel.(*release.Release)
+		if !ok || r == nil {
+			return nil, fmt.Errorf("unexpected helm release type %T", rel)
+		}
+		releases = append(releases, r)
+	}
+	return filterIgnoredReleases(releases, releaseIgnoreList, chartIgnoreList), nil
 }
 
 // OverrideDesiredVersion accepts a list of releases and overrides the version stored in the helm struct where required
