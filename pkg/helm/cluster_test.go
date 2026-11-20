@@ -19,8 +19,8 @@ import (
 
 	"github.com/fairwindsops/nova/pkg/output"
 	"github.com/stretchr/testify/assert"
-	"helm.sh/helm/v4/pkg/chart"
-	"helm.sh/helm/v4/pkg/release"
+	chart "helm.sh/helm/v4/pkg/chart/v2"
+	release "helm.sh/helm/v4/pkg/release/v1"
 )
 
 func TestHelm_OverrideDesiredVersion(t *testing.T) {

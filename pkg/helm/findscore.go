@@ -20,7 +20,7 @@ import (
 
 	"github.com/fairwindsops/nova/pkg/output"
 	version "github.com/mcuadros/go-version"
-	"helm.sh/helm/v4/pkg/release"
+	release "helm.sh/helm/v4/pkg/release/v1"
 	"k8s.io/klog/v2"
 )
 
